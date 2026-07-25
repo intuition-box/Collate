@@ -10,3 +10,4 @@ dist
 .env.*.local
 progress.md
 tsconfig.typecheck.tsbuildinfo
+*.tsbuildinfo
