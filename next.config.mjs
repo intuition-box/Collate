@@ -5,9 +5,7 @@ const isNetlifyBuild = process.env.NETLIFY === 'true';
 const nextConfig = {
   // Keep Windows dev and build processes from contending for the same locked trace file.
   distDir: distDirOverride || (isNetlifyBuild ? '.next' : process.env.NODE_ENV === 'development' ? '.next-dev' : '.next-build'),
-  experimental: {
-    cpus: 1,
-  },
+  experimental: process.env.NODE_ENV === 'production' ? { cpus: 1 } : {},
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),

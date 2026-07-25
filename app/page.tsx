@@ -1,8 +1,7 @@
 import Link from 'next/link';
 
 import { AppShell } from '@/components/app/app-shell';
-
-export const dynamic = 'force-dynamic';
+import { HomeTypewriterWord } from '@/components/home-typewriter-word';
 
 const reviewRows = [
   { name: 'Knowledge Garden', type: 'Thing', status: 'Ready' },
@@ -116,10 +115,10 @@ export default function HomePage() {
     <AppShell fullBleed>
       <main className="overflow-hidden">
         <section className="relative px-4 pb-14 pt-10 text-center sm:px-8 sm:pb-20 sm:pt-24">
-          <div className="home-reveal mx-auto max-w-5xl">
+          <div className="home-reveal mx-auto max-w-6xl">
             <p className="font-serif text-lg italic text-muted sm:text-xl">One atom or one thousand.</p>
-            <h1 className="mx-auto mt-5 max-w-4xl text-[2.8rem] font-semibold leading-[0.92] tracking-[-0.055em] text-ink min-[390px]:text-[3.2rem] sm:text-7xl sm:tracking-[-0.065em] lg:text-[6.7rem] lg:leading-[0.86] lg:tracking-[-0.075em]">
-              Create knowledge.
+            <h1 className="mx-auto mt-5 max-w-6xl text-[2.8rem] font-semibold leading-[0.92] tracking-[-0.055em] text-ink min-[390px]:text-[3.2rem] sm:text-7xl sm:tracking-[-0.065em] lg:text-[6.1rem] lg:leading-[0.86] lg:tracking-[-0.075em] xl:text-[6.7rem]">
+              <HomeTypewriterWord />
               <span className="block font-serif font-normal italic tracking-[-0.065em]">Skip the busywork.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-2xl text-base leading-7 text-muted sm:text-lg sm:leading-8">

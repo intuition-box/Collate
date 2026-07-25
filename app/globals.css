@@ -121,6 +121,21 @@ html[data-theme='dark'] select {
   }
 }
 
+@keyframes typewriter-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.typewriter-caret {
+  animation: typewriter-caret 720ms steps(1, end) infinite;
+}
+
 .home-reveal {
   animation: home-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -146,7 +161,8 @@ html[data-theme='dark'] .atmosphere-dark::before {
 
 @media (prefers-reduced-motion: reduce) {
   .home-reveal,
-  .home-board {
+  .home-board,
+  .typewriter-caret {
     animation: none;
   }
 }
