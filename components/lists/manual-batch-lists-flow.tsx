@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
+import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { AtomSearchSelect } from '@/components/lists/atom-search-select';
@@ -17,6 +18,7 @@ import {
   reviewManualBatchLists,
 } from '@/lib/intuition/manual-batch-lists';
 import { createLocalId } from '@/lib/utils/ids';
+import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { IntuitionAtomSearchResult } from '@/types/api';
 import type { ListMemberRow, ManualListReviewRow } from '@/types/lists';
@@ -59,6 +61,13 @@ export function ManualBatchListsFlow() {
     () => (reviewRows ? getCreatablePreparedListEntries(reviewRows) : []),
     [reviewRows],
   );
+  const hasSelectedMember = memberRows.some((row) => row.selectedAtom);
+  const reviewDisabledReason = getListReviewDisabledReason({
+    hasListAtom: !!listAtom,
+    hasReviewableInput: hasSelectedMember,
+    isBusy: isReviewing || isPublishing,
+    missingInputMessage: 'Select at least one member atom before reviewing.',
+  });
   const publishDisabledReason = getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableEntries.length,
@@ -97,7 +106,7 @@ export function ManualBatchListsFlow() {
       return;
     }
 
-    if (!memberRows.some((row) => row.selectedAtom)) {
+    if (!hasSelectedMember) {
       setError('Select at least one member atom before reviewing the batch.');
       return;
     }
@@ -116,7 +125,7 @@ export function ManualBatchListsFlow() {
       });
 
       setReviewRows(nextRows);
-      setStatus(`Review ready. ${nextRows.filter((row) => row.status === 'ready_to_create').length} list entries can be created.`);
+      setStatus(`Review ready. ${getCreatablePreparedListEntries(nextRows).length} list entries can be created.`);
     } catch (caughtError) {
       setReviewRows(null);
       setStatus(null);
@@ -239,16 +248,18 @@ export function ManualBatchListsFlow() {
             >
               + Add member
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                void handleReview();
-              }}
-              disabled={isReviewing || isPublishing}
-              className="inline-flex rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-muted transition-colors duration-150 hover:border-ink/15 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isReviewing ? 'Reviewing list entries...' : 'Review list entries'}
-            </button>
+            <DisabledActionTooltip reason={reviewDisabledReason}>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleReview();
+                }}
+                disabled={!!reviewDisabledReason}
+                className="inline-flex rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-muted transition-colors duration-150 hover:border-ink/15 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isReviewing ? 'Reviewing list entries...' : 'Review list entries'}
+              </button>
+            </DisabledActionTooltip>
           </div>
 
           {reviewRows ? <ListReviewTable rows={reviewRows} nativeSymbol={networkConfig.nativeSymbol} /> : null}
@@ -258,7 +269,8 @@ export function ManualBatchListsFlow() {
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Publish</p>
                 <p className="text-sm leading-7 text-muted">
-                  Review comes first. Only rows marked `ready_to_create` are included in the transaction.
+                  Review comes first. Only rows marked `ready_to_create` or `ready_with_matches` are included in the
+                  transaction.
                 </p>
                 <p className="text-sm leading-7 text-muted">
                   Eligible rows: <span className="text-ink">{creatableEntries.length}</span> / {reviewRows?.length ?? 0}

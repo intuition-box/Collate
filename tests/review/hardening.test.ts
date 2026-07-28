@@ -10,6 +10,7 @@ import {
 import { getCreatablePreparedAtoms, publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getCreatablePreparedListEntries, publishManualBatchLists } from '@/lib/intuition/manual-batch-lists';
 import { prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
+import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { IntuitionAtomSearchResult } from '@/types/api';
 import type { AtomDraft, AtomReviewRow, PreparedAtomDraft } from '@/types/atoms';
@@ -164,6 +165,52 @@ test('reviewCsvBatchLists marks ambiguous and missing rows without needing chain
   assert.equal(rows[1]?.status, 'missing');
 });
 
+test('reviewCsvBatchLists keeps a description-resolved duplicate-name row eligible with matches', async () => {
+  const selected = candidate('0x1111111111111111111111111111111111111111111111111111111111111111', 'Subscription streaming service.');
+  const alternative = candidate('0x1212121212121212121212121212121212121212121212121212121212121212', 'A protocol project using the same name.');
+  const parsedRows: CsvListParseRow[] = [
+    {
+      row: {
+        id: 'm1',
+        sourceLine: 2,
+        memberName: 'Netflix',
+        memberDescription: 'Subscription streaming service.',
+        selectedAtom: selected,
+        candidates: [selected, alternative],
+        resolutionNote: 'Resolved from a unique description match.',
+      },
+      errors: [],
+    },
+  ];
+  const publicClient = {
+    readContract: async ({ functionName }: { functionName: string }) => {
+      if (functionName === 'getTripleCost') {
+        return 3n;
+      }
+
+      if (functionName === 'calculateTripleId') {
+        return '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+      }
+
+      if (functionName === 'isTermCreated') {
+        return false;
+      }
+
+      throw new Error(`Unexpected contract read: ${functionName}`);
+    },
+  } as never;
+
+  const rows = await reviewCsvBatchLists({
+    listAtom,
+    parsedRows,
+    network: 'testnet',
+    publicClient,
+  });
+
+  assert.equal(rows[0]?.status, 'ready_with_matches');
+  assert.deepEqual(getCreatablePreparedListEntries(rows), [rows[0]?.payload.prepared]);
+});
+
 test('getCreatablePreparedAtoms only returns ready atom rows', () => {
   const preparedAtom: PreparedAtomDraft = {
     id: 'a1',
@@ -182,7 +229,7 @@ test('getCreatablePreparedAtoms only returns ready atom rows', () => {
   assert.deepEqual(getCreatablePreparedAtoms(rows), [preparedAtom]);
 });
 
-test('getCreatablePreparedListEntries only returns ready list rows', () => {
+test('getCreatablePreparedListEntries includes ready rows with matches and excludes blocked rows', () => {
   const preparedEntry: PreparedListEntry = {
     id: 'm1',
     listTermId: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -191,12 +238,50 @@ test('getCreatablePreparedListEntries only returns ready list rows', () => {
     assetWei: 3n,
     alreadyExistsOnChain: false,
   };
+  const matchedEntry: PreparedListEntry = {
+    ...preparedEntry,
+    id: 'm2',
+    memberTermId: '0x1212121212121212121212121212121212121212121212121212121212121212',
+    tripleId: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+  };
   const rows: ManualListReviewRow[] = [
     { id: 'm1', label: 'Alpha', status: 'ready_to_create', message: 'ready', payload: { row: {} as never, prepared: preparedEntry } },
-    { id: 'm2', label: 'Beta', status: 'skip_existing', message: 'skip', payload: { row: {} as never } },
+    { id: 'm2', label: 'Beta', status: 'ready_with_matches', message: 'review options', payload: { row: {} as never, prepared: matchedEntry } },
+    { id: 'm3', label: 'Gamma', status: 'ambiguous', message: 'blocked', payload: { row: {} as never } },
+    { id: 'm4', label: 'Delta', status: 'skip_existing', message: 'skip', payload: { row: {} as never } },
   ];
 
-  assert.deepEqual(getCreatablePreparedListEntries(rows), [preparedEntry]);
+  assert.deepEqual(getCreatablePreparedListEntries(rows), [preparedEntry, matchedEntry]);
+});
+
+test('getListReviewDisabledReason explains list and input prerequisites in order', () => {
+  assert.equal(
+    getListReviewDisabledReason({
+      hasListAtom: false,
+      hasReviewableInput: false,
+      isBusy: false,
+      missingInputMessage: 'Select a member.',
+    }),
+    'Select or create a list atom before reviewing.',
+  );
+  assert.equal(
+    getListReviewDisabledReason({
+      hasListAtom: true,
+      hasReviewableInput: false,
+      isBusy: false,
+      missingInputMessage: 'Select a member.',
+    }),
+    'Select a member.',
+  );
+  assert.equal(
+    getListReviewDisabledReason({
+      hasListAtom: true,
+      hasReviewableInput: true,
+      isBusy: false,
+      missingInputMessage: 'Select a member.',
+    }),
+    null,
+  );
 });
 
 test('prepareCreateAtomsTransaction includes only eligible atom payload assets', () => {

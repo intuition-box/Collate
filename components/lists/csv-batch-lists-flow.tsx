@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
+import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ClearFormButton } from '@/components/app/clear-form-button';
@@ -19,6 +20,7 @@ import {
 } from '@/lib/intuition/manual-batch-lists';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
 import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
+import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { IntuitionAtomSearchResult } from '@/types/api';
 import type { CsvListParseRow, ManualListReviewRow } from '@/types/lists';
@@ -57,6 +59,12 @@ export function CsvBatchListsFlow() {
     () => (reviewRows ? getCreatablePreparedListEntries(reviewRows) : []),
     [reviewRows],
   );
+  const reviewDisabledReason = getListReviewDisabledReason({
+    hasListAtom: !!listAtom,
+    hasReviewableInput: !!parsedRows?.length,
+    isBusy: isParsing || isReviewing || isPublishing,
+    missingInputMessage: 'Preview at least one CSV row before reviewing.',
+  });
   const publishDisabledReason = getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableEntries.length,
@@ -161,7 +169,7 @@ export function CsvBatchListsFlow() {
 
       setParsedRows(mergedParsedRows);
       setReviewRows(nextRows);
-      setStatus(`Review ready. ${nextRows.filter((row) => row.status === 'ready_to_create').length} list entries can be created.`);
+      setStatus(`Review ready. ${getCreatablePreparedListEntries(nextRows).length} list entries can be created.`);
     } catch (caughtError) {
       setReviewRows(null);
       setStatus(null);
@@ -340,16 +348,18 @@ export function CsvBatchListsFlow() {
             >
               {isParsing ? 'Parsing CSV...' : 'Preview CSV rows'}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                void handleReview();
-              }}
-              disabled={!parsedRows || isParsing || isReviewing || isPublishing}
-              className="inline-flex rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-muted transition-colors duration-150 hover:border-ink/15 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isReviewing ? 'Reviewing list rows...' : 'Review list rows'}
-            </button>
+            <DisabledActionTooltip reason={reviewDisabledReason}>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleReview();
+                }}
+                disabled={!!reviewDisabledReason}
+                className="inline-flex rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-muted transition-colors duration-150 hover:border-ink/15 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isReviewing ? 'Reviewing list rows...' : 'Review list rows'}
+              </button>
+            </DisabledActionTooltip>
           </div>
 
           {parsedRows ? <CsvListPreviewTable rows={parsedRows} /> : null}
@@ -376,7 +386,8 @@ export function CsvBatchListsFlow() {
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Publish</p>
                 <p className="text-sm leading-7 text-muted">
-                  Review comes first. Only `ready_to_create` rows are included. Existing, duplicate, ambiguous, missing, and invalid rows are blocked.
+                  Review comes first. `ready_to_create` and `ready_with_matches` rows are included. Existing, duplicate,
+                  ambiguous, missing, and invalid rows are blocked.
                 </p>
                 <p className="text-sm leading-7 text-muted">
                   Eligible rows: <span className="text-ink">{creatableEntries.length}</span> / {reviewRows?.length ?? 0}

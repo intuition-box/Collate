@@ -84,3 +84,43 @@ test('buildListReviewRows marks existing and duplicate list entries', () => {
   assert.equal(review[1]?.status, 'blocked_duplicate');
   assert.equal(review[2]?.status, 'skip_existing');
 });
+
+test('buildListReviewRows keeps same-name alternatives eligible without overriding blockers', () => {
+  const selected = {
+    termId: '0x21' as const,
+    label: 'Netflix',
+    type: 'Thing',
+    data: null,
+    description: 'Subscription streaming service.',
+    image: null,
+    url: null,
+    creatorId: null,
+    creatorLabel: null,
+    positionCount: 0,
+    totalShares: '0',
+  };
+  const alternative = {
+    ...selected,
+    termId: '0x22' as const,
+    description: 'A protocol project using the same name.',
+  };
+  const rows: ListMemberRow[] = [
+    { id: 'm1', memberName: 'Netflix', memberDescription: selected.description, selectedAtom: selected, candidates: [selected, alternative] },
+    { id: 'm2', memberName: 'Netflix', memberDescription: selected.description, selectedAtom: selected, candidates: [selected, alternative] },
+    { id: 'm3', memberName: 'Netflix', memberDescription: selected.description, selectedAtom: selected, candidates: [selected, alternative] },
+    { id: 'm4', memberName: 'Netflix', memberDescription: selected.description, selectedAtom: selected, candidates: [selected, alternative] },
+  ];
+  const prepared: PreparedListEntry[] = [
+    { id: 'm1', listTermId: '0xaa', memberTermId: selected.termId, tripleId: '0xa1', assetWei: 1n, alreadyExistsOnChain: false },
+    { id: 'm2', listTermId: '0xaa', memberTermId: selected.termId, tripleId: '0xb1', assetWei: 1n, alreadyExistsOnChain: true },
+    { id: 'm3', listTermId: '0xaa', memberTermId: selected.termId, tripleId: '0xc1', assetWei: 1n, alreadyExistsOnChain: false },
+    { id: 'm4', listTermId: '0xaa', memberTermId: selected.termId, tripleId: '0xc1', assetWei: 1n, alreadyExistsOnChain: false },
+  ];
+
+  const review = buildListReviewRows(rows, prepared);
+
+  assert.equal(review[0]?.status, 'ready_with_matches');
+  assert.equal(review[1]?.status, 'skip_existing');
+  assert.equal(review[2]?.status, 'blocked_duplicate');
+  assert.equal(review[3]?.status, 'blocked_duplicate');
+});

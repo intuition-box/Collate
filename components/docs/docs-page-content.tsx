@@ -36,6 +36,7 @@ const externalLinks = [
 
 const reviewStates = [
   ['ready_to_create', 'The row passed validation and is eligible for the next transaction.'],
+  ['ready_with_matches', 'The row is eligible, but other exact-name atoms remain available to inspect or select.'],
   ['existing', 'The atom already exists and should not be minted again.'],
   ['skip_existing', 'The list entry already exists and will be skipped.'],
   ['blocked_duplicate', 'The same atom or list member appears more than once in the current batch.'],
@@ -64,6 +65,11 @@ const changelogItems = [
     label: 'Lists',
     title: 'List atom and member search got smoother.',
     description: 'List atom lookup now searches while typing, with inline atom creation paths for missing atoms.',
+  },
+  {
+    label: 'Resolution',
+    title: 'Duplicate-name list members stay reviewable.',
+    description: 'Unique description matches remain publishable while exposing same-name graph atoms for comparison.',
   },
   {
     label: 'Interface',

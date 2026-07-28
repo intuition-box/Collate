@@ -54,13 +54,15 @@ function CandidateImage({ atom, size = 'compact' }: { atom: IntuitionAtomSearchR
   );
 }
 
-function AmbiguousCandidate({
+function CandidateOption({
   atom,
   index,
+  isSelected,
   onSelect,
 }: {
   atom: IntuitionAtomSearchResult;
   index: number;
+  isSelected: boolean;
   onSelect: (atom: IntuitionAtomSearchResult) => void;
 }) {
   const detailsId = useId();
@@ -82,7 +84,11 @@ function AmbiguousCandidate({
   return (
     <div
       className={`min-w-0 rounded-xl border transition-colors duration-150 ${
-        isOpen ? 'border-ink/20 bg-white/90' : 'border-line/80 bg-white/70 hover:border-ink/15'
+        isSelected
+          ? 'border-success/30 bg-success/10'
+          : isOpen
+            ? 'border-ink/20 bg-white/90'
+            : 'border-line/80 bg-white/70 hover:border-ink/15'
       }`}
       onMouseEnter={showDetails}
       onMouseLeave={hideDetails}
@@ -110,7 +116,9 @@ function AmbiguousCandidate({
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-2">
             <span className="truncate text-sm text-ink">{atom.label}</span>
-            <span className="shrink-0 text-[0.64rem] uppercase tracking-terminal text-muted">Option {index + 1}</span>
+            <span className={`shrink-0 text-[0.64rem] uppercase tracking-terminal ${isSelected ? 'text-success' : 'text-muted'}`}>
+              {isSelected ? 'Selected' : `Option ${index + 1}`}
+            </span>
           </span>
           <span className="mt-1 block truncate text-[0.76rem] leading-5 text-muted">
             {atom.description?.trim() || 'No description provided'}
@@ -167,13 +175,19 @@ function AmbiguousCandidate({
             </div>
           </dl>
 
-          <button
-            type="button"
-            onClick={() => onSelect(atom)}
-            className="mt-3 inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-[0.76rem] text-paper transition-opacity duration-150 hover:opacity-[0.85]"
-          >
-            Use this atom
-          </button>
+          {isSelected ? (
+            <span className="mt-3 inline-flex rounded-full border border-success/30 bg-success/10 px-4 py-2 text-[0.76rem] text-success">
+              Currently selected
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSelect(atom)}
+              className="mt-3 inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-[0.76rem] text-paper transition-opacity duration-150 hover:opacity-[0.85]"
+            >
+              Use this atom
+            </button>
+          )}
         </div>
       ) : null}
     </div>
@@ -196,7 +210,8 @@ export function ListReviewTable({
       <div className="space-y-2">
         <p className="text-[0.72rem] uppercase tracking-terminal text-muted">List review</p>
         <p className="text-sm leading-7 text-muted">
-          Review each member entry before publishing. Only `ready_to_create` rows are eligible for the batch transaction.
+          Review each member entry before publishing. `ready_to_create` and `ready_with_matches` rows are eligible for
+          the batch transaction.
         </p>
       </div>
       <div className="mt-4 overflow-x-auto">
@@ -268,17 +283,20 @@ export function ListReviewTable({
                         ))}
                       </div>
                     ) : null}
-                    {row.status === 'ambiguous' && row.payload.row.candidates.length > 0 && onSelectCandidate ? (
+                    {(row.status === 'ambiguous' || row.status === 'ready_with_matches') &&
+                    row.payload.row.candidates.length > 0 &&
+                    onSelectCandidate ? (
                       <div className="mt-3 space-y-2">
                         <p className="text-[0.68rem] uppercase tracking-terminal text-muted">
                           Compare {row.payload.row.candidates.length} exact-name options · hover, focus, or tap for details
                         </p>
                         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                           {row.payload.row.candidates.map((candidate, index) => (
-                            <AmbiguousCandidate
+                            <CandidateOption
                               key={`${row.id}-${candidate.termId}`}
                               atom={candidate}
                               index={index}
+                              isSelected={row.payload.row.selectedAtom?.termId === candidate.termId}
                               onSelect={(atom) => onSelectCandidate(row.id, atom)}
                             />
                           ))}

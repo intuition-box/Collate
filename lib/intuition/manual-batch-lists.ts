@@ -1,7 +1,7 @@
 import type { Hex, PublicClient, WalletClient } from 'viem';
 
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
-import { buildListReviewRows } from '@/lib/intuition/list-duplicates';
+import { buildListReviewRows, isCreatableListReviewStatus } from '@/lib/intuition/list-duplicates';
 import { INTUITION_CHAINS, getIntuitionNetwork } from '@/lib/intuition/networks';
 import { HAS_TAG_PREDICATE_TERM_ID, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
 import type { IntuitionAtomSearchResult, PublicIntuitionNetwork } from '@/types/api';
@@ -119,7 +119,7 @@ export async function reviewManualBatchLists({
 
 export function getCreatablePreparedListEntries(rows: ManualListReviewRow[]): PreparedListEntry[] {
   return rows
-    .filter((row) => row.status === 'ready_to_create' && row.payload.prepared)
+    .filter((row) => isCreatableListReviewStatus(row.status) && row.payload.prepared)
     .map((row) => row.payload.prepared as PreparedListEntry);
 }
 

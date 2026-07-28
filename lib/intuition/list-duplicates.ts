@@ -1,7 +1,11 @@
 import type { Hex } from 'viem';
 
-import type { ReviewRow } from '@/types/review';
+import type { ReviewRow, ReviewStatus } from '@/types/review';
 import type { ListMemberRow, PreparedListEntry } from '@/types/lists';
+
+export function isCreatableListReviewStatus(status: ReviewStatus): boolean {
+  return status === 'ready_to_create' || status === 'ready_with_matches';
+}
 
 export function buildListReviewRows(
   rows: ListMemberRow[],
@@ -48,6 +52,16 @@ export function buildListReviewRows(
       };
     }
 
+    if (sourceRow.candidates.length > 1) {
+      return {
+        id: entry.id,
+        label: sourceRow.selectedAtom.label,
+        status: 'ready_with_matches',
+        message: 'This entry is ready to create, but other atoms share this name. Review the selected option if needed.',
+        payload: entry,
+      };
+    }
+
     return {
       id: entry.id,
       label: sourceRow.selectedAtom.label,
@@ -59,5 +73,5 @@ export function buildListReviewRows(
 }
 
 export function filterCreatableListEntries(rows: ReviewRow<PreparedListEntry>[]): PreparedListEntry[] {
-  return rows.filter((row) => row.status === 'ready_to_create').map((row) => row.payload);
+  return rows.filter((row) => isCreatableListReviewStatus(row.status)).map((row) => row.payload);
 }

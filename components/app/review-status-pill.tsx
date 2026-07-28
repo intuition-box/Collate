@@ -2,6 +2,7 @@ import type { ReviewStatus } from '@/types/review';
 
 const STATUS_CLASSNAMES: Record<ReviewStatus, string> = {
   ready_to_create: 'border-success/20 bg-success/10 text-success',
+  ready_with_matches: 'border-warning/25 bg-success/10 text-warning',
   existing: 'border-line bg-white/80 text-muted',
   skip_existing: 'border-line bg-paper/80 text-muted',
   blocked_duplicate: 'border-warning/20 bg-warning/10 text-warning',

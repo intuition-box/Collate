@@ -1,5 +1,6 @@
 export type ReviewStatus =
   | 'ready_to_create'
+  | 'ready_with_matches'
   | 'existing'
   | 'skip_existing'
   | 'blocked_duplicate'
