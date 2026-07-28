@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildAtomReviewRows } from '@/lib/intuition/atom-duplicates';
-import { reviewCsvBatchLists } from '@/lib/intuition/csv-batch-lists';
+import {
+  chooseUniqueCandidateByDescription,
+  getExactLabelCandidates,
+  reviewCsvBatchLists,
+} from '@/lib/intuition/csv-batch-lists';
 import { getCreatablePreparedAtoms, publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getCreatablePreparedListEntries, publishManualBatchLists } from '@/lib/intuition/manual-batch-lists';
 import { prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
@@ -24,6 +28,67 @@ const listAtom: IntuitionAtomSearchResult = {
   positionCount: 0,
   totalShares: '0',
 };
+
+function candidate(
+  termId: `0x${string}`,
+  description: string | null,
+  overrides: Partial<IntuitionAtomSearchResult> = {},
+): IntuitionAtomSearchResult {
+  return {
+    ...listAtom,
+    termId,
+    label: 'Netflix',
+    description,
+    ...overrides,
+  };
+}
+
+test('getExactLabelCandidates excludes partial and unrelated atom labels', () => {
+  const exact = candidate('0x1111', 'Streaming service');
+  const differentlyCased = candidate('0x2222', 'Media company', { label: '  NETFLIX  ' });
+  const partial = candidate('0x3333', 'Fan account', { label: 'Netflix Fans' });
+
+  assert.deepEqual(getExactLabelCandidates([partial, exact, differentlyCased], 'Netflix'), [exact, differentlyCased]);
+});
+
+test('chooseUniqueCandidateByDescription resolves one exact normalized description match', () => {
+  const expected = candidate('0x1111', 'Subscription streaming service and production company.');
+  const other = candidate('0x2222', 'A protocol project using the same name.');
+
+  assert.equal(
+    chooseUniqueCandidateByDescription(
+      [other, expected],
+      '  Subscription streaming service and production company! ',
+    ),
+    expected,
+  );
+});
+
+test('chooseUniqueCandidateByDescription accepts one substantial containment match', () => {
+  const expected = candidate(
+    '0x1111',
+    'Netflix is a subscription streaming service and production company based in California.',
+  );
+  const other = candidate('0x2222', 'A decentralized media curation community.');
+
+  assert.equal(
+    chooseUniqueCandidateByDescription(
+      [other, expected],
+      'Subscription streaming service and production company based in California',
+    ),
+    expected,
+  );
+});
+
+test('chooseUniqueCandidateByDescription keeps tied, weak, and missing metadata ambiguous', () => {
+  const first = candidate('0x1111', 'Subscription streaming service.');
+  const second = candidate('0x2222', 'Subscription streaming service.');
+  const unrelated = candidate('0x3333', 'A decentralized media curation community.');
+
+  assert.equal(chooseUniqueCandidateByDescription([first, second], 'Subscription streaming service'), null);
+  assert.equal(chooseUniqueCandidateByDescription([first, unrelated], 'Streaming entertainment'), null);
+  assert.equal(chooseUniqueCandidateByDescription([first, unrelated], ''), null);
+});
 
 test('buildAtomReviewRows uses skip_existing when an explicit existing match is provided', () => {
   const drafts: AtomDraft[] = [

@@ -363,6 +363,7 @@ export function CsvBatchListsFlow() {
                   row: {
                     ...entry.row,
                     selectedAtom: atom,
+                    resolutionNote: 'Selected manually after reviewing duplicate-name candidates.',
                   },
                 }));
               }}

@@ -16,6 +16,7 @@ export interface ListMemberRow {
   memberDescription: string;
   selectedAtom: IntuitionAtomSearchResult | null;
   candidates: IntuitionAtomSearchResult[];
+  resolutionNote?: string;
 }
 
 export interface CsvListParseRow {
