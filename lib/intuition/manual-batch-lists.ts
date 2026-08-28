@@ -1,5 +1,10 @@
 import type { Hex, PublicClient, WalletClient } from 'viem';
 
+import {
+  createActivityIntentBestEffort,
+  enqueueActivityConfirmation,
+  flushActivityOutbox,
+} from '@/lib/activity/client';
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
 import { buildListReviewRows, isCreatableListReviewStatus } from '@/lib/intuition/list-duplicates';
 import { INTUITION_CHAINS, getIntuitionNetwork } from '@/lib/intuition/networks';
@@ -7,6 +12,7 @@ import { HAS_TAG_PREDICATE_TERM_ID, prepareCreateTriplesTransaction } from '@/li
 import type { IntuitionAtomSearchResult, PublicIntuitionNetwork } from '@/types/api';
 import type { ListMemberRow, ManualListReviewRow, PreparedListEntry } from '@/types/lists';
 import type { WriteResult } from '@/types/writes';
+import type { ActivitySourceFlow } from '@/types/activity';
 
 interface ReviewManualBatchListsOptions {
   listAtom: IntuitionAtomSearchResult | null;
@@ -21,6 +27,7 @@ interface PublishManualBatchListsOptions {
   publicClient: PublicClient;
   walletClient: WalletClient;
   walletAddress: Hex;
+  activityFlow?: ActivitySourceFlow;
 }
 
 function buildInvalidRow(row: ListMemberRow, errors: string[]): ManualListReviewRow {
@@ -129,6 +136,7 @@ export async function publishManualBatchLists({
   publicClient,
   walletClient,
   walletAddress,
+  activityFlow,
 }: PublishManualBatchListsOptions): Promise<WriteResult> {
   if (entries.length === 0) {
     return {
@@ -139,6 +147,14 @@ export async function publishManualBatchLists({
   }
 
   const preparedTransaction = prepareCreateTriplesTransaction(entries);
+  const activityIntent = activityFlow
+    ? await createActivityIntentBestEffort({
+        network,
+        sourceFlow: activityFlow,
+        walletAddress,
+        data: preparedTransaction.data,
+      })
+    : null;
   const txHash = await walletClient.sendTransaction({
     account: walletAddress,
     chain: INTUITION_CHAINS[network],
@@ -147,11 +163,18 @@ export async function publishManualBatchLists({
     value: preparedTransaction.value,
   });
 
+  if (activityIntent) {
+    enqueueActivityConfirmation({ intentId: activityIntent.intentId, network, txHash });
+    void flushActivityOutbox();
+  }
+
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
   if (receipt.status !== 'success') {
     throw new Error('The createTriples transaction was reverted on-chain. No list entries were confirmed as created.');
   }
+
+  if (activityIntent) void flushActivityOutbox();
 
   return {
     kind: 'created',

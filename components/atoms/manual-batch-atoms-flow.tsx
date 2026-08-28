@@ -151,6 +151,7 @@ export function ManualBatchAtomsFlow({
         publicClient,
         walletClient,
         walletAddress: getAddress(address) as Hex,
+        activityFlow: isSingleMode ? 'single_atom' : 'batch_atoms',
       });
 
       setWriteResult(result);

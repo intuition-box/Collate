@@ -9,4 +9,6 @@ export const MULTIVAULT_ABI = parseAbi([
   'function isTermCreated(bytes32 id) view returns (bool)',
   'function createAtoms(bytes[] atomDatas, uint256[] assets) payable returns (bytes32[])',
   'function createTriples(bytes32[] subjectIds, bytes32[] predicateIds, bytes32[] objectIds, uint256[] assets) payable returns (bytes32[])',
+  'event AtomCreated(address indexed creator, bytes32 indexed termId, bytes atomData, address atomWallet)',
+  'event TripleCreated(address indexed creator, bytes32 indexed termId, bytes32 subjectId, bytes32 predicateId, bytes32 objectId)',
 ]);

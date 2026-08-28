@@ -173,6 +173,7 @@ export function CsvBatchAtomsFlow() {
         publicClient,
         walletClient,
         walletAddress: getAddress(address) as Hex,
+        activityFlow: 'csv_atoms',
       });
 
       setWriteResult(result);

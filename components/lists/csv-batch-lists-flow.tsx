@@ -218,6 +218,7 @@ export function CsvBatchListsFlow() {
         publicClient,
         walletClient,
         walletAddress: getAddress(address) as Hex,
+        activityFlow: 'csv_lists',
       });
 
       setWriteResult(result);

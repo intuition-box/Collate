@@ -158,6 +158,7 @@ export function ManualBatchListsFlow() {
         publicClient,
         walletClient,
         walletAddress: getAddress(address) as Hex,
+        activityFlow: 'manual_lists',
       });
 
       setWriteResult(result);

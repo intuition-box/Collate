@@ -1,5 +1,10 @@
 import type { Hex, PublicClient, WalletClient } from 'viem';
 
+import {
+  createActivityIntentBestEffort,
+  enqueueActivityConfirmation,
+  flushActivityOutbox,
+} from '@/lib/activity/client';
 import { getIntuitionNetwork, INTUITION_CHAINS } from '@/lib/intuition/networks';
 import { prepareAtomDraft, validateAtomDraft } from '@/lib/intuition/atom-prepare';
 import { buildAtomReviewRows } from '@/lib/intuition/atom-duplicates';
@@ -8,6 +13,7 @@ import { prepareCreateAtomsTransaction } from '@/lib/intuition/tx-prepare';
 import type { AtomDraft, AtomReviewRow, PreparedAtomDraft } from '@/types/atoms';
 import type { PublicIntuitionNetwork } from '@/types/api';
 import type { WriteResult } from '@/types/writes';
+import type { ActivitySourceFlow } from '@/types/activity';
 
 interface ReviewAtomDraftBatchOptions {
   drafts: AtomDraft[];
@@ -22,6 +28,7 @@ interface PublishManualBatchAtomsOptions {
   publicClient: PublicClient;
   walletClient: WalletClient;
   walletAddress: Hex;
+  activityFlow?: ActivitySourceFlow;
 }
 
 interface CreateSingleAtomOptions {
@@ -109,6 +116,7 @@ export async function publishManualBatchAtoms({
   publicClient,
   walletClient,
   walletAddress,
+  activityFlow,
 }: PublishManualBatchAtomsOptions): Promise<WriteResult> {
   if (atoms.length === 0) {
     return {
@@ -119,6 +127,14 @@ export async function publishManualBatchAtoms({
   }
 
   const preparedTransaction = prepareCreateAtomsTransaction(atoms);
+  const activityIntent = activityFlow
+    ? await createActivityIntentBestEffort({
+        network,
+        sourceFlow: activityFlow,
+        walletAddress,
+        data: preparedTransaction.data,
+      })
+    : null;
   const txHash = await walletClient.sendTransaction({
     account: walletAddress,
     chain: INTUITION_CHAINS[network],
@@ -127,11 +143,18 @@ export async function publishManualBatchAtoms({
     value: preparedTransaction.value,
   });
 
+  if (activityIntent) {
+    enqueueActivityConfirmation({ intentId: activityIntent.intentId, network, txHash });
+    void flushActivityOutbox();
+  }
+
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
   if (receipt.status !== 'success') {
     throw new Error('The createAtoms transaction was reverted on-chain. No atoms were confirmed as created.');
   }
+
+  if (activityIntent) void flushActivityOutbox();
 
   return {
     kind: 'created',
@@ -176,6 +199,7 @@ export async function createSingleAtom({
     publicClient,
     walletClient,
     walletAddress,
+    activityFlow: 'inline_atom',
   });
 
   return {
