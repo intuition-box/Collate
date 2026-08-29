@@ -43,3 +43,45 @@ export interface ActivityConfirmationResponse {
 export interface ActivityOutboxEntry extends ActivityConfirmationRequest {
   queuedAt: string;
 }
+
+export type ActivityNetworkFilter = PublicIntuitionNetwork | 'all';
+
+export interface ActivityLeaderboardEntry {
+  wallet: Hex;
+  atoms: number;
+  listEntries: number;
+  claims: number;
+  standaloneClaims: number;
+  total: number;
+}
+
+export interface ActivitySummaryResponse {
+  network: ActivityNetworkFilter;
+  totals: {
+    atoms: number;
+    listEntries: number;
+    claims: number;
+    standaloneClaims: number;
+    confirmedTransactions: number;
+  };
+  leaderboard: ActivityLeaderboardEntry[];
+}
+
+export interface ConfirmedActivityItem {
+  id: string;
+  kind: ActivityItemKind;
+  network: PublicIntuitionNetwork;
+  txHash: Hex;
+  creatorWallet: Hex;
+  protocolId: Hex;
+  subjectId: Hex | null;
+  predicateId: Hex | null;
+  objectId: Hex | null;
+  blockNumber: string;
+  createdAt: string;
+}
+
+export interface ActivityItemsResponse {
+  items: ConfirmedActivityItem[];
+  nextCursor: string | null;
+}
