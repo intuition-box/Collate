@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "npm run db:migrate && next start",
     "db:migrate": "node scripts/migrate.mjs",
+    "admin:hash": "node scripts/hash-admin-password.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "tsx --test tests/**/*.test.ts"
   },

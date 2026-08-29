@@ -29,6 +29,11 @@ Required:
 - `INTUITION_PIN_API_KEY`
 - `DATABASE_URL` (server-only PostgreSQL connection string)
 
+Required to manage `/settings`:
+
+- `ADMIN_PASSWORD_HASH` (generated locally; never use the raw password)
+- `ADMIN_AUTH_SECRET` (a private random value of at least 32 characters)
+
 Optional overrides:
 
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
@@ -70,6 +75,14 @@ npm run dev
 
 Ordinary `npm run dev` remains supported without PostgreSQL for work unrelated to activity tracking. Protocol publishing still works, while activity APIs remain unavailable until `DATABASE_URL` is configured.
 
+To configure the private settings page, generate a password hash using the hidden terminal prompt:
+
+```bash
+npm run admin:hash
+```
+
+Store the printed `ADMIN_PASSWORD_HASH` value in your local or deployment environment. Generate a separate random `ADMIN_AUTH_SECRET` with at least 32 characters; it signs the eight-hour admin session cookie and must remain server-only. Visit `/settings` directly to sign in. The first available control decides whether Activity appears in the public navigation.
+
 Open:
 
 ```text
@@ -83,6 +96,7 @@ npm run typecheck
 npm test
 npm run build
 npm run db:migrate
+npm run admin:hash
 ```
 
 ## Notes
@@ -112,9 +126,12 @@ Deploy the application and a PostgreSQL resource in the same Coolify project and
 - Build command: `npm run build`
 - Start command: `npm start`
 - Required runtime variables: `INTUITION_PIN_API_KEY`, `DATABASE_URL`
+- Admin runtime variables: `ADMIN_PASSWORD_HASH`, `ADMIN_AUTH_SECRET`
 - Recommended public variable: `NEXT_PUBLIC_APP_URL=https://your-domain.example`
 
 Use the PostgreSQL resource's internal Postgres URL as `DATABASE_URL`. Keep it server-only: enable Coolify's runtime and literal options, disable the build option, and never prefix it with `NEXT_PUBLIC_`. `npm start` applies pending migrations under an advisory lock before starting Next.js, so the schema is ready before the app accepts traffic.
+
+Keep both admin variables server-only with Coolify's runtime and literal options enabled. Changing feature flags from `/settings` writes directly to PostgreSQL and does not require a commit or redeployment.
 
 ### Activity ledger
 

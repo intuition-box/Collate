@@ -2,6 +2,7 @@
 
 import { startTransition, useEffect, useState } from 'react';
 
+import { WalletIdentity } from '@/components/wallet/wallet-identity';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type {
   ActivityItemsResponse,
@@ -283,19 +284,12 @@ export function ActivityDashboard() {
                                 {index + 1}
                               </span>
                             </td>
-                            <td className="px-5 py-4 font-mono text-xs text-ink">
-                              {explorerNetwork ? (
-                                <a
-                                  href={`${explorerNetwork.explorerUrl}/address/${entry.wallet}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="underline decoration-line underline-offset-4 hover:decoration-ink"
-                                >
-                                  {shortenHex(entry.wallet)}
-                                </a>
-                              ) : (
-                                shortenHex(entry.wallet)
-                              )}
+                            <td className="px-5 py-4">
+                              <WalletIdentity
+                                address={entry.wallet}
+                                href={explorerNetwork ? `${explorerNetwork.explorerUrl}/address/${entry.wallet}` : undefined}
+                                size={32}
+                              />
                             </td>
                             <td className="px-5 py-4 text-right text-sm text-muted">{NUMBER_FORMATTER.format(entry.atoms)}</td>
                             <td className="px-5 py-4 text-right text-sm text-muted">{NUMBER_FORMATTER.format(entry.claims)}</td>
@@ -346,9 +340,17 @@ export function ActivityDashboard() {
                             <p className="truncate font-mono text-xs text-ink" title={item.protocolId}>
                               {shortenHex(item.protocolId, 10, 8)}
                             </p>
-                            <p className="mt-1 text-xs text-muted">
-                              by {shortenHex(item.creatorWallet)} · Block {NUMBER_FORMATTER.format(Number(item.blockNumber))}
-                            </p>
+                            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted">
+                              <span>by</span>
+                              <WalletIdentity
+                                address={item.creatorWallet}
+                                href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`}
+                                size={22}
+                                showAddress={false}
+                              />
+                              <span aria-hidden="true">·</span>
+                              <span>Block {NUMBER_FORMATTER.format(Number(item.blockNumber))}</span>
+                            </div>
                           </div>
 
                           <div className="flex items-center justify-between gap-4 sm:justify-end">

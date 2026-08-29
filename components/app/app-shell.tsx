@@ -6,10 +6,11 @@ import type { ReactNode } from 'react';
 
 import { NetworkToggle } from '@/components/app/network-toggle';
 import { ThemeToggle } from '@/components/app/theme-toggle';
+import { usePublicSettings } from '@/components/app/use-public-settings';
 import { CollateLogo } from '@/components/brand/collate-logo';
 import { WalletButton } from '@/components/wallet/wallet-button';
 
-const NAV_ITEMS = [
+const CORE_NAV_ITEMS = [
   { href: '/', label: 'Home' },
   { href: '/create', label: 'Create' },
   { href: '/docs', label: 'Docs' },
@@ -18,6 +19,9 @@ const NAV_ITEMS = [
 export function AppShell({ children, fullBleed = false }: { children: ReactNode; fullBleed?: boolean }) {
   const pathname = usePathname();
   const isHome = pathname === '/';
+  const { data: publicSettings } = usePublicSettings();
+  const showActivity = publicSettings?.settings.showActivityInNav === true;
+  const navItems = showActivity ? [...CORE_NAV_ITEMS, { href: '/activity', label: 'Activity' }] : CORE_NAV_ITEMS;
 
   return (
     <div className="min-h-screen w-full overflow-x-clip pb-16 pt-8 sm:pt-10">
@@ -34,9 +38,11 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
 
         <nav
           aria-label="Primary navigation"
-          className="inline-flex w-full min-w-0 max-w-full items-center gap-1 justify-self-center overflow-hidden rounded-full border border-line/90 bg-white/88 p-1.5 backdrop-blur sm:w-[17rem]"
+          className={`inline-flex w-full min-w-0 max-w-full items-center gap-1 justify-self-center overflow-hidden rounded-full border border-line/90 bg-white/88 p-1.5 backdrop-blur transition-[width] ${
+            showActivity ? 'sm:w-[22rem]' : 'sm:w-[17rem]'
+          }`}
         >
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href);
 
             return (
