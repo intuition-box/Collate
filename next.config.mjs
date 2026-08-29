@@ -1,11 +1,12 @@
 const distDirOverride = process.env.COLLATE_NEXT_DIST_DIR?.trim();
 const isNetlifyBuild = process.env.NETLIFY === 'true';
+const needsWindowsBuildWorkaround = process.platform === 'win32' && process.env.NODE_ENV === 'production';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Keep Windows dev and build processes from contending for the same locked trace file.
   distDir: distDirOverride || (isNetlifyBuild ? '.next' : process.env.NODE_ENV === 'development' ? '.next-dev' : '.next-build'),
-  experimental: process.env.NODE_ENV === 'production' ? { cpus: 1 } : {},
+  ...(needsWindowsBuildWorkaround ? { experimental: { cpus: 1 } } : {}),
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),
