@@ -18,6 +18,7 @@ All four flows are review-first: rows are previewed, validated, classified, and 
 - Node.js 20.6+
 - npm
 - An Intuition pinning API key for rich atom metadata creation
+- PostgreSQL for activity tracking and the community activity page
 
 ## Environment
 
@@ -26,6 +27,7 @@ Copy `.env.example` to `.env.local` and fill in the required values.
 Required:
 
 - `INTUITION_PIN_API_KEY`
+- `DATABASE_URL` (server-only PostgreSQL connection string)
 
 Optional overrides:
 
@@ -59,13 +61,14 @@ Run the dev server:
 npm run dev
 ```
 
-To exercise the verified activity ledger locally, run the app through the Netlify CLI instead so Netlify Database is available:
+To exercise activity tracking locally, point `DATABASE_URL` at a local PostgreSQL database and apply the schema:
 
 ```bash
-npx netlify dev
+npm run db:migrate
+npm run dev
 ```
 
-Ordinary `npm run dev` remains supported for product development. If no database connection is present, protocol publishing still works and activity tracking quietly stays unavailable.
+Ordinary `npm run dev` remains supported without PostgreSQL for work unrelated to activity tracking. Protocol publishing still works, while activity APIs remain unavailable until `DATABASE_URL` is configured.
 
 Open:
 
@@ -79,6 +82,7 @@ Useful commands:
 npm run typecheck
 npm test
 npm run build
+npm run db:migrate
 ```
 
 ## Notes
@@ -99,9 +103,22 @@ Connect the repository as a Next.js site using these settings:
 
 The committed `netlify.toml` sets Node.js 20, and `next.config.mjs` automatically uses Netlify's standard `.next` output whenever Netlify's built-in `NETLIFY=true` flag is present. In Netlify environment variables, set `INTUITION_PIN_API_KEY` with Functions scope and set `NEXT_PUBLIC_APP_URL` to the site's final HTTPS origin with Builds scope. WalletConnect, ENS RPC, Intuition endpoint, and explorer overrides remain optional as described above. Because `NEXT_PUBLIC_*` values are embedded at build time, redeploy after changing them.
 
-### Verified activity ledger
+Activity tracking is host-neutral and requires a PostgreSQL `DATABASE_URL`. Apply `npm run db:migrate` against that database before a Netlify deployment; Netlify's Next.js runtime does not invoke this repository's `npm start` command.
 
-The `@netlify/database` integration records only server-verified successful creation events for future analytics and leaderboards. Netlify provisions the database connection for deployed builds; do not add `NETLIFY_DB_URL` to the repository or expose it as a public environment variable. The schema migration is committed under `netlify/database/migrations` and is applied by Netlify's database tooling.
+## Coolify
+
+Deploy the application and a PostgreSQL resource in the same Coolify project and destination so the database stays on Coolify's private network.
+
+- Build command: `npm run build`
+- Start command: `npm start`
+- Required runtime variables: `INTUITION_PIN_API_KEY`, `DATABASE_URL`
+- Recommended public variable: `NEXT_PUBLIC_APP_URL=https://your-domain.example`
+
+Use the PostgreSQL resource's internal Postgres URL as `DATABASE_URL`. Keep it server-only: enable Coolify's runtime and literal options, disable the build option, and never prefix it with `NEXT_PUBLIC_`. `npm start` applies pending migrations under an advisory lock before starting Next.js, so the schema is ready before the app accepts traffic.
+
+### Activity ledger
+
+The PostgreSQL activity ledger records only server-verified successful creation events for analytics and leaderboards. Its versioned schema lives under `database/migrations`; applied migration checksums are stored in `collate_schema_migrations`.
 
 - A pre-wallet activity intent records the exact calldata hash, wallet, flow, and network.
 - A local browser outbox retries receipt confirmation after refreshes and temporary service failures.

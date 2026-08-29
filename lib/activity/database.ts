@@ -1,4 +1,4 @@
-import { getDatabase } from '@netlify/database';
+import { Pool } from 'pg';
 import type { Address, Hex } from 'viem';
 
 import type { VerifiedActivityItem } from '@/lib/activity/events';
@@ -26,6 +26,10 @@ interface ActivityQueryClient {
 interface ActivityPool extends ActivityQueryClient {
   connect(): Promise<ActivityQueryClient>;
 }
+
+const globalForActivityDatabase = globalThis as typeof globalThis & {
+  collateActivityPool?: Pool;
+};
 
 export interface ActivityTransactionRecord {
   id: string;
@@ -67,7 +71,28 @@ export interface ConfirmActivityRecord {
 }
 
 function getPool(): ActivityPool {
-  return getDatabase().pool as unknown as ActivityPool;
+  const connectionString = process.env.DATABASE_URL?.trim();
+
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is not configured.');
+  }
+
+  if (!globalForActivityDatabase.collateActivityPool) {
+    const pool = new Pool({
+      connectionString,
+      max: 5,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 5_000,
+    });
+
+    pool.on('error', (error) => {
+      console.error('[activity-database] Unexpected idle PostgreSQL client error.', error);
+    });
+
+    globalForActivityDatabase.collateActivityPool = pool;
+  }
+
+  return globalForActivityDatabase.collateActivityPool as unknown as ActivityPool;
 }
 
 export async function createActivityIntent(record: CreateActivityIntentRecord): Promise<void> {
