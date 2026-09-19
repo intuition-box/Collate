@@ -72,6 +72,7 @@ export function AtomDraftRowEditor({
   title,
   helperText,
   hideRemoveButton,
+  active = true,
   onPatch,
   onRemove,
 }: {
@@ -81,6 +82,7 @@ export function AtomDraftRowEditor({
   title?: string;
   helperText?: string;
   hideRemoveButton?: boolean;
+  active?: boolean;
   onPatch: (patch: Partial<AtomDraft>) => void;
   onRemove: () => void;
 }) {
@@ -271,6 +273,7 @@ export function AtomDraftRowEditor({
             label="Atom type"
             showLabel={false}
             compact
+            active={active}
             disabled={!!disabled}
           />
           {hideRemoveButton ? null : (

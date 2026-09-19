@@ -33,8 +33,10 @@ function getInitialDrafts(mode: ManualAtomsFlowMode): AtomDraft[] {
 
 export function ManualBatchAtomsFlow({
   mode = 'single',
+  active = true,
 }: {
   mode?: ManualAtomsFlowMode;
+  active?: boolean;
 }) {
   const { address, status: accountStatus } = useAccount();
   const chainId = useChainId();
@@ -203,6 +205,7 @@ export function ManualBatchAtomsFlow({
                 draft={draft}
                 index={index}
                 disabled={isReviewing || isPublishing}
+                active={active}
                 onPatch={(patch) => patchDraft(draft.id, patch)}
                 onRemove={() => removeDraft(draft.id)}
               />

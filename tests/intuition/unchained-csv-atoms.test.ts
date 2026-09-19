@@ -7,7 +7,8 @@ import { decodeFunctionData, hexToString, type PublicClient } from 'viem';
 import { parseUnchainedAtomCsvText } from '@/lib/csv/unchained-atom-csv';
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
 import { prepareCreateAtomsTransaction } from '@/lib/intuition/tx-prepare';
-import { getCreatableUnchainedAtoms, reviewUnchainedCsvAtoms } from '@/lib/intuition/unchained-csv-atoms';
+import { getCreatableUnchainedAtoms, reviewUnchainedAtoms, reviewUnchainedCsvAtoms } from '@/lib/intuition/unchained-csv-atoms';
+import { createUnchainedManualAtomDraft, prepareUnchainedManualAtom } from '@/lib/intuition/unchained-manual-atoms';
 import type { IntuitionAtomSearchResult } from '@/types/api';
 
 function client(existingIds = new Set<string>()): PublicClient {
@@ -106,4 +107,47 @@ test('Unchained createAtoms calldata includes only reviewed eligible rows', asyn
   assert.equal(decoded.functionName, 'createAtoms');
   assert.equal(decoded.args[0].length, 1);
   assert.equal(hexToString(decoded.args[0][0]!), eligible[0]?.dataString);
+});
+
+test('manual Unchained drafts use the same canonical review and publish preparation', async () => {
+  const draft = {
+    ...createUnchainedManualAtomDraft('person'),
+    fieldValues: {
+      givenName: 'Ada',
+      familyName: 'Lovelace',
+      sameAs: 'https://example.com/ada\nhttps://example.org/ada',
+    },
+    deposit: '0.25',
+  };
+  const parsed = prepareUnchainedManualAtom(draft);
+
+  assert.deepEqual(parsed.errors, []);
+  assert.deepEqual(parsed.atom.values.sameAs, ['https://example.com/ada', 'https://example.org/ada']);
+
+  const reviewed = await reviewUnchainedAtoms({
+    rows: [parsed],
+    network: 'testnet',
+    publicClient: client(),
+    lookupMatches: async () => [],
+  });
+  const eligible = getCreatableUnchainedAtoms(reviewed);
+  const transaction = prepareCreateAtomsTransaction(eligible);
+  const decoded = decodeFunctionData({ abi: MULTIVAULT_ABI, data: transaction.data });
+
+  assert.equal(reviewed[0]?.status, 'ready_to_create');
+  assert.equal(eligible.length, 1);
+  assert.equal(decoded.functionName, 'createAtoms');
+  assert.equal(decoded.args[0].length, 1);
+});
+
+test('manual Unchained drafts surface URL and support errors before chain reads', () => {
+  const draft = {
+    ...createUnchainedManualAtomDraft('thing'),
+    fieldValues: { name: 'Example', sameAs: 'http://example.com' },
+    deposit: '-1',
+  };
+  const parsed = prepareUnchainedManualAtom(draft);
+
+  assert.match(parsed.errors.join(' '), /public HTTPS URL/);
+  assert.match(parsed.errors.join(' '), /non-negative TRUST/);
 });

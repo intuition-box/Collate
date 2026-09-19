@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { CsvAtomImportWorkspace } from '@/components/atoms/csv-atom-import-workspace';
-import { ManualBatchAtomsFlow } from '@/components/atoms/manual-batch-atoms-flow';
+import { ManualAtomCreationWorkspace } from '@/components/atoms/manual-atom-creation-workspace';
 import { CsvBatchListsFlow } from '@/components/lists/csv-batch-lists-flow';
 import { ManualBatchListsFlow } from '@/components/lists/manual-batch-lists-flow';
 
@@ -86,8 +86,8 @@ export function AtomCreationWorkspace() {
       </div>
 
       <div className="px-0 py-0">
-        {section === 'atoms' && atomMode === 'single_atom' ? <ManualBatchAtomsFlow key={`single-${network}`} mode="single" /> : null}
-        {section === 'atoms' && atomMode === 'batch_atoms' ? <ManualBatchAtomsFlow key={`batch-${network}`} mode="batch" /> : null}
+        {section === 'atoms' && atomMode === 'single_atom' ? <ManualAtomCreationWorkspace key={`single-${network}`} mode="single" /> : null}
+        {section === 'atoms' && atomMode === 'batch_atoms' ? <ManualAtomCreationWorkspace key={`batch-${network}`} mode="batch" /> : null}
         {section === 'atoms' && atomMode === 'csv_atoms' ? <CsvAtomImportWorkspace key={`csv-atoms-${network}`} /> : null}
         {section === 'lists' && listMode === 'manual_lists' ? <ManualBatchListsFlow key={`lists-${network}`} /> : null}
         {section === 'lists' && listMode === 'csv_lists' ? <CsvBatchListsFlow key={`csv-lists-${network}`} /> : null}

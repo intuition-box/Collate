@@ -423,7 +423,7 @@ function renderActiveSection(activeSection: DocSectionId) {
           items={[
             'Choose Mainnet or Testnet from the network control at the top of the page.',
             'Have a compatible wallet ready and funded with the selected network’s native token.',
-            'Decide whether the atom represents a Thing, Person, Organization, Account, or raw URI/data value.',
+            'Choose Unchained for one of 37 canonical primitive types, or Classic when you need an older image-rich atom shape.',
           ]}
         />
         <GuideSteps
@@ -434,16 +434,16 @@ function renderActiveSection(activeSection: DocSectionId) {
               description: <>Go to <strong className="text-ink">Create</strong>, choose <strong className="text-ink">Atom creation</strong>, then select <strong className="text-ink">Single atom</strong>.</>,
             },
             {
-              title: 'Choose the atom type',
-              description: <>Use <strong className="text-ink">Thing</strong> for a general concept or object, <strong className="text-ink">Person</strong> for an individual, <strong className="text-ink">Organization</strong> for a group, <strong className="text-ink">Account</strong> for a chain account, or <strong className="text-ink">Raw URI / data</strong> for an existing raw value.</>,
+              title: 'Choose the creation format',
+              description: <>Choose <strong className="text-ink">Unchained types</strong> for the canonical primitive model, or <strong className="text-ink">Classic</strong> when you specifically need image upload or one of the established atom shapes.</>,
             },
             {
-              title: 'Enter the atom details',
-              description: <>For Thing, Person, and Organization atoms, enter a name. Add a clear description, HTTPS URL, and image when useful. You can upload an image from your device or paste a public HTTPS image URL and choose <strong className="text-ink">Import URL</strong>.</>,
+              title: 'Choose the atom type and enter its fields',
+              description: <>Unchained offers 37 types and changes the form to show the selected primitive&apos;s exact fields. Classic offers Thing, Person, Organization, Account, and Raw URI/data with rich metadata and image upload.</>,
             },
             {
-              title: 'Watch the existing atom lookup',
-              description: <>As you type, Collate searches the selected Intuition network. Inspect any matching atoms and reuse the correct existing atom instead of creating an unnecessary duplicate.</>,
+              title: 'Check existing atoms',
+              description: <>Classic searches while you type. Unchained calculates the canonical ID and compares same-name graph atoms during review. Reuse the correct existing atom instead of creating an unnecessary duplicate.</>,
             },
             {
               title: 'Review the atom',
@@ -451,11 +451,11 @@ function renderActiveSection(activeSection: DocSectionId) {
             },
             {
               title: 'Read the review result',
-              description: <><code className="text-ink">ready_to_create</code> can be published. <code className="text-ink">existing</code> means the atom is already on the graph. <code className="text-ink">invalid</code> explains what must be corrected before reviewing again.</>,
+              description: <><code className="text-ink">ready_to_create</code> can be published. <code className="text-ink">existing</code> is already on the graph. <code className="text-ink">ambiguous</code> requires same-name comparison. <code className="text-ink">invalid</code> explains what must be corrected.</>,
             },
             {
               title: 'Connect, publish, and confirm',
-              description: <>Connect your wallet, make sure it is on the selected network, then choose <strong className="text-ink">Create atom</strong>. Approve the wallet transaction and wait for confirmation before closing or clearing the form.</>,
+              description: <>Connect your wallet, make sure it is on the selected network, then choose <strong className="text-ink">Publish atom</strong>. Approve the wallet transaction and wait for confirmation before closing or clearing the form.</>,
             },
           ]}
         />
@@ -479,7 +479,7 @@ function renderActiveSection(activeSection: DocSectionId) {
           title="Before you start"
           items={[
             'Choose the target network before building the batch.',
-            'Gather the name, description, URL, image, type, and optional initial support for each atom.',
+            'Gather the canonical fields for each Unchained primitive, or the rich metadata for each Classic atom.',
             'Use a smaller batch first if this is your first multi-atom transaction.',
           ]}
         />
@@ -492,11 +492,11 @@ function renderActiveSection(activeSection: DocSectionId) {
             },
             {
               title: 'Complete each atom row',
-              description: <>Choose the correct schema type for each row and enter its details. Different rows can use different atom types. Use <strong className="text-ink">+ Add atom</strong> whenever you need another row.</>,
+              description: <>Choose <strong className="text-ink">Unchained types</strong> or <strong className="text-ink">Classic</strong>. Each row can use a different atom type, and Unchained adapts its fields to each selected primitive. Use <strong className="text-ink">+ Add atom</strong> for more rows.</>,
             },
             {
-              title: 'Check live lookup results',
-              description: <>Existing atom lookup runs while you type. Use the results to catch likely existing atoms early, especially when several rows have familiar names.</>,
+              title: 'Check existing matches',
+              description: <>Classic lookup runs while you type. Unchained checks exact IDs and same-name graph atoms during review. Inspect matches carefully, especially when several rows have familiar names.</>,
             },
             {
               title: 'Remove mistakes before review',

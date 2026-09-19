@@ -9,9 +9,9 @@ import { parseOptionalSupport } from '@/lib/utils/validation';
 import type { IntuitionAtomSearchResult, PublicIntuitionNetwork } from '@/types/api';
 import type {
   PreparedAtomDraft,
-  UnchainedCsvAtomParseRow,
-  UnchainedCsvAtomReviewRow,
-  UnchainedCsvAtomRow,
+  UnchainedAtomDraft,
+  UnchainedAtomParseRow,
+  UnchainedAtomReviewRow,
 } from '@/types/atoms';
 
 type MatchLookup = (network: PublicIntuitionNetwork, name: string) => Promise<IntuitionAtomSearchResult[]>;
@@ -20,7 +20,7 @@ function normalizedName(value: string): string {
   return value.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-function invalidRow(draft: UnchainedCsvAtomRow, errors: string[]): UnchainedCsvAtomReviewRow {
+function invalidRow(draft: UnchainedAtomDraft, errors: string[]): UnchainedAtomReviewRow {
   return {
     id: draft.id,
     label: getUnchainedAtomDisplayName(draft.values),
@@ -34,19 +34,19 @@ async function defaultLookup(network: PublicIntuitionNetwork, name: string): Pro
   return searchAtoms(network, name, true, 12);
 }
 
-export async function reviewUnchainedCsvAtoms({
+export async function reviewUnchainedAtoms({
   rows,
   network,
   publicClient,
   approvedMatchIds = new Set(),
   lookupMatches = defaultLookup,
 }: {
-  rows: UnchainedCsvAtomParseRow[];
+  rows: UnchainedAtomParseRow[];
   network: PublicIntuitionNetwork;
   publicClient: PublicClient;
   approvedMatchIds?: Set<string>;
   lookupMatches?: MatchLookup;
-}): Promise<UnchainedCsvAtomReviewRow[]> {
+}): Promise<UnchainedAtomReviewRow[]> {
   const contract = getIntuitionNetwork(network).multiVault;
   if (rows.every((row) => row.errors.length > 0)) {
     return rows.map((row) => invalidRow(row.atom, row.errors));
@@ -58,8 +58,8 @@ export async function reviewUnchainedCsvAtoms({
     functionName: 'getAtomCost',
   })) as bigint;
 
-  const prepareRow = async ({ atom, errors }: UnchainedCsvAtomParseRow): Promise<{
-    draft: UnchainedCsvAtomRow;
+  const prepareRow = async ({ atom, errors }: UnchainedAtomParseRow): Promise<{
+    draft: UnchainedAtomDraft;
     errors: string[];
     prepared: PreparedAtomDraft | null;
   }> => {
@@ -139,7 +139,7 @@ export async function reviewUnchainedCsvAtoms({
     }
 
     if ((counts.get(atom.atomId.toLowerCase()) ?? 0) > 1) {
-      return { id: draft.id, label: atom.displayName, status: 'blocked_duplicate', message: 'The same canonical atom appears more than once in this CSV.', payload };
+      return { id: draft.id, label: atom.displayName, status: 'blocked_duplicate', message: 'The same canonical atom appears more than once in this batch.', payload };
     }
 
     if (sameNameMatches.length && !approvedMatchIds.has(draft.id)) {
@@ -158,7 +158,9 @@ export async function reviewUnchainedCsvAtoms({
   });
 }
 
-export function getCreatableUnchainedAtoms(rows: UnchainedCsvAtomReviewRow[]): PreparedAtomDraft[] {
+export const reviewUnchainedCsvAtoms = reviewUnchainedAtoms;
+
+export function getCreatableUnchainedAtoms(rows: UnchainedAtomReviewRow[]): PreparedAtomDraft[] {
   return rows
     .filter((row) => row.status === 'ready_to_create' && row.payload.prepared)
     .map((row) => row.payload.prepared as PreparedAtomDraft);

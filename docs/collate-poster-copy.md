@@ -15,12 +15,11 @@ Build Intuition atoms and lists one at a time, in batches, or from CSV. Every Co
 **One idea. One atom. No guesswork.**
 
 1. Open **Create -> Atom creation -> Single atom**.
-2. Choose the atom type.
-3. Add its name, description, URL, and image.
-4. Check the live search for existing atoms.
-5. Select **Review atom**.
-6. Connect your wallet and select **Create atom**.
-7. Confirm the transaction.
+2. Choose **Unchained types** or **Classic**.
+3. Choose the atom type and complete its required fields.
+4. Select **Review atom** and inspect existing or same-name matches.
+5. Connect your wallet and select **Publish atom**.
+6. Confirm the transaction.
 
 **Tip:** If the correct atom already exists, reuse it instead of creating a duplicate.
 
@@ -29,10 +28,10 @@ Build Intuition atoms and lists one at a time, in batches, or from CSV. Every Co
 **More atoms. One clear review.**
 
 1. Open **Create -> Atom creation -> Batch atoms**.
-2. Complete each atom row.
-3. Use **+ Add atom** for more rows.
-4. Check live matches and remove mistakes.
-5. Select **Review atoms**.
+2. Choose **Unchained types** or **Classic**.
+3. Choose a type and complete the fields for each row.
+4. Use **+ Add atom** for more rows.
+5. Select **Review atoms** and inspect duplicate or same-name matches.
 6. Confirm the eligible rows.
 7. Select **Publish eligible atoms** and approve one transaction.
 

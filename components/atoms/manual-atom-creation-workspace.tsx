@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 
-import { CsvBatchAtomsFlow } from '@/components/atoms/csv-batch-atoms-flow';
-import { UnchainedCsvAtomsFlow } from '@/components/atoms/unchained-csv-atoms-flow';
+import { ManualBatchAtomsFlow } from '@/components/atoms/manual-batch-atoms-flow';
+import { UnchainedManualAtomsFlow } from '@/components/atoms/unchained-manual-atoms-flow';
 
-export function CsvAtomImportWorkspace() {
+export function ManualAtomCreationWorkspace({ mode }: { mode: 'single' | 'batch' }) {
   const [format, setFormat] = useState<'unchained' | 'classic'>('unchained');
 
   return (
@@ -25,14 +25,14 @@ export function CsvAtomImportWorkspace() {
           onClick={() => setFormat('classic')}
           className={`rounded-full border px-4 py-2 text-sm transition-colors ${format === 'classic' ? 'border-ink bg-ink text-paper' : 'border-line bg-white text-muted hover:text-ink'}`}
         >
-          Classic CSV
+          Classic
         </button>
         <p className="w-full text-sm leading-6 text-muted">
-          Unchained uses classification-specific fields. Classic keeps existing CSVs and image-rich atoms working.
+          Unchained provides 37 canonical atom types. Classic preserves image uploads and established rich-metadata atoms.
         </p>
       </div>
-      <div hidden={format !== 'unchained'}><UnchainedCsvAtomsFlow active={format === 'unchained'} /></div>
-      <div hidden={format !== 'classic'}><CsvBatchAtomsFlow /></div>
+      <div hidden={format !== 'unchained'}><UnchainedManualAtomsFlow mode={mode} active={format === 'unchained'} /></div>
+      <div hidden={format !== 'classic'}><ManualBatchAtomsFlow mode={mode} active={format === 'classic'} /></div>
     </div>
   );
 }

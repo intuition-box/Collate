@@ -12,26 +12,23 @@ Create Intuition atoms and list entries with a review-first workflow. Collate sh
 
 ## 1. Create One Atom
 
-Use this when you only need one person, organization, thing, account, or raw value.
+Use this when you need one atom. Unchained offers 37 canonical primitive types; Classic preserves the older five atom shapes and image uploads.
 
 1. Open **Create**.
 2. Choose **Atom creation**, then **Single atom**.
-3. Choose the atom type:
-   - **Thing** for a concept, object, place, product, or general subject.
-   - **Person** for an individual.
-   - **Organization** for a company, community, or group.
-   - **Account** for a blockchain account.
-   - **Raw URI / data** for an existing raw value.
-4. Enter the atom details. A name is required for Thing, Person, and Organization atoms. Add a clear description, URL, image, and initial support when relevant.
-5. To add an image, upload one from your device or paste a public HTTPS image URL and select **Import URL**.
-6. Watch the existing atom lookup while you type. If the correct atom already exists, reuse it instead of creating another one.
+3. Choose **Unchained types** or **Classic**. Unchained is the primary path; use Classic when you specifically need an image upload or an older atom shape.
+4. In Unchained, choose one of the 37 primitive types and complete its required fields. The form changes to match the selected primitive exactly.
+5. In Classic, choose Thing, Person, Organization, Account, or Raw URI/data. Add a description, URL, image, and initial support when relevant.
+6. Classic searches for existing atoms while you type. Unchained compares exact IDs and same-name graph atoms during review.
 7. Select **Review atom**.
 8. Read the result:
    - `ready_to_create` means the atom can be created.
    - `existing` means the atom is already on the selected network.
+   - `ambiguous` means same-name atoms need comparison before creating another.
    - `invalid` explains which value needs to be fixed.
-9. Connect your wallet and confirm it is on the selected network.
-10. Select **Create atom**, approve the transaction, and wait for confirmation.
+9. For an Unchained `ambiguous` result, compare the existing atoms and explicitly approve a distinct atom only when intended, then review again.
+10. Connect your wallet and confirm it is on the selected network.
+11. Select **Publish atom**, approve the transaction, and wait for confirmation.
 
 If you edit the form after reviewing, review it again before publishing.
 
@@ -41,20 +38,21 @@ Use this when you have several atoms to create but do not need a spreadsheet.
 
 1. Open **Create**.
 2. Choose **Atom creation**, then **Batch atoms**.
-3. Complete the first two atom rows. Each row can use a different atom type.
-4. Select **+ Add atom** to add more rows.
-5. Use the live lookup results to identify atoms that may already exist.
-6. Remove unwanted rows before review. Do not intentionally add the same atom twice.
-7. Select **Review atoms**.
-8. Check every row in the review table:
+3. Choose **Unchained types** or **Classic**. Each Unchained row can use a different one of the 37 primitives; each Classic row can use one of the established five types.
+4. Complete the first two atom rows. The required fields adapt to the type selected for each row.
+5. Select **+ Add atom** to add more rows.
+6. In Classic, use the live lookup results to identify atoms that may already exist. Unchained performs canonical and same-name checks during review.
+7. Remove unwanted rows before review. Do not intentionally add the same atom twice.
+8. Select **Review atoms**.
+9. Check every row in the review table:
    - `ready_to_create` rows are eligible.
    - `existing` rows are already on the graph.
    - `blocked_duplicate` rows repeat another atom in this batch.
    - `invalid` rows contain missing or malformed data.
-9. Confirm that the eligible count matches the rows you expect to create.
-10. Connect your wallet on the selected network.
-11. Select **Publish eligible atoms** and approve the single batch transaction.
-12. Wait for confirmation before clearing or leaving the form.
+10. Confirm that the eligible count matches the rows you expect to create.
+11. Connect your wallet on the selected network.
+12. Select **Publish eligible atoms** and approve the single batch transaction.
+13. Wait for confirmation before clearing or leaving the form.
 
 Only eligible rows enter the transaction. Existing, duplicate, and invalid rows stay out of it.
 
@@ -62,7 +60,7 @@ Only eligible rows enter the transaction. Existing, duplicate, and invalid rows 
 
 Use this for larger, repeatable, or spreadsheet-based atom uploads. An import supports up to 50 atom rows at a time. The CSV import screen now has two formats: **Unchained types** for canonical classification data, and **Classic CSV** for existing files and image-rich atoms. Do not treat their columns as interchangeable.
 
-For now, **Unchained publishing is available on Testnet only** while the new atoms' graph display is checked. Classic CSV remains available on both networks.
+For now, **Unchained publishing is available on Testnet only** while the new atoms' graph display is checked. Classic creation remains available on both networks.
 
 ### Build an Unchained Atom CSV
 

@@ -2,18 +2,18 @@
 
 Review-first community tools for creating atoms and lists on Intuition.
 
-The app uses `@0xintuition/sdk` and `@0xintuition/graphql` for its established protocol and pinning paths. Unchained CSV imports use pinned alpha versions of `@0xintuition/classifications`, `@0xintuition/primitives`, and `@0xintuition/ids` to prepare canonical atom bytes.
+The app uses `@0xintuition/sdk` and `@0xintuition/graphql` for its established protocol and pinning paths. Unchained atom creation uses pinned alpha versions of `@0xintuition/classifications`, `@0xintuition/primitives`, and `@0xintuition/ids` to prepare canonical atom bytes.
 
 This standalone app currently supports:
 
-- Batch atoms
+- Single and batch atoms
 - CSV atoms
 - Batch lists
 - CSV lists
 
-Atom CSV import supports two explicit formats: Unchained classifications with package-driven samples for all 37 types, and Classic CSV for existing files and image-rich atoms. The manual atom forms still use the Classic format. Unchained CSV rows publish canonical classification bytes; Classic rich atoms continue to publish pinned IPFS metadata URIs. Never assume that the two formats produce the same atom ID.
+Single, batch, and CSV atom creation support two explicit formats: Unchained classifications with package-driven fields for all 37 types, and Classic creation for existing files and image-rich atoms. Unchained entries publish canonical classification bytes; Classic rich atoms continue to publish pinned IPFS metadata URIs. Never assume that the two formats produce the same atom ID.
 
-Classic CSV remains the default. Unchained canonical publishing is temporarily limited to Testnet until an actual creation and graph-indexing check confirms that newly published classifications display correctly; Mainnet users can still use Classic CSV.
+Unchained is the primary atom format. Canonical publishing is temporarily limited to Testnet until an actual creation and graph-indexing check confirms that newly published classifications display correctly; Mainnet users can still switch to Classic creation.
 
 All four flows are review-first: rows are previewed, validated, classified, and filtered before any protocol write is sent.
 
