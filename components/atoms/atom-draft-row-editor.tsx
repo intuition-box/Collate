@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
+import { OptionPicker } from '@/components/app/option-picker';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { CLASSIC_ATOM_TYPE_OPTIONS } from '@/components/atoms/classic-atom-type-options';
 import {
   getImageDataUri,
   resolveIntuitionImageUrl,
@@ -262,18 +264,15 @@ export function AtomDraftRowEditor({
           {helperText ? <p className="text-sm leading-7 text-muted">{helperText}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <OptionPicker
+            options={CLASSIC_ATOM_TYPE_OPTIONS}
             value={draft.schemaType}
-            onChange={(event) => setSchemaType(event.target.value as AtomSchemaType)}
-            disabled={disabled}
-            className="rounded-full border border-line bg-white/80 px-3 py-2 text-sm text-ink outline-none"
-          >
-            {(['Thing', 'Person', 'Organization', 'Account', 'Raw'] as AtomSchemaType[]).map((schemaType) => (
-              <option key={schemaType} value={schemaType}>
-                {schemaType === 'Raw' ? 'Raw URI / data' : schemaType}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setSchemaType(value as AtomSchemaType)}
+            label="Atom type"
+            showLabel={false}
+            compact
+            disabled={!!disabled}
+          />
           {hideRemoveButton ? null : (
             <button
               type="button"

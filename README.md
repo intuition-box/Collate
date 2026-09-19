@@ -2,7 +2,7 @@
 
 Review-first community tools for creating atoms and lists on Intuition.
 
-The app uses the current `@0xintuition/sdk` and `@0xintuition/graphql` packages for protocol writes and pinning-related server requests.
+The app uses `@0xintuition/sdk` and `@0xintuition/graphql` for its established protocol and pinning paths. Unchained CSV imports use pinned alpha versions of `@0xintuition/classifications`, `@0xintuition/primitives`, and `@0xintuition/ids` to prepare canonical atom bytes.
 
 This standalone app currently supports:
 
@@ -10,6 +10,10 @@ This standalone app currently supports:
 - CSV atoms
 - Batch lists
 - CSV lists
+
+Atom CSV import supports two explicit formats: Unchained classifications with package-driven samples for all 37 types, and Classic CSV for existing files and image-rich atoms. The manual atom forms still use the Classic format. Unchained CSV rows publish canonical classification bytes; Classic rich atoms continue to publish pinned IPFS metadata URIs. Never assume that the two formats produce the same atom ID.
+
+Classic CSV remains the default. Unchained canonical publishing is temporarily limited to Testnet until an actual creation and graph-indexing check confirms that newly published classifications display correctly; Mainnet users can still use Classic CSV.
 
 All four flows are review-first: rows are previewed, validated, classified, and filtered before any protocol write is sent.
 
@@ -79,7 +83,10 @@ To configure the private settings page, generate a password hash using the hidde
 
 ```bash
 npm run admin:hash
+npm run check:unchained:testnet
 ```
+
+The Unchained check is read-only: it compares a locally calculated canonical atom ID with the Testnet MultiVault result. New canonical imports still need a real Testnet creation and graph-indexing check before broad community use.
 
 Store the printed `ADMIN_PASSWORD_HASH` value in your local or deployment environment. Generate a separate random `ADMIN_AUTH_SECRET` with at least 32 characters; it signs the eight-hour admin session cookie and must remain server-only. Visit `/settings` directly to sign in. The first available control decides whether Activity appears in the public navigation.
 
@@ -98,6 +105,11 @@ npm run build
 npm run db:migrate
 npm run admin:hash
 ```
+
+## User guides
+
+- [Detailed creation guide](docs/collate-creation-guide.md)
+- [Condensed poster copy](docs/collate-poster-copy.md)
 
 ## Notes
 

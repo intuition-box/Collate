@@ -56,3 +56,26 @@ export interface AtomReviewPayload {
 export type AtomReviewRow = ReviewRow<AtomReviewPayload>;
 export type ManualAtomReviewPayload = AtomReviewPayload;
 export type ManualAtomReviewRow = AtomReviewRow;
+
+export interface UnchainedCsvAtomRow {
+  id: string;
+  sourceLine: number;
+  classification: string;
+  values: Record<string, unknown>;
+  deposit: string;
+  sourceRecord: Record<string, string>;
+}
+
+export interface UnchainedCsvAtomParseRow {
+  atom: UnchainedCsvAtomRow;
+  errors: string[];
+}
+
+export interface UnchainedCsvAtomReviewPayload {
+  draft: UnchainedCsvAtomRow;
+  prepared?: PreparedAtomDraft;
+  matches?: IntuitionAtomSearchResult[];
+  errors?: string[];
+}
+
+export type UnchainedCsvAtomReviewRow = ReviewRow<UnchainedCsvAtomReviewPayload>;

@@ -4,10 +4,12 @@ import { useMemo, useState } from 'react';
 import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
+import { OptionPicker } from '@/components/app/option-picker';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { AtomReviewTable } from '@/components/atoms/atom-review-table';
+import { CLASSIC_ATOM_TYPE_OPTIONS } from '@/components/atoms/classic-atom-type-options';
 import { CsvAtomPreviewTable } from '@/components/atoms/csv-atom-preview-table';
 import { parseCsvAtomText } from '@/lib/csv/atom-csv';
 import { downloadBasicAtomCsvTemplate, downloadSchemaAtomCsvTemplate } from '@/lib/csv/templates';
@@ -244,33 +246,16 @@ export function CsvBatchAtomsFlow() {
                     Upload CSV file
                   </label>
                   <div className="flex items-center gap-2">
-                    <details className="group relative">
-                      <summary className="inline-flex cursor-pointer list-none rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-muted transition-colors duration-150 hover:border-ink/15 hover:text-ink">
-                        Download sample
-                      </summary>
-                      <div className="absolute left-0 z-20 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-white">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.currentTarget.closest('details')?.removeAttribute('open');
-                            downloadBasicAtomCsvTemplate();
-                          }}
-                          className="block w-full px-4 py-3 text-left text-sm text-ink transition-colors duration-150 hover:bg-paper/70"
-                        >
-                          Basic atom CSV
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.currentTarget.closest('details')?.removeAttribute('open');
-                            downloadSchemaAtomCsvTemplate();
-                          }}
-                          className="block w-full border-t border-line/70 px-4 py-3 text-left text-sm text-ink transition-colors duration-150 hover:bg-paper/70"
-                        >
-                          Schema-aware CSV
-                        </button>
-                      </div>
-                    </details>
+                    <OptionPicker
+                      options={[
+                        { value: 'basic', label: 'Basic atom CSV', description: 'One default schema for every row.' },
+                        { value: 'schema', label: 'Schema-aware CSV', description: 'Mix atom types in one file.' },
+                      ]}
+                      onChange={(value) => value === 'basic' ? downloadBasicAtomCsvTemplate() : downloadSchemaAtomCsvTemplate()}
+                      label="Download sample"
+                      showLabel={false}
+                      compact
+                    />
                     <span className="group relative inline-flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white/80 text-xs text-muted">
                       ?
                       <span className="pointer-events-none absolute right-0 top-9 z-30 hidden w-64 rounded-xl border border-line bg-white p-3 text-left text-[0.72rem] leading-5 text-muted group-hover:block group-focus:block">
@@ -282,23 +267,15 @@ export function CsvBatchAtomsFlow() {
                 <p className="text-sm leading-7 text-muted">{fileName ? `Loaded file: ${fileName}` : 'You can upload a file or paste CSV text.'}</p>
               </div>
 
-              <label className="space-y-2">
-                <span className="text-sm text-muted">Default schema type</span>
-                <select
-                  value={defaultSchemaType}
-                  onChange={(event) => {
-                    setDefaultSchemaType(event.target.value as AtomSchemaType);
-                    resetDownstreamState();
-                  }}
-                  className="w-full rounded-xl border border-line/80 bg-white/80 px-4 py-3 text-sm text-ink outline-none"
-                >
-                  {(['Thing', 'Person', 'Organization', 'Account', 'Raw'] as AtomSchemaType[]).map((schemaType) => (
-                    <option key={schemaType} value={schemaType}>
-                      {schemaType}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <OptionPicker
+                options={CLASSIC_ATOM_TYPE_OPTIONS}
+                value={defaultSchemaType}
+                onChange={(value) => {
+                  setDefaultSchemaType(value as AtomSchemaType);
+                  resetDownstreamState();
+                }}
+                label="Default schema type"
+              />
 
               <div className="space-y-2 text-sm leading-7 text-muted">
                 <p>Supported headers include `name`, `description`, `url`, `image_url`, `deposit`, `schema_type`, `account_address`, `chain_id`, and `raw_data`.</p>
