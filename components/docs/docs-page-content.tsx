@@ -66,6 +66,41 @@ const reviewStates = [
 
 const changelogItems = [
   {
+    label: 'Atom formats',
+    title: 'Classic is now the recommended creation default.',
+    description: 'Classic opens first for single atoms, atom batches, and CSV imports. Unchained remains fully available as an Early access option while its alpha packages mature.',
+  },
+  {
+    label: 'Unchained',
+    title: 'All 37 primitive types are now available.',
+    description: 'Single atoms, atom batches, and CSV imports can use type-specific canonical fields, review checks, and sample files through the Early access Unchained option.',
+  },
+  {
+    label: 'Creation UI',
+    title: 'Choosing atom types is faster and clearer.',
+    description: 'Searchable, numbered type pickers now replace browser dropdowns, with grouped classifications and consistent controls across every creation mode.',
+  },
+  {
+    label: 'Activity',
+    title: 'Community creation activity has a home.',
+    description: 'The Activity page shows network-specific totals, recent atoms and list entries, and a contributor leaderboard for creations made through Collate.',
+  },
+  {
+    label: 'Identity',
+    title: 'ENS profiles make contributors recognizable.',
+    description: 'Wallet displays and community activity can resolve ENS names and avatars instead of relying only on shortened addresses.',
+  },
+  {
+    label: 'Guides',
+    title: 'Every creation path now has a walkthrough.',
+    description: 'The docs include step-by-step guidance for single, batch, and CSV atom and list creation, plus condensed copy for community tutorials.',
+  },
+  {
+    label: 'Collate',
+    title: 'The community tool has a distinct identity.',
+    description: 'Collate now has its own name, convergence mark, refined homepage, responsive navigation, and a consistent light and dark interface.',
+  },
+  {
     label: 'Core flows',
     title: 'All four batch workflows are live.',
     description: 'Manual atoms, CSV atoms, manual lists, and CSV lists now share review-first publishing behavior.',
@@ -423,7 +458,7 @@ function renderActiveSection(activeSection: DocSectionId) {
           items={[
             'Choose Mainnet or Testnet from the network control at the top of the page.',
             'Have a compatible wallet ready and funded with the selected network’s native token.',
-            'Choose Unchained for one of 37 canonical primitive types, or Classic when you need an older image-rich atom shape.',
+            'Start with Classic for established image-rich atoms on either network, or choose Unchained Early access for one of 37 structured types on Testnet.',
           ]}
         />
         <GuideSteps
@@ -435,15 +470,15 @@ function renderActiveSection(activeSection: DocSectionId) {
             },
             {
               title: 'Choose the creation format',
-              description: <>Choose <strong className="text-ink">Unchained types</strong> for the canonical primitive model, or <strong className="text-ink">Classic</strong> when you specifically need image upload or one of the established atom shapes.</>,
+              description: <>Classic opens first and supports familiar atom formats and image upload. Choose <strong className="text-ink">Unchained types · Early access</strong> when you want one of the new structured types on Testnet.</>,
             },
             {
               title: 'Choose the atom type and enter its fields',
-              description: <>Unchained offers 37 types and changes the form to show the selected primitive&apos;s exact fields. Classic offers Thing, Person, Organization, Account, and Raw URI/data with rich metadata and image upload.</>,
+              description: <>Classic offers Thing, Person, Organization, Account, and Raw URI/data with rich metadata and image upload. Unchained offers 37 types and changes the form to show the selected primitive&apos;s exact fields.</>,
             },
             {
               title: 'Check existing atoms',
-              description: <>Classic searches while you type. Unchained calculates the canonical ID and compares same-name graph atoms during review. Reuse the correct existing atom instead of creating an unnecessary duplicate.</>,
+              description: <>Classic searches while you type. Unchained checks the atom&apos;s exact identity and compares same-name atoms during review. Reuse the correct existing atom instead of creating an unnecessary duplicate.</>,
             },
             {
               title: 'Review the atom',
@@ -479,7 +514,7 @@ function renderActiveSection(activeSection: DocSectionId) {
           title="Before you start"
           items={[
             'Choose the target network before building the batch.',
-            'Gather the canonical fields for each Unchained primitive, or the rich metadata for each Classic atom.',
+            'Gather the name, description, URL, and image details for each Classic atom, or the fields required by each Early access Unchained type.',
             'Use a smaller batch first if this is your first multi-atom transaction.',
           ]}
         />
@@ -492,7 +527,7 @@ function renderActiveSection(activeSection: DocSectionId) {
             },
             {
               title: 'Complete each atom row',
-              description: <>Choose <strong className="text-ink">Unchained types</strong> or <strong className="text-ink">Classic</strong>. Each row can use a different atom type, and Unchained adapts its fields to each selected primitive. Use <strong className="text-ink">+ Add atom</strong> for more rows.</>,
+              description: <>Classic opens first. Choose <strong className="text-ink">Unchained types · Early access</strong> for a structured Testnet batch. Each row can use a different atom type, and Unchained adapts its fields to each selected primitive. Use <strong className="text-ink">+ Add atom</strong> for more rows.</>,
             },
             {
               title: 'Check existing matches',
@@ -529,23 +564,23 @@ function renderActiveSection(activeSection: DocSectionId) {
         id="csv-atoms-guide"
         eyebrow="Creation guide 03"
         title="Create atoms from a CSV file."
-        description="Choose Unchained types for classification-specific atoms, or Classic CSV for existing image-rich files. Both paths preview and review before publishing."
+        description="Start with Classic CSV for familiar image-rich files, or choose Unchained Early access for type-specific Testnet files. Both paths preview and review before publishing."
       >
         <section id="csv-atoms-format" className="rounded-[1.1rem] border border-line/80 bg-paper/65 p-5 sm:p-6">
           <h2 className="text-xl font-medium text-ink">Choose the CSV format</h2>
-          <p className="mt-3 text-sm leading-7 text-muted">In <strong className="text-ink">Unchained types</strong>, choose one of the 37 classifications. Its sample and download show the exact fields that type supports. For example:</p>
-          <CsvExample>{`classification,givenName,familyName,sameAs,deposit
-person,Alex,Rivera,https://example.com/alex,0`}</CsvExample>
-          <p className="mt-5 text-sm leading-7 text-muted">In <strong className="text-ink">Classic CSV</strong>, keep using the existing basic or schema-aware templates for Thing, Person, Organization, Account, Raw, and attached images:</p>
+          <p className="mt-3 text-sm leading-7 text-muted">In <strong className="text-ink">Classic CSV</strong>, use the established basic or schema-aware templates for Thing, Person, Organization, Account, Raw, and attached images:</p>
           <CsvExample>{`name,description,url,image_url,deposit
 Knowledge Garden,A shared place for ideas,https://example.com,https://example.com/image.jpg,0`}</CsvExample>
+          <p className="mt-5 text-sm leading-7 text-muted">In <strong className="text-ink">Unchained types · Early access</strong>, choose one of the 37 classifications. Its sample and download show the exact fields that type supports:</p>
+          <CsvExample>{`classification,givenName,familyName,sameAs,deposit
+person,Alex,Rivera,https://example.com/alex,0`}</CsvExample>
           <ul className="mt-5 list-disc space-y-2 pl-5 text-sm leading-7 text-muted">
             <li>Unchained field names vary by classification. Do not add unsupported columns such as <code className="text-ink">image_url</code> to a type that has no image field.</li>
             <li>The <code className="text-ink">classification</code> column allows mixed types. Combine their field columns and leave irrelevant cells blank.</li>
             <li>Use public HTTPS URLs. Separate multiple <code className="text-ink">sameAs</code> references with <code className="text-ink">|</code>.</li>
             <li>If a value contains a comma, wrap it in double quotes. Keep headers unique.</li>
             <li>Each import supports up to 50 atom rows.</li>
-            <li>Unchained publishing is on Testnet during its initial validation. Classic CSV remains available on both networks.</li>
+            <li>Classic CSV is available on both networks. Unchained publishing remains on Testnet during its Early access validation.</li>
           </ul>
         </section>
         <GuideSteps
@@ -553,15 +588,15 @@ Knowledge Garden,A shared place for ideas,https://example.com,https://example.co
           steps={[
             {
               title: 'Choose a format and type',
-              description: <>Go to <strong className="text-ink">Create → Atom creation → CSV import</strong>. Choose <strong className="text-ink">Unchained types</strong> for the new classification format, or <strong className="text-ink">Classic CSV</strong> for an existing file.</>,
+              description: <>Go to <strong className="text-ink">Create → Atom creation → CSV import</strong>. Classic CSV opens first for established files. Choose <strong className="text-ink">Unchained types · Early access</strong> for a structured Testnet file.</>,
             },
             {
               title: 'Preview and download the right sample',
-              description: <>For Unchained, choose the classification and inspect its <strong className="text-ink">Sample CSV</strong> box. Download that type’s sample or place it in the editor. For Classic, use the basic or schema-aware sample menu.</>,
+              description: <>For Classic, use the basic or schema-aware sample menu. For Unchained, choose the classification and inspect its <strong className="text-ink">Sample CSV</strong> box, then download that type&apos;s sample or place it in the editor.</>,
             },
             {
               title: 'Edit and export the spreadsheet',
-              description: <>Keep the header row, replace the examples, and export as a <strong className="text-ink">.csv</strong> file. In Unchained, a row-level <code className="text-ink">classification</code> overrides the selected default. Classic uses <code className="text-ink">schema_type</code>.</>,
+              description: <>Keep the header row, replace the examples, and export as a <strong className="text-ink">.csv</strong> file. Classic uses <code className="text-ink">schema_type</code>. In Unchained, a row-level <code className="text-ink">classification</code> overrides the selected default.</>,
             },
             {
               title: 'Upload or paste the CSV',
@@ -585,8 +620,8 @@ Knowledge Garden,A shared place for ideas,https://example.com,https://example.co
           id="csv-atoms-review"
           title="Review checklist"
           items={[
-            'Every intended row appears once and has the expected classification or Classic schema type.',
-            'Only fields supported by that Unchained classification are present. Classic image previews show the correct image.',
+            'Every intended row appears once and has the expected Classic schema type or Unchained classification.',
+            'Classic image previews show the correct image. Only fields supported by an Unchained classification are present.',
             'Only ready_to_create rows are counted as eligible.',
             'Existing, blocked_duplicate, ambiguous, and invalid rows are understood before publishing.',
           ]}
@@ -809,10 +844,10 @@ Base,A secure low-cost builder-friendly Ethereum L2`}</CsvExample>
           <section id="atom-csv-headers" className="rounded-[1.1rem] border border-line/80 bg-paper/65 p-5">
             <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Atom CSV formats</p>
             <p className="mt-3 text-sm leading-7 text-muted">
-              Unchained uses <code className="text-ink">classification</code>, that type&apos;s exact fields, and optional <code className="text-ink">deposit</code>. Choose a type in CSV import to see and download its sample.
+              Classic uses <code className="text-ink">name</code>, <code className="text-ink">description</code>, <code className="text-ink">url</code>, <code className="text-ink">image_url</code>, <code className="text-ink">deposit</code>, and optional <code className="text-ink">schema_type</code> fields.
             </p>
             <p className="mt-3 text-sm leading-7 text-muted">
-              Classic keeps <code className="text-ink">name</code>, <code className="text-ink">description</code>, <code className="text-ink">url</code>, <code className="text-ink">image_url</code>, <code className="text-ink">deposit</code>, and optional <code className="text-ink">schema_type</code> fields.
+              Unchained Early access uses <code className="text-ink">classification</code>, that type&apos;s exact fields, and optional <code className="text-ink">deposit</code>. Choose a type in CSV import to see and download its sample.
             </p>
           </section>
           <section id="list-csv-headers" className="rounded-[1.1rem] border border-line/80 bg-paper/65 p-5">

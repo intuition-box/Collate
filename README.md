@@ -11,9 +11,9 @@ This standalone app currently supports:
 - Batch lists
 - CSV lists
 
-Single, batch, and CSV atom creation support two explicit formats: Unchained classifications with package-driven fields for all 37 types, and Classic creation for existing files and image-rich atoms. Unchained entries publish canonical classification bytes; Classic rich atoms continue to publish pinned IPFS metadata URIs. Never assume that the two formats produce the same atom ID.
+Single, batch, and CSV atom creation support two explicit formats: Classic creation for established image-rich atoms and existing files, plus Early access Unchained classifications with package-driven fields for all 37 types. Classic rich atoms publish pinned IPFS metadata URIs; Unchained entries publish canonical classification bytes. Never assume that the two formats produce the same atom ID.
 
-Unchained is the primary atom format. Canonical publishing is temporarily limited to Testnet until an actual creation and graph-indexing check confirms that newly published classifications display correctly; Mainnet users can still switch to Classic creation.
+Classic is the primary atom format and is available on Mainnet and Testnet. Unchained remains available as an Early access option, with canonical publishing temporarily limited to Testnet until an actual creation and graph-indexing check confirms that newly published classifications display correctly.
 
 All four flows are review-first: rows are previewed, validated, classified, and filtered before any protocol write is sent.
 

@@ -1,144 +1,219 @@
-# Collate Poster Copy
+# Collate Poster and Carousel Copy
 
-Short, layout-ready copy for community tutorials, carousels, and posters. Pair each numbered step with a screenshot of the matching Collate screen.
+Short, layout-ready copy for community posters, carousels, and tutorial graphics. Pair each step with a screenshot or a simple interface crop.
 
-## Shared Cover
+## Cover
 
 **Create with clarity. Publish with confidence.**
 
-Build Intuition atoms and lists one at a time, in batches, or from CSV. Every Collate flow lets you prepare, review, and publish only what is ready.
+Create Intuition atoms and lists one at a time, in batches, or from CSV.
 
-**Prepare -> Review -> Publish -> Confirm**
+**Prepare → Review → Publish → Confirm**
+
+Footer: **Built for the Intuition community.**
+
+## Quick Start Card
+
+**Before you create**
+
+1. Choose Mainnet or Testnet.
+2. Prepare and review before connecting your wallet.
+3. Check every row and the eligible count.
+4. Connect on the selected network.
+5. Publish only when everything looks right.
+
+Callout: **New here? Start on Testnet.**
 
 ## Poster 1: Create One Atom
 
-**One idea. One atom. No guesswork.**
+**One atom. Fully reviewed.**
 
-1. Open **Create -> Atom creation -> Single atom**.
-2. Choose **Unchained types** or **Classic**.
-3. Choose the atom type and complete its required fields.
-4. Select **Review atom** and inspect existing or same-name matches.
-5. Connect your wallet and select **Publish atom**.
-6. Confirm the transaction.
+1. Open **Create → Atom creation → Single atom**.
+2. Start with **Classic**, or choose **Unchained types · Early access** for a structured Testnet atom.
+3. Pick the atom type and complete its required fields.
+4. Select **Review atom**.
+5. Check existing and same-name atoms.
+6. Connect your wallet and select **Publish atom**.
+7. Wait for confirmation.
 
-**Tip:** If the correct atom already exists, reuse it instead of creating a duplicate.
+Callout: **If the correct atom already exists, reuse it.**
 
-## Poster 2: Create Batch Atoms
+Small note: Classic supports familiar rich metadata and image uploads. Unchained Early access offers 37 structured atom types on Testnet.
 
-**More atoms. One clear review.**
+Suggested visual: The type picker beside a completed atom form, followed by a ready review state.
 
-1. Open **Create -> Atom creation -> Batch atoms**.
-2. Choose **Unchained types** or **Classic**.
-3. Choose a type and complete the fields for each row.
+## Poster 2: Create a Batch of Atoms
+
+**More atoms. One careful review.**
+
+1. Open **Create → Atom creation → Batch atoms**.
+2. Start with **Classic**, or choose **Unchained types · Early access** for a structured Testnet batch.
+3. Complete each atom row.
 4. Use **+ Add atom** for more rows.
-5. Select **Review atoms** and inspect duplicate or same-name matches.
-6. Confirm the eligible rows.
-7. Select **Publish eligible atoms** and approve one transaction.
+5. Select **Review atoms**.
+6. Check every status and the eligible count.
+7. Select **Publish eligible atoms**.
+8. Approve one transaction for all ready atoms.
 
-**Only ready rows are published. Existing, duplicate, and invalid rows stay out.**
+Callout: **Existing, repeated, ambiguous, and invalid atoms stay out.**
+
+Suggested visual: Three atom rows flowing into a review table with two ready rows and one blocked row.
 
 ## Poster 3: Create Atoms From CSV
 
 **Turn a spreadsheet into reviewed atoms.**
 
-1. Open **Create -> Atom creation -> CSV import**.
-2. Choose **Unchained types** or **Classic CSV**.
-3. For Unchained, choose a classification and download its exact sample.
-4. For Classic, download the basic or schema-aware sample.
-5. Add one atom per row and export as CSV.
-6. Upload the file or paste CSV text.
-7. Preview names, fields, errors, and any Classic image previews.
-8. Review existing, duplicate, and same-name atoms.
-9. Publish the eligible rows in one transaction.
+### Prepare the File
 
-Basic format:
+1. Open **Create → Atom creation → CSV import**.
+2. Start with **Classic CSV**, or choose **Unchained types · Early access** for a structured Testnet file.
+3. Download the sample that matches your format and type.
+4. Replace the examples with your own atoms.
+5. Export the spreadsheet as a `.csv` file.
+
+### Use It in Collate
+
+6. Upload the file or paste its CSV text.
+7. Select **Preview CSV rows**.
+8. Fix any row errors and preview again.
+9. Select **Review atoms**.
+10. Confirm the eligible rows.
+11. Publish them in one transaction.
+
+Callout: **Start with Collate’s sample. Do not guess the column format.**
+
+Classic example:
 
 ```csv
 name,description,url,image_url,deposit
+Knowledge Garden,A shared place for ideas,https://example.com,,0
 ```
 
 Unchained Person example:
 
 ```csv
 classification,givenName,familyName,sameAs,deposit
-person,Alex,Rivera,https://example.com/alex,0
+person,Ada,Lovelace,https://example.com/ada,0
 ```
 
-**CSV tip:** Every Unchained classification has its own on-screen example and downloadable CSV. Keep headers unique and quote values containing commas.
+Small note: Classic CSV supports uploaded images. Each Early access Unchained type has its own preview and downloadable Testnet sample.
 
-**Network note:** Unchained publishing starts on Testnet. Classic CSV is available on Mainnet and Testnet.
+Suggested visual: A spreadsheet on the left, parsed rows in the center, and the eligible publish count on the right.
 
-## Poster 4: Add One List Member
+## Poster 4: Add One Member to a List
 
 **Choose the list. Choose the member. Create the connection.**
 
-1. Open **Create -> Lists -> Manual lists**.
+1. Open **Create → Lists → Manual lists**.
 2. Search for and select the list atom.
 3. Create the list atom in the modal if it is missing.
-4. Search for and select one member atom.
-5. Create the member atom in its modal if needed.
+4. Search for and select the member atom.
+5. Compare details when several atoms share a name.
 6. Select **Review list entries**.
-7. Publish the missing entry and confirm.
+7. Publish the ready entry and confirm.
 
-**If the member is already in the list, Collate skips it.**
+Callout: **If the member is already in the list, Collate skips it.**
 
-## Poster 5: Add Batch List Members
+Suggested visual: One list atom card connected to one selected member card.
 
-**Build one list with many members.**
+## Poster 5: Add Several Members to a List
 
-1. Open **Create -> Lists -> Manual lists**.
+**One list. Many members. One transaction.**
+
+1. Open **Create → Lists → Manual lists**.
 2. Select or create the list atom.
 3. Select the first member atom.
-4. Use **+ Add member** for every additional member.
-5. Check each selected atom's details.
-6. Review all list entries.
-7. Publish all eligible relationships in one transaction.
+4. Use **+ Add member** for more rows.
+5. Check every selected member.
+6. Select **Review list entries**.
+7. Confirm the eligible count.
+8. Publish all ready entries together.
 
-**Existing and repeated members are never submitted.**
+Callout: **Existing and repeated members are never submitted again.**
+
+Suggested visual: Several member cards converging into one list atom.
 
 ## Poster 6: Add List Members From CSV
 
-**Resolve first. Add to the list second.**
+**Match first. Add to the list second.**
 
-1. Open **Create -> Lists -> CSV import**.
+### Prepare the List
+
+1. Open **Create → Lists → CSV import**.
 2. Select or create the list atom first.
-3. Prepare one existing member atom per CSV row.
-4. Copy each atom's exact name and exact description.
-5. Upload the CSV or paste its text.
-6. Preview the parsed rows.
-7. Review matches against the knowledge graph.
-8. Inspect and choose the correct atom for ambiguous rows.
-9. Remove missing or invalid rows.
-10. Publish only the eligible list entries.
+3. Download the sample CSV.
+4. Add one existing member atom per row.
+5. Copy each atom’s exact name and exact description.
 
 Recommended format:
 
 ```csv
 member,description
 Ethereum,A decentralized open-source blockchain system
+Base,A secure low-cost builder-friendly Ethereum L2
 ```
 
-**Important:** The description should match the existing atom exactly, especially when several atoms share the same name.
+### Resolve and Publish
 
-## Poster 7: Understand Review States
+6. Upload the file or paste its text.
+7. Preview the parsed rows.
+8. Select **Review list entries**.
+9. Inspect possible matches carefully.
+10. Choose the correct atom for ambiguous rows.
+11. Remove missing or invalid rows.
+12. Review again and publish eligible entries.
+
+Callout: **The description should match the existing atom exactly, especially when names repeat.**
+
+Small note: CSV list import does not create missing member atoms. Create them through Atom creation first.
+
+Suggested visual: A CSV row beside two same-name candidate cards, with one clearly selected.
+
+## Poster 7: Choose Classic or Unchained
+
+**Two formats. One review-first workflow.**
+
+### Choose Classic When
+
+- You need Thing, Person, Organization, Account, or Raw data.
+- You want to upload an image.
+- You are publishing on Mainnet or Testnet.
+
+### Choose Unchained Early Access When
+
+- You want one of the 37 structured atom types.
+- You want fields tailored to that exact type.
+- You are creating and testing on Testnet.
+
+Callout: **When in doubt, start on Testnet and review before publishing.**
+
+Suggested visual: A clean two-column comparison with Classic on one side and Unchained Early access on the other.
+
+## Poster 8: Understand Review Results
 
 **Know what will happen before you sign.**
 
-- **Ready to create:** eligible for publishing.
-- **Ready with matches:** eligible, with same-name alternatives available to inspect.
-- **Existing:** the atom is already on the graph.
-- **Skip existing:** the list entry already exists.
+- **Ready to create:** safe to include in the next transaction.
+- **Ready with matches:** safe to include, with similar atoms available to inspect.
+- **Existing:** this atom already exists.
+- **Skip existing:** this list entry already exists.
 - **Blocked duplicate:** repeated inside the current batch.
-- **Ambiguous:** choose the correct existing atom.
+- **Ambiguous:** several atoms could match. Choose carefully.
 - **Missing:** no existing member atom was found.
-- **Invalid:** required data is missing or malformed.
+- **Invalid:** required information is missing or incorrect.
 
-**Collate publishes eligible rows only.**
+Callout: **Collate publishes eligible rows only.**
+
+Suggested visual: A vertical stack of status pills with one short explanation beside each.
 
 ## Closing Poster
 
 **From one atom to a full CSV batch.**
 
-Prepare your data. Review every result. Publish without surprises.
+Prepare your data.
+
+Review every result.
+
+Publish without surprises.
 
 **Create with Collate.**
