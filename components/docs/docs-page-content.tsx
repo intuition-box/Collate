@@ -818,6 +818,9 @@ Base,A secure low-cost builder-friendly Ethereum L2`}</CsvExample>
             This is a practical operator guide for the current app. A more sophisticated documentation system will come
             later with deeper examples, troubleshooting paths, and richer community testing notes.
           </p>
+          <Link href="/how-it-works" className="mt-4 inline-flex items-center rounded-full border border-accent/50 bg-white/70 px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-ink/30">
+            Open the visual How it works guide
+          </Link>
         </section>
 
         <section id="current-flows" className="grid gap-4 md:grid-cols-2">

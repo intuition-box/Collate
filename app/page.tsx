@@ -134,7 +134,7 @@ export default function HomePage() {
                 <ArrowIcon />
               </Link>
               <Link
-                href="/docs"
+                href="/how-it-works"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/70 px-6 py-3 text-sm font-medium text-ink transition-colors duration-150 hover:border-ink/30"
               >
                 See how it works

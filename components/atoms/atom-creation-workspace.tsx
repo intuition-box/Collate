@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSelectedNetwork } from '@/components/app/network-provider';
@@ -7,16 +8,41 @@ import { CsvAtomImportWorkspace } from '@/components/atoms/csv-atom-import-works
 import { ManualAtomCreationWorkspace } from '@/components/atoms/manual-atom-creation-workspace';
 import { CsvBatchListsFlow } from '@/components/lists/csv-batch-lists-flow';
 import { ManualBatchListsFlow } from '@/components/lists/manual-batch-lists-flow';
+import {
+  getCreateFlowHref,
+  getCreateWorkspaceState,
+  type AtomMode,
+  type CreateFlowId,
+  type ListMode,
+  type WorkspaceSection,
+} from '@/lib/navigation/create-flow';
 
-type WorkspaceSection = 'atoms' | 'lists';
-type AtomMode = 'single_atom' | 'batch_atoms' | 'csv_atoms';
-type ListMode = 'manual_lists' | 'csv_lists';
+const atomFlowByMode: Record<AtomMode, CreateFlowId> = {
+  single_atom: 'single-atom',
+  batch_atoms: 'batch-atoms',
+  csv_atoms: 'csv-atoms',
+};
 
-export function AtomCreationWorkspace() {
+const listFlowByMode: Record<ListMode, CreateFlowId> = {
+  manual_lists: 'manual-lists',
+  csv_lists: 'csv-lists',
+};
+
+export function AtomCreationWorkspace({ initialFlow }: { initialFlow: CreateFlowId }) {
   const { network } = useSelectedNetwork();
-  const [section, setSection] = useState<WorkspaceSection>('atoms');
-  const [atomMode, setAtomMode] = useState<AtomMode>('single_atom');
-  const [listMode, setListMode] = useState<ListMode>('manual_lists');
+  const router = useRouter();
+  const initialState = getCreateWorkspaceState(initialFlow);
+  const [section, setSection] = useState<WorkspaceSection>(initialState.section);
+  const [atomMode, setAtomMode] = useState<AtomMode>(initialState.atomMode);
+  const [listMode, setListMode] = useState<ListMode>(initialState.listMode);
+
+  function selectFlow(flow: CreateFlowId) {
+    const nextState = getCreateWorkspaceState(flow);
+    setSection(nextState.section);
+    setAtomMode(nextState.atomMode);
+    setListMode(nextState.listMode);
+    router.push(getCreateFlowHref(flow), { scroll: false });
+  }
 
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-line bg-white/82">
@@ -31,7 +57,7 @@ export function AtomCreationWorkspace() {
               <button
                 key={value}
                 type="button"
-                onClick={() => setSection(value)}
+                onClick={() => selectFlow(value === 'atoms' ? atomFlowByMode[atomMode] : listFlowByMode[listMode])}
                 className={`rounded-[0.95rem] px-4 py-2 text-[0.95rem] transition-colors duration-150 ${
                   section === value ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
                 }`}
@@ -57,7 +83,7 @@ export function AtomCreationWorkspace() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setAtomMode(value)}
+                      onClick={() => selectFlow(atomFlowByMode[value])}
                       className={`rounded-[0.85rem] px-3 py-1.5 text-[0.92rem] transition-colors duration-150 ${
                         atomMode === value ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
                       }`}
@@ -72,7 +98,7 @@ export function AtomCreationWorkspace() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setListMode(value)}
+                      onClick={() => selectFlow(listFlowByMode[value])}
                       className={`rounded-[0.85rem] px-3 py-1.5 text-[0.92rem] transition-colors duration-150 ${
                         listMode === value ? 'bg-ink text-paper' : 'text-muted hover:text-ink'
                       }`}
