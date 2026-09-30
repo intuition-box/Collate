@@ -751,7 +751,7 @@ Base,A secure low-cost builder-friendly Ethereum L2`}</CsvExample>
             <li><code className="text-ink">member</code> should match the existing atom’s name. <code className="text-ink">name</code>, <code className="text-ink">atom</code>, <code className="text-ink">label</code>, or <code className="text-ink">subject</code> are accepted alternatives.</li>
             <li>Copy the existing atom’s description exactly into <code className="text-ink">description</code>. This is especially important when several atoms share the same name.</li>
             <li>Do not write a new summary in the description column. It is used to identify an atom that already exists on the graph.</li>
-            <li>A unique exact name may resolve without a description, but duplicate names need matching descriptions or manual selection.</li>
+            <li>Always copy both the exact name and exact description from the existing atom. The name finds matches; the description identifies the right atom when names repeat.</li>
             <li>Each import supports up to 50 member rows.</li>
           </ul>
         </section>

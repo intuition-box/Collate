@@ -60,6 +60,14 @@ test('only CSV guides carry the bulk-data recommendation', () => {
   assert.equal(HOW_IT_WORKS_GUIDES.find((guide) => guide.id === 'csv-lists')?.badge, 'Best for bulk data');
 });
 
+test('the CSV-list guide explains that rows resolve existing atoms', () => {
+  const csvLists = HOW_IT_WORKS_GUIDES.find((guide) => guide.id === 'csv-lists');
+  const preparationStep = csvLists?.steps.find((step) => step.title === 'Copy existing atom details into the CSV');
+
+  assert.match(preparationStep?.emphasis ?? '', /exact name and exact description/i);
+  assert.match(preparationStep?.emphasis ?? '', /description identifies the right one/i);
+});
+
 test('each Create flow maps to the intended workspace section and mode', () => {
   assert.deepEqual(getCreateWorkspaceState('single-atom'), {
     section: 'atoms', atomMode: 'single_atom', listMode: 'manual_lists',

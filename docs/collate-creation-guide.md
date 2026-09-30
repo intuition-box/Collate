@@ -266,10 +266,10 @@ For each row:
 - `member` should match the existing atom’s name.
 - `description` should match the existing atom’s description exactly.
 - Copy the description from the atom you want to use. Do not write a new summary.
-- Exact descriptions are especially important when several atoms share the same name.
+- Always copy both the exact name and exact description. The name finds matching atoms; the description identifies the right one when names repeat.
 - Put quotation marks around descriptions containing commas.
 
-A unique name may resolve without a description, but including the exact description is the safest approach.
+A unique name may technically resolve without a description, but the CSV should still include the exact description so every row is clear and reliable.
 
 CSV list import does not create missing member atoms. Create missing atoms through **Atom creation** first, then return to the list CSV.
 

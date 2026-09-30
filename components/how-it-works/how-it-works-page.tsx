@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Fragment } from 'react';
 
 import {
   HOW_IT_WORKS_GUIDES,
@@ -57,6 +58,53 @@ function GuideBadge({ children }: { children: string }) {
         <path d="m10 1.8 2.25 4.56 5.03.73-3.64 3.55.86 5.01L10 13.29l-4.5 2.36.86-5.01-3.64-3.55 5.03-.73L10 1.8Z" />
       </svg>
       {children}
+    </span>
+  );
+}
+
+function GuideTaskIcon({ id, selected }: { id: HowItWorksGuideId; selected: boolean }) {
+  return (
+    <span className={`flex h-10 w-10 items-center justify-center rounded-xl border ${selected ? 'border-ink bg-ink text-paper' : 'border-line bg-paper/70 text-muted'}`}>
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5">
+        {id === 'single-atom' ? <circle cx="12" cy="12" r="5" /> : null}
+        {id === 'batch-atoms' ? (
+          <>
+            <circle cx="7" cy="8" r="2.5" />
+            <circle cx="17" cy="8" r="2.5" />
+            <circle cx="12" cy="17" r="2.5" />
+          </>
+        ) : null}
+        {id === 'csv-atoms' ? (
+          <>
+            <path d="M6 3.5h8l4 4V20.5H6z" />
+            <path d="M14 3.5v4h4M9 12h6M9 16h6" />
+          </>
+        ) : null}
+        {id === 'single-list' ? (
+          <>
+            <circle cx="7" cy="12" r="3" />
+            <circle cx="17" cy="12" r="3" />
+            <path d="M10 12h4" />
+          </>
+        ) : null}
+        {id === 'batch-lists' ? (
+          <>
+            <circle cx="6" cy="6" r="2" />
+            <circle cx="6" cy="12" r="2" />
+            <circle cx="6" cy="18" r="2" />
+            <circle cx="18" cy="12" r="3" />
+            <path d="m8 6 7.3 4.2M8 12h7M8 18l7.3-4.2" />
+          </>
+        ) : null}
+        {id === 'csv-lists' ? (
+          <>
+            <path d="M5 3.5h7l3 3V12M12 3.5v3h3" />
+            <circle cx="9" cy="17" r="2.5" />
+            <circle cx="18" cy="17" r="2.5" />
+            <path d="M11.5 17h4" />
+          </>
+        ) : null}
+      </svg>
     </span>
   );
 }
@@ -305,27 +353,35 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
               ['Lists', listGuides],
             ].map(([label, guides]) => (
               <div key={label as string} className="rounded-3xl border border-line bg-paper/45 p-4 sm:p-5">
-                <p className="px-2 pb-4 text-xs uppercase tracking-terminal text-muted">{label as string}</p>
-                <div className="space-y-2">
-                  {(guides as typeof HOW_IT_WORKS_GUIDES).map((guide) => {
+                <p className="px-2 pb-4 text-base font-semibold tracking-[-0.02em] text-ink sm:text-lg">{label as string}</p>
+                <div className="space-y-1">
+                  {(guides as typeof HOW_IT_WORKS_GUIDES).map((guide, index) => {
                     const selected = guide.id === activeGuide.id;
                     return (
-                      <Link
-                        key={guide.id}
-                        href={getHowItWorksHref(guide.id)}
-                        aria-current={selected ? 'page' : undefined}
-                        className={`group grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:p-4 ${selected ? 'border-ink bg-white' : 'border-transparent bg-white/55 hover:border-line hover:bg-white'}`}
-                      >
-                        <span className="font-mono text-xs text-muted">{guide.index}</span>
-                        <span className="min-w-0">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium text-ink sm:text-base">{guide.title}</span>
-                            {guide.badge ? <GuideBadge>{guide.badge}</GuideBadge> : null}
+                      <Fragment key={guide.id}>
+                        {index > 0 ? (
+                          <div aria-hidden="true" className="flex items-center gap-3 px-4 py-1 text-muted">
+                            <span className="h-px flex-1 bg-line" />
+                            <span className="font-serif text-sm italic">or</span>
+                            <span className="h-px flex-1 bg-line" />
+                          </div>
+                        ) : null}
+                        <Link
+                          href={getHowItWorksHref(guide.id)}
+                          aria-current={selected ? 'page' : undefined}
+                          className={`group grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:p-4 ${selected ? 'border-ink bg-white' : 'border-transparent bg-white/55 hover:border-line hover:bg-white'}`}
+                        >
+                          <GuideTaskIcon id={guide.id} selected={selected} />
+                          <span className="min-w-0">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-medium text-ink sm:text-base">{guide.title}</span>
+                              {guide.badge ? <GuideBadge>{guide.badge}</GuideBadge> : null}
+                            </span>
+                            <span className="mt-1 hidden text-sm leading-6 text-muted sm:block">{guide.shortDescription}</span>
                           </span>
-                          <span className="mt-1 hidden text-sm leading-6 text-muted sm:block">{guide.shortDescription}</span>
-                        </span>
-                        <span className="text-muted transition-transform group-hover:translate-x-0.5"><ArrowIcon /></span>
-                      </Link>
+                          <span className="text-muted transition-transform group-hover:translate-x-0.5"><ArrowIcon /></span>
+                        </Link>
+                      </Fragment>
                     );
                   })}
                 </div>
@@ -340,7 +396,9 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
           <div className="flex flex-col gap-6 border-b border-line pb-10 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs uppercase tracking-terminal text-muted">Guide {activeGuide.index} · {activeGuide.category}</p>
+                <p className="text-xs uppercase tracking-terminal text-muted">
+                  {activeGuide.category === 'atoms' ? 'Atom creation guide' : 'List creation guide'}
+                </p>
                 {activeGuide.badge ? <GuideBadge>{activeGuide.badge}</GuideBadge> : null}
               </div>
               <h2 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-6xl">{activeGuide.title}</h2>
@@ -377,6 +435,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
                     <div>
                       <h3 className="text-lg font-medium text-ink">{step.title}</h3>
                       <p className="mt-2 text-sm leading-7 text-muted">{step.description}</p>
+                      {step.emphasis ? <p className="mt-3 text-sm font-semibold leading-7 text-ink">{step.emphasis}</p> : null}
                     </div>
                   </div>
                 ))}

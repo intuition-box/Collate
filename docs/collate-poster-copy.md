@@ -163,7 +163,7 @@ Base,A secure low-cost builder-friendly Ethereum L2
 11. Remove missing or invalid rows.
 12. Review again and publish eligible entries.
 
-Callout: **The description should match the existing atom exactly, especially when names repeat.**
+Callout: **Copy the exact name and exact description from the existing atom.**
 
 Small note: CSV list import does not create missing member atoms. Create them through Atom creation first.
 

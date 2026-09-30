@@ -240,8 +240,8 @@ export function CsvBatchListsFlow() {
                 Import list members from CSV and resolve them before publish.
               </h1>
               <p className="max-w-3xl text-sm leading-7 text-muted">
-                Select an existing list atom, upload or paste member CSV rows, resolve each row against existing atoms,
-                then publish only the missing list entries in one transaction.
+                Select an existing list atom, then import member names and descriptions copied from atoms that already
+                exist on the selected network. Collate resolves those atoms before publishing the missing list entries.
               </p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export function CsvBatchListsFlow() {
           <FlowSteps
             steps={[
               { label: 'Choose a list', hint: 'Select the existing list atom you want to update before importing members.' },
-              { label: 'Load CSV', hint: 'Upload a file or paste CSV text for the member rows.' },
+              { label: 'Load CSV', hint: 'Copy the exact name and exact description from each existing member atom.' },
               { label: 'Review and resolve', hint: 'Preview rows, resolve ambiguous matches, and confirm which entries are publishable.' },
               { label: 'Publish missing entries', hint: 'Only ready list entries are submitted. Missing or ambiguous rows stay blocked.' },
             ]}
@@ -331,7 +331,15 @@ export function CsvBatchListsFlow() {
 
               <div className="space-y-2 text-sm leading-7 text-muted">
                 <p>Supported headers include `member`, `name`, `atom`, `label`, `subject`, and `description`.</p>
-                <p>Exact single matches auto-resolve. Ambiguous rows require manual selection. Missing rows stay blocked until removed.</p>
+                <p>Exact single-name matches auto-resolve. Ambiguous rows require manual selection. Missing rows stay blocked until removed.</p>
+              </div>
+
+              <div className="rounded-xl border border-warning/40 bg-warning/10 p-4">
+                <p className="text-xs uppercase tracking-terminal text-ink">Matching rule</p>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Copy the exact name and exact description from an atom that already exists on this network. The name
+                  finds matching atoms; the description identifies the right one when names repeat.
+                </p>
               </div>
             </div>
           </div>

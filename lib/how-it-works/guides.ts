@@ -16,13 +16,12 @@ export type GuideVisualKind = HowItWorksGuideId;
 export type HowItWorksGuide = {
   id: HowItWorksGuideId;
   category: GuideCategory;
-  index: string;
   title: string;
   badge?: string;
   shortDescription: string;
   summary: string;
   prerequisites: string[];
-  steps: Array<{ title: string; description: string }>;
+  steps: Array<{ title: string; description: string; emphasis?: string }>;
   tips: string[];
   outcomes: Array<{ label: string; description: string }>;
   visual: GuideVisualKind;
@@ -36,7 +35,6 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
   {
     id: 'single-atom',
     category: 'atoms',
-    index: '01',
     title: 'Create one atom',
     shortDescription: 'Create one reviewed building block without unnecessary batch setup.',
     summary: 'Start with one idea, check whether it already exists, then publish the atom you actually intend to create.',
@@ -69,7 +67,6 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
   {
     id: 'batch-atoms',
     category: 'atoms',
-    index: '02',
     title: 'Create batch atoms',
     shortDescription: 'Prepare several atoms and publish every eligible row together.',
     summary: 'Use a familiar form for each atom, review the complete batch, and keep existing or repeated rows out of the transaction.',
@@ -102,7 +99,6 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
   {
     id: 'csv-atoms',
     category: 'atoms',
-    index: '03',
     title: 'Import atoms from CSV',
     badge: 'Best for bulk data',
     shortDescription: 'Turn a prepared spreadsheet into a reviewed atom batch.',
@@ -138,7 +134,6 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
   {
     id: 'single-list',
     category: 'lists',
-    index: '04',
     title: 'Add one list member',
     shortDescription: 'Connect one existing member atom to the right list atom.',
     summary: 'Choose the atom representing the list, choose one member, then review whether that relationship still needs to be created.',
@@ -170,7 +165,6 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
   {
     id: 'batch-lists',
     category: 'lists',
-    index: '05',
     title: 'Add several list members',
     shortDescription: 'Review several member relationships and publish the missing ones together.',
     summary: 'Select one destination list, collect the existing member atoms, and create every missing list entry in one transaction.',
@@ -203,27 +197,31 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
   {
     id: 'csv-lists',
     category: 'lists',
-    index: '06',
     title: 'Import list members from CSV',
     badge: 'Best for bulk data',
     shortDescription: 'Resolve spreadsheet rows to existing atoms before adding them to a list.',
-    summary: 'Select the destination list first, then use exact names and descriptions to safely resolve every CSV row to an existing member atom.',
+    summary: 'Select the destination list first. Every CSV row must identify an atom that already exists on the selected network before Collate can add it as a member.',
     prerequisites: [
       'Select or create the destination list atom first.',
       'Use a CSV with no more than 50 member rows.',
-      'Copy each existing atom description exactly when duplicate names are possible.',
+      'Copy each member atom\'s exact name and exact description as they appear on the graph.',
     ],
     steps: [
       { title: 'Select the list atom', description: 'Open Lists, choose CSV import, then search for or create the destination list atom.' },
-      { title: 'Prepare the member CSV', description: 'Download the sample and add one existing member name and its exact description per row.' },
+      {
+        title: 'Copy existing atom details into the CSV',
+        description: 'Download the sample and add one member per row.',
+        emphasis: 'Copy the exact name and exact description from an atom that already exists. The name finds matching atoms; the description identifies the right one when names repeat.',
+      },
       { title: 'Upload or paste', description: 'Upload the file or paste its CSV text into Collate.' },
       { title: 'Preview parsed rows', description: 'Check names, descriptions, line numbers, and parsing errors before graph resolution.' },
-      { title: 'Review member matches', description: 'Collate searches exact names and uses descriptions to distinguish atoms that share a name.' },
+      { title: 'Review member matches', description: 'Collate finds atoms with the same name, then compares their descriptions. If one clear match cannot be found, choose the correct atom manually.' },
       { title: 'Resolve uncertain rows', description: 'Inspect candidate details for ambiguous rows. Remove missing or invalid rows that cannot be published.' },
       { title: 'Publish eligible entries', description: 'Review again after any candidate change, confirm the eligible count, then approve one transaction.' },
     ],
     tips: [
-      'The description identifies an existing atom. Do not replace it with a newly written summary.',
+      'Copy the existing atom\'s name and description. Do not write a new description.',
+      'A CSV row cannot create a new member atom.',
       'CSV list import does not create missing member atoms. Create them first, then review the CSV again.',
     ],
     outcomes: [
