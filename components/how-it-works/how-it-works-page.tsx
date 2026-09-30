@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 
+import { GuideTemplateDownloads } from '@/components/how-it-works/guide-template-downloads';
 import {
   HOW_IT_WORKS_GUIDES,
   getHowItWorksGuide,
@@ -436,6 +437,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
                       <h3 className="text-lg font-medium text-ink">{step.title}</h3>
                       <p className="mt-2 text-sm leading-7 text-muted">{step.description}</p>
                       {step.emphasis ? <p className="mt-3 text-sm font-semibold leading-7 text-ink">{step.emphasis}</p> : null}
+                      {step.action ? <GuideTemplateDownloads action={step.action} /> : null}
                     </div>
                   </div>
                 ))}

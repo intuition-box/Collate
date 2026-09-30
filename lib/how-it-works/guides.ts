@@ -12,6 +12,7 @@ export const HOW_IT_WORKS_GUIDE_IDS = [
 export type HowItWorksGuideId = (typeof HOW_IT_WORKS_GUIDE_IDS)[number];
 export type GuideCategory = 'atoms' | 'lists';
 export type GuideVisualKind = HowItWorksGuideId;
+export type GuideStepAction = 'atom-csv-templates' | 'list-csv-template';
 
 export type HowItWorksGuide = {
   id: HowItWorksGuideId;
@@ -21,7 +22,7 @@ export type HowItWorksGuide = {
   shortDescription: string;
   summary: string;
   prerequisites: string[];
-  steps: Array<{ title: string; description: string; emphasis?: string }>;
+  steps: Array<{ title: string; description: string; emphasis?: string; action?: GuideStepAction }>;
   tips: string[];
   outcomes: Array<{ label: string; description: string }>;
   visual: GuideVisualKind;
@@ -44,12 +45,30 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       'Connect your wallet only when you are ready to publish.',
     ],
     steps: [
-      { title: 'Open Single atom', description: 'Go to Create, choose Atom creation, then select Single atom.' },
-      { title: 'Choose the format', description: 'Classic opens first for familiar image rich atoms. Unchained Early access offers structured types on Testnet.' },
-      { title: 'Describe the atom', description: 'Choose its type, complete the required fields, and add an image or useful links when they help identify it.' },
-      { title: 'Review before signing', description: 'Select Review atom. Collate checks the fields and searches for exact or same name atoms you may want to reuse.' },
-      { title: 'Publish the eligible atom', description: 'Confirm the review result, connect on the selected network, and approve the wallet transaction.' },
-      { title: 'Wait for confirmation', description: 'Keep the page open until Collate confirms the transaction, then open the explorer link or create another atom.' },
+      {
+        title: 'Open the single atom workspace',
+        description: 'Open Create, choose Atom creation, then select Single atom. Choose Mainnet or Testnet in the top navigation before entering anything so the lookup and transaction use the right network.',
+      },
+      {
+        title: 'Choose Classic or Unchained',
+        description: 'Classic opens by default and supports familiar image rich atoms such as Things, People, Organizations, and Accounts. Choose Unchained types Early access only when you need one of its structured types on Testnet.',
+      },
+      {
+        title: 'Enter the atom details',
+        description: 'Choose the type, enter the name and required fields, then add a clear description, URL, and image where available. Use details that will help people recognize this atom and distinguish it from similar results.',
+      },
+      {
+        title: 'Check the existing atom lookup',
+        description: 'For Classic atoms, watch the lookup below the form while you type. Inspect any matching names, descriptions, images, and links. If the atom you need already exists, reuse it instead of creating a duplicate.',
+      },
+      {
+        title: 'Review the finished atom',
+        description: 'Select Review atom. Collate validates the fields, prepares the metadata, estimates the cost, and checks for exact or same name atoms. Correct invalid fields or inspect uncertain matches before continuing.',
+      },
+      {
+        title: 'Publish and wait for confirmation',
+        description: 'Connect your wallet, confirm it is on the selected network, then select Publish atom. Approve the transaction and keep the page open until Collate confirms it and shows the explorer link.',
+      },
     ],
     tips: [
       'Reuse the correct existing atom instead of creating a duplicate.',
@@ -76,12 +95,30 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       'Use CSV import instead when a spreadsheet is easier to maintain.',
     ],
     steps: [
-      { title: 'Open Batch atoms', description: 'Go to Create, choose Atom creation, then select Batch atoms.' },
-      { title: 'Complete the starting rows', description: 'Choose Classic or Unchained Early access and enter the required information for each atom.' },
-      { title: 'Add or remove rows', description: 'Use Add atom for every additional item and remove rows that do not belong in this batch.' },
-      { title: 'Review the whole batch', description: 'Select Review atoms and read every status, duplicate warning, existing match, and estimated cost.' },
-      { title: 'Check the eligible count', description: 'Make sure the count matches the atoms you intend to create. Blocked rows will not be submitted.' },
-      { title: 'Publish once', description: 'Connect the wallet on the selected network and approve one transaction containing the eligible atoms only.' },
+      {
+        title: 'Open the batch atom workspace',
+        description: 'Open Create, choose Atom creation, then select Batch atoms. Choose the target network first because every eligible atom in this batch will be published there.',
+      },
+      {
+        title: 'Choose a format and complete each row',
+        description: 'Classic opens by default. Choose the correct type for each atom, then enter its name, required fields, and useful identifying details. If you choose Unchained Early access, select the structured type for every Testnet row.',
+      },
+      {
+        title: 'Build the complete batch',
+        description: 'Select Add atom for each additional item. Before reviewing, remove unwanted rows, confirm that every row describes a different atom, and make sure each image, URL, and description belongs to the correct row.',
+      },
+      {
+        title: 'Review all atoms together',
+        description: 'Select Review atoms. Collate validates every row, checks the graph for existing atoms, detects duplicates inside this batch, prepares eligible metadata, and calculates the estimated cost.',
+      },
+      {
+        title: 'Inspect every status and the eligible count',
+        description: 'Read each row instead of relying only on the total. Ready to create rows can publish. Existing, blocked duplicate, ambiguous, and invalid rows stay out. Confirm the eligible count matches exactly what you intend to create.',
+      },
+      {
+        title: 'Publish the eligible atoms together',
+        description: 'Connect your wallet on the selected network and select Publish eligible atoms. Approve the transaction once, then wait for Collate to confirm the batch before clearing or changing the form.',
+      },
     ],
     tips: [
       'Different rows can use different Classic types or Unchained classifications.',
@@ -109,13 +146,36 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       'Use public HTTPS image links when a Classic row needs an image URL.',
     ],
     steps: [
-      { title: 'Choose the CSV format', description: 'Open CSV import. Classic CSV opens first; Unchained Early access provides samples tailored to each structured type.' },
-      { title: 'Download a sample', description: 'Keep the header row and replace the example values in your spreadsheet instead of guessing the format.' },
-      { title: 'Upload or paste', description: 'Upload the CSV file or paste its text directly into Collate.' },
-      { title: 'Preview parsed rows', description: 'Check names, types, fields, image previews, and row errors. Fix the source and preview again when needed.' },
-      { title: 'Review against the graph', description: 'Select Review atoms to find existing atoms, batch duplicates, and same name matches.' },
-      { title: 'Confirm eligible rows', description: 'Make sure only the intended ready rows are included in the eligible count.' },
-      { title: 'Publish one transaction', description: 'Connect the wallet, publish the eligible atoms, and wait for confirmation.' },
+      {
+        title: 'Choose the atom CSV format',
+        description: 'Open Create, choose Atom creation, then select CSV import. Use Classic CSV for image rich atoms on Mainnet or Testnet. Choose Unchained types Early access when you need a structured type file on Testnet.',
+      },
+      {
+        title: 'Download and populate the right sample',
+        description: 'Download the sample that matches the atoms you want to create. Keep its header row, then replace every example row with the real names, descriptions, URLs, image URLs, types, and other values you want written to the knowledge graph. Use one atom per row and delete any example rows you do not need.',
+        emphasis: 'Your spreadsheet should contain the actual atom data you want Collate to create, not instructions, sample content, or placeholder values. For a large dataset, download the sample first, then give that file and your source data to an AI assistant to populate the rows faster. Check every field before uploading and do not let it invent facts, links, or images.',
+        action: 'atom-csv-templates',
+      },
+      {
+        title: 'Save, upload, or paste the CSV',
+        description: 'Export the completed spreadsheet as a CSV file, then select Upload CSV file. You can also paste the complete CSV text into the large input. Uploading only loads the data into Collate; it does not publish anything.',
+      },
+      {
+        title: 'Preview exactly what Collate parsed',
+        description: 'Select Preview CSV rows. Compare every parsed name, type, field, and Classic image preview with your spreadsheet. If a row shows an error or the values appear in the wrong columns, correct the source file and preview it again.',
+      },
+      {
+        title: 'Review the atoms against the graph',
+        description: 'Select Review atoms. Collate validates required fields, checks for atoms that already exist, detects repeated rows in the file, and surfaces same name matches that need attention.',
+      },
+      {
+        title: 'Confirm exactly what is eligible',
+        description: 'Read every review status and confirm the eligible count. Only Ready to create rows enter the transaction. Existing, blocked duplicate, ambiguous, and invalid rows remain excluded.',
+      },
+      {
+        title: 'Publish the reviewed CSV batch',
+        description: 'Connect your wallet on the selected network and select Publish eligible CSV atoms for Classic or Publish eligible atoms for Unchained. Approve one transaction and wait for confirmation before changing the file or leaving the page.',
+      },
     ],
     tips: [
       'Keep every header unique and leave optional cells blank rather than deleting required columns.',
@@ -143,12 +203,30 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       'Use descriptions and images when several atoms share a name.',
     ],
     steps: [
-      { title: 'Open Manual lists', description: 'Go to Create, choose Lists, then select Manual lists.' },
-      { title: 'Select the list atom', description: 'Start typing its name and choose the correct result. Create it in the modal if it does not exist yet.' },
-      { title: 'Select the member atom', description: 'Search automatically from the first member row and inspect the result before selecting it.' },
-      { title: 'Create a missing member if needed', description: 'Use the member row suggestion to create the atom in a modal without leaving the list flow.' },
-      { title: 'Review the relationship', description: 'Select Review list entries. Collate checks whether this member is already part of the list.' },
-      { title: 'Publish and confirm', description: 'Publish the ready entry, approve the transaction, and wait for confirmation.' },
+      {
+        title: 'Open the manual list workspace',
+        description: 'Open Create, choose Lists, then select Manual lists. Choose the network that contains the list and member atoms you want to use.',
+      },
+      {
+        title: 'Find or create the list atom',
+        description: 'Type the list name in the List atom field. Search runs automatically, so inspect the results and select the atom that represents the destination list. If it does not exist, use the create suggestion and publish it in the modal.',
+      },
+      {
+        title: 'Find the member atom',
+        description: 'In the first member row, type the member name and select the intended existing atom. When several results share a name, compare their descriptions, images, types, and URLs before choosing.',
+      },
+      {
+        title: 'Create a missing member when necessary',
+        description: 'If no correct member exists, choose Create atom in the member row. Complete and publish the atom in the modal. After confirmation, Collate selects it as the member without taking you away from the list flow.',
+      },
+      {
+        title: 'Review the list relationship',
+        description: 'Select Review list entries. Collate checks whether this exact member is already connected to the selected list. Ready to create means a new entry is needed; Skip existing means there is nothing to submit.',
+      },
+      {
+        title: 'Publish and confirm the entry',
+        description: 'Connect your wallet on the selected network and select Publish eligible list entries. Approve the transaction, then keep the page open until Collate confirms that the member was added.',
+      },
     ],
     tips: [
       'Selecting an atom does not recreate it. Publishing creates the list relationship.',
@@ -174,12 +252,34 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       'Check descriptions carefully when atom names repeat.',
     ],
     steps: [
-      { title: 'Open Manual lists', description: 'Go to Create, choose Lists, then select Manual lists.' },
-      { title: 'Select or create the list atom', description: 'Search automatically and choose the correct list atom before adding members.' },
-      { title: 'Choose the first member', description: 'Search for an existing atom and confirm its selected card is the intended result.' },
-      { title: 'Add more members', description: 'Use Add member, select one atom in each row, and remove accidental rows before review.' },
-      { title: 'Review every entry', description: 'Collate finds existing list entries, repeated members, and incomplete rows.' },
-      { title: 'Publish the missing entries', description: 'Check the eligible count and approve one transaction for all ready list entries.' },
+      {
+        title: 'Open Manual lists and choose the network',
+        description: 'Open Create, choose Lists, then select Manual lists. Choose the network that already contains the list and member atoms for this batch.',
+      },
+      {
+        title: 'Select or create the destination list',
+        description: 'Type the list name in the List atom field and select the correct result from the automatic search. If it does not exist, create and publish it through the modal. This one list applies to every member row below.',
+      },
+      {
+        title: 'Select the first existing member',
+        description: 'Type in the first member row and choose the intended atom from the search results. Inspect its metadata carefully when multiple atoms have the same name.',
+      },
+      {
+        title: 'Add and complete the remaining rows',
+        description: 'Select Add member for each additional list member, then search for and select one existing atom in every row. If a member does not exist, create it through that row\'s modal and return to the batch.',
+      },
+      {
+        title: 'Clean up the batch before review',
+        description: 'Check that every selected atom belongs in this list, remove any unwanted rows, and make sure you have not selected the same member more than once.',
+      },
+      {
+        title: 'Review every list entry',
+        description: 'Select Review list entries. Collate checks whether each relationship already exists, detects repeated members in this batch, and marks incomplete rows as invalid.',
+      },
+      {
+        title: 'Confirm and publish the missing entries',
+        description: 'Read every status and confirm the eligible count. Ready to create rows will be submitted; Skip existing, blocked duplicate, and invalid rows will not. Select Publish eligible list entries and approve one transaction for the eligible rows.',
+      },
     ],
     tips: [
       'The selected list atom applies to every member row in the batch.',
@@ -207,17 +307,40 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       'Copy each member atom\'s exact name and exact description as they appear on the graph.',
     ],
     steps: [
-      { title: 'Select the list atom', description: 'Open Lists, choose CSV import, then search for or create the destination list atom.' },
       {
-        title: 'Copy existing atom details into the CSV',
-        description: 'Download the sample and add one member per row.',
-        emphasis: 'Copy the exact name and exact description from an atom that already exists. The name finds matching atoms; the description identifies the right one when names repeat.',
+        title: 'Select or create the destination list',
+        description: 'Open Create, choose Lists, then select CSV import. Type in the List atom field and choose the correct existing result, or create and publish the list atom through the modal. Review remains unavailable until a list atom is selected.',
       },
-      { title: 'Upload or paste', description: 'Upload the file or paste its CSV text into Collate.' },
-      { title: 'Preview parsed rows', description: 'Check names, descriptions, line numbers, and parsing errors before graph resolution.' },
-      { title: 'Review member matches', description: 'Collate finds atoms with the same name, then compares their descriptions. If one clear match cannot be found, choose the correct atom manually.' },
-      { title: 'Resolve uncertain rows', description: 'Inspect candidate details for ambiguous rows. Remove missing or invalid rows that cannot be published.' },
-      { title: 'Publish eligible entries', description: 'Review again after any candidate change, confirm the eligible count, then approve one transaction.' },
+      {
+        title: 'Download the sample and enter existing members',
+        description: 'Download the list CSV sample. Add one member per row, replacing the examples with the actual atoms you want to add to the selected list, then delete any sample rows you do not need.',
+        emphasis: 'Copy each atom\'s exact name and exact description from its existing graph record. The name finds matching atoms, and the description identifies the correct one when several atoms share that name. For a large set, download the sample first, then give that file and the copied graph records to an AI assistant to populate it. It must not rewrite or invent the names and descriptions, so verify every row before uploading.',
+        action: 'list-csv-template',
+      },
+      {
+        title: 'Save, upload, or paste the CSV',
+        description: 'Export the completed spreadsheet as a CSV file, then select Upload CSV file. You can also paste the complete CSV text into the input. Confirm that the selected list atom is still the destination you intended.',
+      },
+      {
+        title: 'Preview the member rows',
+        description: 'Select Preview CSV rows. Check every line number, member name, and description against the spreadsheet, and correct any parsing error before continuing. This step confirms that Collate read the file; it does not resolve the atoms yet.',
+      },
+      {
+        title: 'Resolve the rows against existing atoms',
+        description: 'Select Review list rows. Collate searches for existing atoms with each exact name and compares their descriptions. A clear match is selected automatically; several possible matches leave the row waiting for your decision.',
+      },
+      {
+        title: 'Inspect ambiguous, missing, or existing rows',
+        description: 'For an ambiguous row, open each candidate\'s details and select Use this atom for the correct one. If a row is Missing, create that atom from Atom creation, then return and review the CSV again. Skip existing means that member is already in the list and needs no new transaction.',
+      },
+      {
+        title: 'Review again and confirm eligibility',
+        description: 'Review the list again after changing a candidate or correcting the CSV. Confirm that Ready to create and Ready with matches rows are the members you intend to add. Ambiguous, missing, existing, duplicate, and invalid rows stay excluded.',
+      },
+      {
+        title: 'Publish the eligible list entries',
+        description: 'Connect your wallet on the selected network and select Publish eligible list entries. Approve one transaction containing only the eligible members, then wait for Collate to confirm the result.',
+      },
     ],
     tips: [
       'Copy the existing atom\'s name and description. Do not write a new description.',

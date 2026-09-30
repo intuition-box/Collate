@@ -62,10 +62,19 @@ test('only CSV guides carry the bulk-data recommendation', () => {
 
 test('the CSV-list guide explains that rows resolve existing atoms', () => {
   const csvLists = HOW_IT_WORKS_GUIDES.find((guide) => guide.id === 'csv-lists');
-  const preparationStep = csvLists?.steps.find((step) => step.title === 'Copy existing atom details into the CSV');
+  const preparationStep = csvLists?.steps.find((step) => step.action === 'list-csv-template');
 
   assert.match(preparationStep?.emphasis ?? '', /exact name and exact description/i);
-  assert.match(preparationStep?.emphasis ?? '', /description identifies the right one/i);
+  assert.match(preparationStep?.emphasis ?? '', /description identifies the correct one/i);
+  assert.match(preparationStep?.description ?? '', /actual atoms you want to add/i);
+});
+
+test('both CSV guides expose their template downloads in Step 02', () => {
+  const csvAtoms = HOW_IT_WORKS_GUIDES.find((guide) => guide.id === 'csv-atoms');
+  const csvLists = HOW_IT_WORKS_GUIDES.find((guide) => guide.id === 'csv-lists');
+
+  assert.equal(csvAtoms?.steps[1]?.action, 'atom-csv-templates');
+  assert.equal(csvLists?.steps[1]?.action, 'list-csv-template');
 });
 
 test('each Create flow maps to the intended workspace section and mode', () => {
