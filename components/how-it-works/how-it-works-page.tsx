@@ -112,7 +112,7 @@ function GuideTaskIcon({ id, selected }: { id: HowItWorksGuideId; selected: bool
 
 function VisualShell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white/85">
+    <div role="img" aria-label={label} className="overflow-hidden rounded-2xl border border-line bg-white/85">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <p className="text-xs uppercase tracking-terminal text-muted">{label}</p>
         <span className="h-2 w-2 rounded-full bg-ink/20" />
@@ -204,7 +204,7 @@ function SingleListVisual() {
     <VisualShell label="One list entry">
       <div className="space-y-3">
         <div className="rounded-xl border border-line bg-paper/65 p-4">
-          <p className="text-xs uppercase tracking-terminal text-muted">List atom</p>
+          <p className="text-sm font-medium text-muted">List</p>
           <p className="mt-2 text-base font-medium text-ink">Favorite protocols</p>
         </div>
         <div className="flex justify-center text-muted">
@@ -215,7 +215,7 @@ function SingleListVisual() {
         <div className="rounded-xl border border-ink/20 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-terminal text-muted">Member atom</p>
+              <p className="text-sm font-medium text-muted">Member</p>
               <p className="mt-2 text-base font-medium text-ink">Ethereum</p>
               <p className="mt-1 text-xs text-muted">Decentralized blockchain system</p>
             </div>
@@ -231,7 +231,7 @@ function BatchListsVisual() {
   return (
     <VisualShell label="List entry review">
       <div className="rounded-xl bg-ink p-4 text-paper">
-        <p className="text-xs uppercase tracking-terminal text-paper/55">Destination list</p>
+        <p className="text-sm font-medium text-paper/60">List</p>
         <p className="mt-2 text-base font-medium">Open data communities</p>
       </div>
       <div className="mt-3 grid gap-2">
@@ -294,45 +294,27 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
 
   return (
     <main className="overflow-hidden">
-      <section className="px-5 pb-20 pt-8 sm:px-8 sm:pb-28 sm:pt-16">
-        <div className="mx-auto grid max-w-[86rem] items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,0.9fr)] lg:gap-20">
-          <div className="home-reveal">
-            <p className="text-xs uppercase tracking-terminal text-muted">How Collate works</p>
-            <h1 className="mt-6 max-w-3xl text-5xl font-semibold tracking-[-0.055em] text-ink sm:text-7xl">
-              Know every step
-              <span className="block font-serif font-normal italic">before you sign.</span>
+      <section className="px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14">
+        <div className="home-reveal mx-auto max-w-[86rem]">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(24rem,0.7fr)] lg:items-end lg:justify-between lg:gap-16">
+            <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-5xl lg:text-6xl">
+              Know every step <span className="font-serif font-normal italic">before you sign.</span>
             </h1>
-            <p className="mt-7 max-w-2xl text-base leading-8 text-muted sm:text-lg">
-              Choose what you want to create, follow one clear path, and see exactly what Collate will publish before your wallet enters the process.
+            <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg sm:leading-8 lg:justify-self-end">
+              Choose a task below for a complete walkthrough, from preparing your data to confirming the finished transaction.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a href="#choose-guide" className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-paper transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
-                Choose your guide
-                <ArrowIcon />
-              </a>
-              <Link href={getCreateFlowHref('single-atom')} className="inline-flex items-center justify-center rounded-full border border-line bg-white/70 px-5 py-3 text-sm font-medium text-ink transition-colors hover:border-ink/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
-                Start with one atom
-              </Link>
-            </div>
           </div>
 
-          <div className="home-board rounded-3xl border border-line bg-white/82 p-4 sm:p-6">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-terminal text-muted">One shared rhythm</p>
-                <p className="mt-2 text-base font-medium text-ink">From input to confirmation</p>
-              </div>
-              <span className="rounded-full border border-line bg-paper px-3 py-1 text-xs text-muted">4 steps</span>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+          <div className="mt-9 overflow-hidden rounded-2xl border border-line bg-line">
+            <div className="grid gap-px sm:grid-cols-2 lg:grid-cols-4">
               {workflowSteps.map((step, index) => (
-                <div key={step.label} className={`rounded-2xl border p-4 ${index === workflowSteps.length - 1 ? 'border-accent/50 bg-accentSoft/60' : 'border-line bg-paper/55'}`}>
-                  <div className="flex items-center justify-between gap-4">
+                <div key={step.label} className={`p-4 sm:p-5 ${index === workflowSteps.length - 1 ? 'bg-accentSoft' : 'bg-paper'}`}>
+                  <div className="flex items-center justify-between gap-3">
                     <span className="font-mono text-xs text-muted">{step.index}</span>
                     {index === workflowSteps.length - 1 ? <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-black"><CheckIcon /></span> : null}
                   </div>
-                  <p className="mt-8 text-base font-medium text-ink">{step.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted">{step.description}</p>
+                  <p className="mt-5 text-base font-medium text-ink">{step.label}</p>
+                  <p className="mt-1.5 text-sm leading-6 text-muted">{step.description}</p>
                 </div>
               ))}
             </div>
@@ -343,8 +325,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
       <section id="choose-guide" className="scroll-mt-6 border-y border-line bg-white/72 px-5 py-20 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[86rem]">
           <div className="max-w-3xl">
-            <p className="text-xs uppercase tracking-terminal text-muted">Choose your guide</p>
-            <h2 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-6xl">Start with what you want to do.</h2>
+            <h2 className="text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-6xl">Start with what you want to do.</h2>
             <p className="mt-5 text-base leading-8 text-muted">Pick a task. The page will show only the steps, checks, and decisions that matter for that path.</p>
           </div>
 
@@ -396,13 +377,8 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
         <div key={activeGuide.id} className="home-reveal mx-auto max-w-[86rem]">
           <div className="flex flex-col gap-6 border-b border-line pb-10 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs uppercase tracking-terminal text-muted">
-                  {activeGuide.category === 'atoms' ? 'Atom creation guide' : 'List creation guide'}
-                </p>
-                {activeGuide.badge ? <GuideBadge>{activeGuide.badge}</GuideBadge> : null}
-              </div>
-              <h2 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-6xl">{activeGuide.title}</h2>
+              {activeGuide.badge ? <div className="mb-5"><GuideBadge>{activeGuide.badge}</GuideBadge></div> : null}
+              <h2 className="text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-6xl">{activeGuide.title}</h2>
               <p className="mt-5 text-base leading-8 text-muted">{activeGuide.summary}</p>
             </div>
             <Link href={getCreateFlowHref(activeGuide.createFlow)} className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-ink px-5 py-3 text-sm font-medium text-paper transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:self-auto">
@@ -415,7 +391,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
             <aside className="space-y-6 lg:sticky lg:top-6">
               <GuideVisual kind={activeGuide.visual} />
               <div className="rounded-2xl border border-line bg-paper/55 p-5">
-                <p className="text-xs uppercase tracking-terminal text-muted">Before you start</p>
+                <h3 className="text-lg font-medium text-ink">Before you start</h3>
                 <ul className="mt-4 space-y-3">
                   {activeGuide.prerequisites.map((item) => (
                     <li key={item} className="flex gap-3 text-sm leading-6 text-muted">
@@ -428,7 +404,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
             </aside>
 
             <article className="min-w-0">
-              <p className="text-xs uppercase tracking-terminal text-muted">Step by step</p>
+              <h3 className="text-lg font-medium text-ink">Step by step</h3>
               <div className="mt-5 divide-y divide-line border-y border-line">
                 {activeGuide.steps.map((step, index) => (
                   <div key={step.title} className="grid gap-4 py-6 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-6">
@@ -445,20 +421,20 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
 
               {activeGuide.csvExample ? (
                 <div className="mt-8 rounded-2xl border border-line bg-white/75 p-5">
-                  <p className="text-xs uppercase tracking-terminal text-muted">Example CSV</p>
+                  <h3 className="text-lg font-medium text-ink">Example CSV</h3>
                   <pre className="mt-4 overflow-x-auto rounded-xl bg-ink p-4 font-mono text-xs leading-6 text-paper"><code>{activeGuide.csvExample}</code></pre>
                 </div>
               ) : null}
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl border border-line bg-paper/55 p-5">
-                  <p className="text-xs uppercase tracking-terminal text-muted">Keep in mind</p>
+                  <h3 className="text-lg font-medium text-ink">Keep in mind</h3>
                   <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
                     {activeGuide.tips.map((tip) => <li key={tip}>• {tip}</li>)}
                   </ul>
                 </div>
                 <div className="rounded-2xl border border-line bg-white/75 p-5">
-                  <p className="text-xs uppercase tracking-terminal text-muted">What review may show</p>
+                  <h3 className="text-lg font-medium text-ink">What review may show</h3>
                   <div className="mt-4 space-y-3">
                     {activeGuide.outcomes.map((outcome) => (
                       <div key={outcome.label}>
@@ -478,8 +454,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
         <div className="mx-auto max-w-[86rem]">
           <div className="grid gap-8 lg:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)] lg:items-start">
             <div>
-              <p className="text-xs uppercase tracking-terminal text-muted">Read the review</p>
-              <h2 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-5xl">Every row tells you what happens next.</h2>
+              <h2 className="text-4xl font-semibold tracking-[-0.045em] text-ink sm:text-5xl">Every row tells you what happens next.</h2>
               <p className="mt-5 max-w-xl text-base leading-8 text-muted">The label beside a row explains whether it will be created, reused, skipped, or held back for your attention.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -500,8 +475,7 @@ export function HowItWorksPage({ activeGuideId }: { activeGuideId: HowItWorksGui
       <section className="px-5 py-10 sm:px-8 sm:py-14">
         <div className="mx-auto flex max-w-[86rem] flex-col gap-8 rounded-3xl bg-ink px-6 py-12 text-paper sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14">
           <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-terminal text-paper/55">Ready to create?</p>
-            <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">Take the guide with you into the workspace.</h2>
+            <h2 className="text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">Take the guide with you into the workspace.</h2>
             <p className="mt-4 text-sm leading-7 text-paper/65">Your selected flow will open directly. Prepare freely, review carefully, and connect your wallet only when you are ready.</p>
           </div>
           <Link href={getCreateFlowHref(activeGuide.createFlow)} className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-accent px-5 py-3 text-sm font-medium text-black transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:self-auto">

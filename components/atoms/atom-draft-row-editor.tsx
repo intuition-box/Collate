@@ -222,13 +222,13 @@ export function AtomDraftRowEditor({
 
     if (!imageUrl) {
       setImageUploadStatus('failed');
-      setImageUploadError('Paste a public HTTPS image URL before importing it.');
+      setImageUploadError('Paste a public HTTPS image URL before pinning it.');
       return;
     }
 
     if (!imageUrl.startsWith('https://')) {
       setImageUploadStatus('failed');
-      setImageUploadError('Only public HTTPS image URLs can be imported through Intuition.');
+      setImageUploadError('Only public HTTPS image URLs can be pinned through Intuition.');
       return;
     }
 
@@ -247,7 +247,7 @@ export function AtomDraftRowEditor({
 
       onPatch({ image: uploadedImage.url });
       setImageUploadStatus('uploaded');
-      setImageUploadError(uploadedImage.safe === false ? 'Image imported but marked unsafe by moderation.' : null);
+      setImageUploadError(uploadedImage.safe === false ? 'Image was marked unsafe by moderation.' : null);
     } catch (caughtError) {
       if (uploadToken !== uploadTokenRef.current) {
         return;
@@ -333,7 +333,7 @@ export function AtomDraftRowEditor({
                     disabled={disabled || imageUploadStatus === 'uploading' || isPreparedLocalImage}
                     className="inline-flex rounded-full border border-line bg-white/80 px-3 py-2 text-sm text-ink transition-colors duration-150 hover:border-ink/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {imageUploadStatus === 'uploading' ? 'Working...' : 'Import URL'}
+                    {imageUploadStatus === 'uploading' ? 'Pinning...' : 'Pin from URL'}
                   </button>
                   <label className="inline-flex cursor-pointer rounded-full border border-line bg-white/80 px-3 py-2 text-sm text-ink transition-colors duration-150 hover:border-ink/15 disabled:cursor-not-allowed disabled:opacity-60">
                     <input
@@ -397,11 +397,11 @@ export function AtomDraftRowEditor({
                 />
               )}
               <div className="space-y-1 text-sm leading-6 text-muted">
-                <p>Upload your own image, or paste a public image URL and import it through Intuition.</p>
+                <p>Upload your own image, or paste a public HTTPS image URL and select Pin from URL to save a copy through Intuition.</p>
                 <p>Local images are resized and converted to JPG before metadata pinning.</p>
                 {selectedImageName ? <p>Selected file: {selectedImageName}</p> : null}
                 {imageUploadStatus === 'uploaded' && draft.image.trim() ? (
-                  <p className="text-[#1f8a62]">Image prepared and will be pinned with this atom's metadata.</p>
+                  <p className="text-[#1f8a62]">{isPreparedLocalImage ? 'Image prepared for pinning during review.' : 'Image pinned and ready for this atom.'}</p>
                 ) : null}
                 {imageUploadError ? <p className="text-[#8a4b38]">{imageUploadError}</p> : null}
               </div>

@@ -206,11 +206,11 @@ export function normalizeImageUploadError(caughtError: unknown): string {
     const lowerMessage = message.toLowerCase();
 
     if (lowerMessage.includes('local file upload failed through intuition image processing')) {
-      return 'Intuition could not process this local image file. Try a smaller PNG/JPG, or use Import URL with a public HTTPS image.';
+      return 'Intuition could not process this local image file. Try a smaller PNG/JPG, or use Pin from URL with a public HTTPS image.';
     }
 
     if (lowerMessage.includes('webhook')) {
-      return 'Intuition image processing failed upstream. Try again, or use Import URL with a public HTTPS image.';
+      return 'Intuition image processing failed upstream. Try again, or use Pin from URL with a public HTTPS image.';
     }
 
     return message;
