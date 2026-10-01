@@ -1,7 +1,8 @@
 'use client';
 
-import { startTransition, useEffect, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 
+import { ActivityFeedItem } from '@/components/activity/activity-feed-item';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type {
@@ -18,23 +19,6 @@ const NETWORK_OPTIONS: Array<{ value: ActivityNetworkFilter; label: string }> = 
 ];
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US');
-
-function shortenHex(value: string, start = 6, end = 4) {
-  return `${value.slice(0, start)}...${value.slice(-end)}`;
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value));
-}
-
-function getItemLabel(item: ConfirmedActivityItem) {
-  if (item.kind === 'atom') return 'Atom';
-  if (item.kind === 'list_entry') return 'List claim';
-  return 'Claim';
-}
 
 function getRequestUrl(path: string, network: ActivityNetworkFilter, cursor?: string | null) {
   const params = new URLSearchParams();
@@ -89,9 +73,13 @@ export function ActivityDashboard() {
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const loadMoreController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
+    loadMoreController.current?.abort();
+    setExpandedItemId(null);
 
     async function loadDashboard() {
       setIsLoading(true);
@@ -124,24 +112,31 @@ export function ActivityDashboard() {
     }
 
     void loadDashboard();
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      loadMoreController.current?.abort();
+    };
   }, [network, refreshKey]);
 
   async function loadMore() {
     if (!nextCursor || isLoadingMore) return;
 
+    const controller = new AbortController();
+    loadMoreController.current = controller;
     setIsLoadingMore(true);
     setLoadMoreError(null);
 
     try {
-      const response = await fetch(getRequestUrl('/api/activity/items', network, nextCursor), { cache: 'no-store' });
+      const response = await fetch(getRequestUrl('/api/activity/items', network, nextCursor), { cache: 'no-store', signal: controller.signal });
       const payload = await readJson<ActivityItemsResponse>(response);
+      if (controller.signal.aborted) return;
       setItems((current) => [...current, ...payload.items]);
       setNextCursor(payload.nextCursor);
     } catch (caughtError) {
-      setLoadMoreError(caughtError instanceof Error ? caughtError.message : 'More activity could not be loaded.');
+      if (!controller.signal.aborted) setLoadMoreError(caughtError instanceof Error ? caughtError.message : 'More activity could not be loaded.');
     } finally {
-      setIsLoadingMore(false);
+      if (!controller.signal.aborted) setIsLoadingMore(false);
+      if (loadMoreController.current === controller) loadMoreController.current = null;
     }
   }
 
@@ -186,7 +181,11 @@ export function ActivityDashboard() {
                 type="button"
                 role="tab"
                 aria-selected={network === option.value}
-                onClick={() => startTransition(() => setNetwork(option.value))}
+                onClick={() => {
+                  loadMoreController.current?.abort();
+                  setIsLoadingMore(false);
+                  startTransition(() => setNetwork(option.value));
+                }}
                 className={`min-w-0 flex-1 rounded-full px-4 py-2 text-xs transition-colors sm:flex-none sm:text-sm ${
                   network === option.value ? 'bg-ink font-medium text-paper' : 'text-muted hover:bg-paper/70 hover:text-ink'
                 }`}
@@ -204,7 +203,11 @@ export function ActivityDashboard() {
             </p>
             <button
               type="button"
-              onClick={() => setRefreshKey((current) => current + 1)}
+              onClick={() => {
+                loadMoreController.current?.abort();
+                setIsLoadingMore(false);
+                setRefreshKey((current) => current + 1);
+              }}
               disabled={isLoading}
               className="rounded-full border border-line bg-white/75 px-4 py-2 text-xs font-medium text-ink transition-colors hover:border-ink/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -321,58 +324,14 @@ export function ActivityDashboard() {
               ) : (
                 <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-line/90 bg-white/72">
                   <div className="divide-y divide-line/65">
-                    {items.map((item) => {
-                      const networkConfig = getIntuitionNetwork(item.network);
-                      return (
-                        <article
-                          key={item.id}
-                          className="grid gap-4 px-5 py-5 transition-colors hover:bg-paper/40 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className={`h-2.5 w-2.5 rounded-full ${item.kind === 'atom' ? 'bg-accent' : 'bg-ink'}`} />
-                            <div>
-                              <p className="text-sm font-medium text-ink">{getItemLabel(item)}</p>
-                              <p className="mt-1 text-[0.65rem] uppercase tracking-terminal text-muted">{item.network}</p>
-                            </div>
-                          </div>
-
-                          <div className="min-w-0 sm:px-4">
-                            <p className="truncate font-mono text-xs text-ink" title={item.protocolId}>
-                              {shortenHex(item.protocolId, 10, 8)}
-                            </p>
-                            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted">
-                              <span>by</span>
-                              <WalletIdentity
-                                address={item.creatorWallet}
-                                href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`}
-                                size={22}
-                                showAddress={false}
-                              />
-                              <span aria-hidden="true">·</span>
-                              <span>Block {NUMBER_FORMATTER.format(Number(item.blockNumber))}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-4 sm:justify-end">
-                            <time dateTime={item.createdAt} className="text-xs text-muted">
-                              {formatDate(item.createdAt)}
-                            </time>
-                            <a
-                              href={`${networkConfig.explorerUrl}/tx/${item.txHash}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              aria-label={`Open ${getItemLabel(item).toLowerCase()} transaction in explorer`}
-                              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-ink/30 hover:bg-paper"
-                            >
-                              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4">
-                                <path d="M8 5h7v7" />
-                                <path d="m15 5-9 9" />
-                              </svg>
-                            </a>
-                          </div>
-                        </article>
-                      );
-                    })}
+                    {items.map((item) => (
+                      <ActivityFeedItem
+                        key={item.id}
+                        item={item}
+                        expanded={expandedItemId === item.id}
+                        onToggle={() => setExpandedItemId((current) => current === item.id ? null : item.id)}
+                      />
+                    ))}
                   </div>
 
                   {nextCursor ? (

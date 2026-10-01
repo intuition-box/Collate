@@ -67,7 +67,29 @@ export interface ActivitySummaryResponse {
   leaderboard: ActivityLeaderboardEntry[];
 }
 
-export interface ConfirmedActivityItem {
+export interface ActivityAtomDetails {
+  label: string;
+  type: string | null;
+  image: string | null;
+  description: string | null;
+  url: string | null;
+}
+
+export type ActivityItemDisplay =
+  | { state: 'ready'; atom: ActivityAtomDetails; triple?: never }
+  | {
+      state: 'ready' | 'partial';
+      triple: {
+        subject: ActivityAtomDetails | null;
+        predicate: ActivityAtomDetails | null;
+        object: ActivityAtomDetails | null;
+      };
+      reason?: 'pending' | 'unavailable';
+      atom?: never;
+    }
+  | { state: 'pending' | 'unavailable'; atom?: never; triple?: never };
+
+export interface ActivityItemRecord {
   id: string;
   kind: ActivityItemKind;
   network: PublicIntuitionNetwork;
@@ -79,6 +101,10 @@ export interface ConfirmedActivityItem {
   objectId: Hex | null;
   blockNumber: string;
   createdAt: string;
+}
+
+export interface ConfirmedActivityItem extends ActivityItemRecord {
+  display: ActivityItemDisplay;
 }
 
 export interface ActivityItemsResponse {
