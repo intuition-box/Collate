@@ -8,15 +8,22 @@ import type { CsvAtomParseRow } from '@/types/atoms';
 
 export function CsvAtomPreviewTable({ rows }: { rows: CsvAtomParseRow[] }) {
   return (
-    <div className="rounded-[1.15rem] border border-dashed border-line bg-paper/60 p-4">
+    <div className="min-w-0 rounded-[1.15rem] border border-dashed border-line bg-paper/60 p-4">
       <div className="space-y-2">
         <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Parsed CSV rows</p>
         <p className="text-sm leading-7 text-muted">
           Preview the imported rows before running duplicate and existing-atom checks.
         </p>
       </div>
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
+      <div className="mt-4 max-w-full overflow-x-auto">
+        <table className="w-full min-w-[56rem] table-fixed text-left text-sm">
+          <colgroup>
+            <col className="w-14" />
+            <col className="w-[26%]" />
+            <col className="w-32" />
+            <col className="w-[36%]" />
+            <col />
+          </colgroup>
           <thead className="text-[0.68rem] uppercase tracking-terminal text-muted">
             <tr>
               <th className="px-3 py-3">Line</th>
@@ -34,9 +41,9 @@ export function CsvAtomPreviewTable({ rows }: { rows: CsvAtomParseRow[] }) {
                 <tr key={row.atom.id}>
                   <td className="px-3 py-3 align-top text-muted">{row.atom.sourceLine}</td>
                   <td className="px-3 py-3 align-top text-ink">
-                    <div className="space-y-1">
+                    <div className="min-w-0 space-y-1 break-words">
                       <p>{getAtomDisplayName(row.atom) || 'Untitled atom'}</p>
-                      <p className="break-all text-[0.72rem] leading-5 text-muted">
+                      <p className="text-[0.72rem] leading-5 text-muted">
                         {row.atom.schemaType === 'Raw'
                           ? row.atom.rawData
                           : row.atom.schemaType === 'Account'
@@ -45,11 +52,11 @@ export function CsvAtomPreviewTable({ rows }: { rows: CsvAtomParseRow[] }) {
                       </p>
                     </div>
                   </td>
-                  <td className="px-3 py-3 align-top text-muted">{row.atom.schemaType}</td>
-                  <td className="min-w-[12rem] px-3 py-3 align-top text-muted">
+                  <td className="break-words px-3 py-3 align-top text-muted">{row.atom.schemaType}</td>
+                  <td className="px-3 py-3 align-top text-muted">
                     <CsvImagePreview imageValue={row.atom.image} previewImageUrl={previewImageUrl} />
                   </td>
-                  <td className="px-3 py-3 align-top text-muted">
+                  <td className="break-words px-3 py-3 align-top text-muted">
                     {row.errors.length > 0 ? (
                       <div className="space-y-1">
                         {row.errors.map((error) => (
@@ -85,7 +92,7 @@ function CsvImagePreview({
 
   if (canPreview) {
     return (
-      <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-line/80 bg-white/75 p-2">
+      <div className="flex min-w-0 max-w-full items-center gap-3 overflow-hidden rounded-2xl border border-line/80 bg-white/75 p-2">
         <img
           src={previewImageUrl}
           alt=""
@@ -106,9 +113,9 @@ function CsvImagePreview({
 
   if (trimmedImageValue) {
     return (
-      <div className="rounded-2xl border border-[#d9b9aa] bg-[#fff8f4] p-3">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#d9b9aa] bg-[#fff8f4] p-3">
         <p className="text-[0.68rem] uppercase tracking-terminal text-[#8a4b38]">No preview</p>
-        <p className="mt-1 break-all text-[0.72rem] leading-5 text-muted">{trimmedImageValue}</p>
+        <p className="mt-1 line-clamp-2 break-all text-[0.72rem] leading-5 text-muted" title={trimmedImageValue}>{trimmedImageValue}</p>
       </div>
     );
   }

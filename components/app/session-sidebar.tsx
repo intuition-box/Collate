@@ -20,7 +20,6 @@ export function SessionSidebar() {
     <aside className="border border-line bg-white/82 p-6 xl:sticky xl:top-24">
       <div className="space-y-5">
         <div className="space-y-2">
-          <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Session</p>
           <p className="font-serif text-[1.55rem] leading-none tracking-[-0.045em] text-ink sm:text-[1.7rem]">
             Review-first batch publishing.
           </p>
