@@ -17,8 +17,11 @@ const config: Config = {
         accent: 'rgb(var(--color-accent) / <alpha-value>)',
         accentSoft: 'rgb(var(--color-accent-soft) / <alpha-value>)',
         success: 'rgb(var(--color-success) / <alpha-value>)',
+        successInk: 'rgb(var(--color-success-ink) / <alpha-value>)',
         warning: 'rgb(var(--color-warning) / <alpha-value>)',
-        danger: 'rgb(var(--color-danger) / <alpha-value>)'
+        warningInk: 'rgb(var(--color-warning-ink) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',
+        dangerInk: 'rgb(var(--color-danger-ink) / <alpha-value>)'
       },
       letterSpacing: {
         terminal: '0.14em',

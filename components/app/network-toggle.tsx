@@ -77,7 +77,7 @@ export function NetworkToggle({ compact = false }: { compact?: boolean }) {
           </button>
         ))}
       </div>
-      {compact ? null : <p className={`max-w-[22rem] text-xs leading-5 ${error ? 'text-[#a33a2b]' : 'text-muted'}`}>{helperText}</p>}
+      {compact ? null : <p className={`max-w-[22rem] text-xs leading-5 ${error ? 'text-dangerInk' : 'text-muted'}`}>{helperText}</p>}
     </div>
   );
 }

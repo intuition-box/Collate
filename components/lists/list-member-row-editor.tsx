@@ -24,7 +24,7 @@ function AtomResultCard({
     <div
       className={
         isSelected
-          ? 'rounded-xl border border-[#5d8a62] bg-[#edf6ee] p-4'
+          ? 'rounded-xl border border-success/40 bg-accentSoft p-4'
           : 'rounded-xl border border-line/80 bg-white/72 p-4'
       }
     >
@@ -34,21 +34,21 @@ function AtomResultCard({
             <img
               src={imageUrl}
               alt=""
-              className={`h-12 w-12 rounded-lg object-cover ${isSelected ? 'border border-[#5d8a62]/40' : 'border border-line/70'}`}
+              className={`h-12 w-12 rounded-lg object-cover ${isSelected ? 'border border-success/40' : 'border border-line/70'}`}
             />
           ) : null}
           <div className="space-y-1">
-            <p className={`text-sm ${isSelected ? 'font-medium text-[#1f5a2d]' : 'text-ink'}`}>{atom.label}</p>
-            <p className={`text-[0.72rem] leading-5 ${isSelected ? 'text-[#41724b]' : 'text-muted'}`}>
+            <p className={`text-sm text-ink ${isSelected ? 'font-medium' : ''}`}>{atom.label}</p>
+            <p className="text-[0.72rem] leading-5 text-muted">
               {atom.type} · {atom.positionCount} positions
             </p>
-            {atom.description ? <p className={`text-[0.78rem] leading-6 ${isSelected ? 'text-[#41724b]' : 'text-muted'}`}>{atom.description}</p> : null}
-            <p className={`break-all font-mono text-[0.72rem] leading-5 ${isSelected ? 'text-[#41724b]' : 'text-muted'}`}>{atom.termId}</p>
+            {atom.description ? <p className="text-[0.78rem] leading-6 text-muted">{atom.description}</p> : null}
+            <p className="break-all font-mono text-[0.72rem] leading-5 text-muted">{atom.termId}</p>
           </div>
         </div>
 
         {isSelected ? (
-          <span className="inline-flex rounded-full border border-[#5d8a62] bg-white/80 px-3 py-1 text-[0.68rem] uppercase tracking-terminal text-[#1f5a2d]">
+          <span className="inline-flex rounded-full border border-success/40 bg-success/10 px-3 py-1 text-[0.68rem] uppercase tracking-terminal text-successInk">
             Selected
           </span>
         ) : (
@@ -248,7 +248,7 @@ export function ListMemberRowEditor({
 
           {row.selectedAtom ? (
             <div className="space-y-2">
-              <p className="text-[0.68rem] uppercase tracking-terminal text-[#41724b]">Chosen member atom</p>
+              <p className="text-[0.68rem] uppercase tracking-terminal text-successInk">Chosen member atom</p>
               <AtomResultCard atom={row.selectedAtom} tone="selected" />
             </div>
           ) : null}
@@ -288,7 +288,7 @@ export function ListMemberRowEditor({
             </div>
           ) : null}
 
-          {error ? <p className="text-sm leading-7 text-[#8a4b38]">{error}</p> : null}
+          {error ? <p className="text-sm leading-7 text-dangerInk">{error}</p> : null}
         </div>
       </div>
 

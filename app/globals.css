@@ -11,8 +11,11 @@
   --color-accent: 141 241 201;
   --color-accent-soft: 225 250 241;
   --color-success: 76 175 80;
+  --color-success-ink: 31 100 67;
   --color-warning: 255 149 0;
+  --color-warning-ink: 139 82 0;
   --color-danger: 255 59 48;
+  --color-danger-ink: 161 50 43;
   --color-surface: 255 255 255;
   --color-surface-soft: 245 245 245;
 }
@@ -32,8 +35,11 @@ html[data-theme='dark'] {
   --color-accent: 141 241 201;
   --color-accent-soft: 22 58 47;
   --color-success: 141 241 201;
+  --color-success-ink: 141 241 201;
   --color-warning: 255 149 0;
+  --color-warning-ink: 255 190 105;
   --color-danger: 255 59 48;
+  --color-danger-ink: 255 173 163;
   --color-surface: 42 42 42;
   --color-surface-soft: 51 51 51;
   background:

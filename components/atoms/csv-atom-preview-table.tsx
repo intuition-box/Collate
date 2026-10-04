@@ -60,7 +60,7 @@ export function CsvAtomPreviewTable({ rows }: { rows: CsvAtomParseRow[] }) {
                     {row.errors.length > 0 ? (
                       <div className="space-y-1">
                         {row.errors.map((error) => (
-                          <p key={`${row.atom.id}-${error}`} className="text-[#8a4b38]">
+                          <p key={`${row.atom.id}-${error}`} className="text-dangerInk">
                             {error}
                           </p>
                         ))}
@@ -102,7 +102,7 @@ function CsvImagePreview({
           }}
         />
         <div className="min-w-0 space-y-1">
-          <p className="text-[0.68rem] uppercase tracking-terminal text-[#1f8a62]">Preview ready</p>
+          <p className="text-[0.68rem] uppercase tracking-terminal text-successInk">Preview ready</p>
           <p className="truncate text-[0.72rem] leading-5 text-muted" title={trimmedImageValue}>
             {trimmedImageValue}
           </p>
@@ -113,8 +113,8 @@ function CsvImagePreview({
 
   if (trimmedImageValue) {
     return (
-      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#d9b9aa] bg-[#fff8f4] p-3">
-        <p className="text-[0.68rem] uppercase tracking-terminal text-[#8a4b38]">No preview</p>
+      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-danger/30 bg-danger/5 p-3">
+        <p className="text-[0.68rem] uppercase tracking-terminal text-dangerInk">No preview</p>
         <p className="mt-1 line-clamp-2 break-all text-[0.72rem] leading-5 text-muted" title={trimmedImageValue}>{trimmedImageValue}</p>
       </div>
     );

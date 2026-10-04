@@ -31,7 +31,7 @@ export function CsvListPreviewTable({ rows }: { rows: CsvListParseRow[] }) {
                   {entry.errors.length > 0 ? (
                     <div className="space-y-1">
                       {entry.errors.map((error) => (
-                        <p key={`${entry.row.id}-${error}`} className="text-[#8a4b38]">
+                        <p key={`${entry.row.id}-${error}`} className="text-dangerInk">
                           {error}
                         </p>
                       ))}

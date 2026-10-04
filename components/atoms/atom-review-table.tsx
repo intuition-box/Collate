@@ -73,12 +73,12 @@ export function AtomReviewTable({
                   <td className="px-3 py-3 align-top text-muted">
                     <p>{row.message}</p>
                     {row.payload.draft.image.trim() && !previewImageUrl ? (
-                      <p className="mt-1 text-[#8a4b38]">Image preview is unavailable because the image value is not a supported URL or IPFS reference.</p>
+                      <p className="mt-1 text-dangerInk">Image preview is unavailable because the image value is not a supported URL or IPFS reference.</p>
                     ) : null}
                     {row.payload.errors?.length ? (
                       <div className="mt-1 space-y-1">
                         {row.payload.errors.map((error) => (
-                          <p key={error} className="text-[#8a4b38]">{error}</p>
+                          <p key={error} className="text-dangerInk">{error}</p>
                         ))}
                       </div>
                     ) : null}

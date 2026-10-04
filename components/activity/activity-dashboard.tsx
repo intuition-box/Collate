@@ -335,7 +335,7 @@ export function ActivityDashboard() {
                       >
                         {isLoadingMore ? 'Loading...' : 'Load more activity'}
                       </button>
-                      {loadMoreError ? <p className="mt-3 text-xs text-danger">{loadMoreError}</p> : null}
+                      {loadMoreError ? <p className="mt-3 text-xs text-dangerInk">{loadMoreError}</p> : null}
                     </div>
                   ) : null}
                 </div>

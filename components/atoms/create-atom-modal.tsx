@@ -170,14 +170,14 @@ export function CreateAtomModal({
                     void handleCreate();
                   }}
                   disabled={isCreating}
-                  className="inline-flex rounded-full border border-[#5d8a62] bg-[#edf6ee] px-5 py-3 text-sm text-[#1f5a2d] transition-colors duration-150 hover:bg-[#dbeedc] disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
+                  className="inline-flex rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk transition-colors duration-150 hover:bg-accent/25 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
                 >
                   {isCreating ? 'Creating atom...' : hasNetworkMismatch ? 'Wrong network' : 'Create atom'}
                 </button>
               </div>
 
               {status ? <p className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
-              {error ? <p className="mt-4 text-sm leading-7 text-[#8a4b38]">{error}</p> : null}
+              {error ? <p className="mt-4 text-sm leading-7 text-dangerInk">{error}</p> : null}
             </div>
           </div>
         </div>

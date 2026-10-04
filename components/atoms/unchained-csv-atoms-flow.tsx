@@ -276,7 +276,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
                   <td className="p-3 align-top text-muted">{getClassification(atom.classification)?.displayName ?? atom.classification}</td>
                   <td className="max-w-72 p-3 align-top text-muted"><div className="break-words font-mono text-xs">{JSON.stringify(atom.values)}</div></td>
                   <td className="p-3 align-top text-muted">
-                    {errors.length ? <span className="text-[#8a4b38]">{errors.join(' ')}</span> : 'Ready for graph review.'}
+                    {errors.length ? <span className="text-dangerInk">{errors.join(' ')}</span> : 'Ready for graph review.'}
                     <button type="button" onClick={() => removeRow(atom.id)} className="mt-2 block text-xs text-ink underline underline-offset-4">Remove row</button>
                   </td>
                 </tr>
@@ -299,14 +299,14 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
             type="button"
             onClick={() => { void publish(); }}
             disabled={!reviewRows || !eligible.length || !canWrite || isReviewing || isPublishing || !!writeResult}
-            className="rounded-full border border-[#5d8a62] bg-[#edf6ee] px-5 py-3 text-sm text-[#1f5a2d] disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
+            className="rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
           >
             {isPublishing ? 'Publishing...' : writeResult ? 'Published' : 'Publish eligible atoms'}
           </button>
         </div>
         {disabledReason && !writeResult ? <p className="mt-3 text-sm text-muted">{disabledReason}</p> : null}
         {status ? <p className="mt-3 text-sm text-muted">{status}</p> : null}
-        {error ? <p className="mt-3 text-sm text-[#8a4b38]">{error}</p> : null}
+        {error ? <p className="mt-3 text-sm text-dangerInk">{error}</p> : null}
         {writeResult?.txHash ? (
           <a href={`${networkConfig.explorerUrl}/tx/${writeResult.txHash}`} target="_blank" rel="noreferrer" className="mt-3 block break-all font-mono text-xs text-ink underline underline-offset-4">
             View transaction: {writeResult.txHash}

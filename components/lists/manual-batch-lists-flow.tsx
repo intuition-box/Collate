@@ -293,7 +293,7 @@ export function ManualBatchListsFlow() {
             {publishDisabledReason ? <p className="mt-4 text-sm leading-7 text-muted">{publishDisabledReason}</p> : null}
 
             {status ? <p className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
-            {error ? <p className="mt-4 text-sm leading-7 text-[#8a4b38]">{error}</p> : null}
+            {error ? <p className="mt-4 text-sm leading-7 text-dangerInk">{error}</p> : null}
 
             {writeResult?.txHash ? (
               <div className="mt-4 rounded-xl border border-line/80 bg-white/75 p-4">

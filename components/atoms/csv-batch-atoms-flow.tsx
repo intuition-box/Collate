@@ -333,7 +333,7 @@ export function CsvBatchAtomsFlow() {
                   void handlePublish();
                 }}
                 disabled={!reviewRows || creatableAtoms.length === 0 || !canWrite || isPublishing || isReviewing || isParsing}
-                className="inline-flex rounded-full border border-[#5d8a62] bg-[#edf6ee] px-5 py-3 text-sm text-[#1f5a2d] transition-colors duration-150 hover:bg-[#dbeedc] disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
+                className="inline-flex rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk transition-colors duration-150 hover:bg-accent/25 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
               >
                 {isPublishing ? 'Publishing batch...' : hasNetworkMismatch ? 'Wrong network' : 'Publish eligible CSV atoms'}
               </button>
@@ -342,7 +342,7 @@ export function CsvBatchAtomsFlow() {
             {publishDisabledReason ? <p className="mt-4 text-sm leading-7 text-muted">{publishDisabledReason}</p> : null}
 
             {status ? <p className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
-            {error ? <p className="mt-4 text-sm leading-7 text-[#8a4b38]">{error}</p> : null}
+            {error ? <p className="mt-4 text-sm leading-7 text-dangerInk">{error}</p> : null}
 
             {writeResult?.txHash ? (
               <div className="mt-4 rounded-xl border border-line/80 bg-white/75 p-4">

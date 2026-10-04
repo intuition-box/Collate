@@ -12,7 +12,7 @@ export function ClearFormButton({ disabled = false, label = 'Clear form', onClic
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-full border border-[#c98673]/30 bg-[#fff7f4] px-4 py-2 text-sm text-[#8a4b38] transition-colors duration-150 hover:border-[#8a4b38]/35 hover:bg-[#fbe9e2] disabled:cursor-not-allowed disabled:border-line disabled:bg-white/60 disabled:text-muted disabled:opacity-60"
+      className="inline-flex items-center gap-2 rounded-full border border-danger/30 bg-danger/5 px-4 py-2 text-sm text-dangerInk transition-colors duration-150 hover:border-danger/50 hover:bg-danger/10 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
     >
       <svg
         aria-hidden="true"

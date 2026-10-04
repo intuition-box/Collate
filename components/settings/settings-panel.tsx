@@ -127,7 +127,7 @@ export function SettingsPanel() {
             required
             className="w-full rounded-[1rem] border border-line bg-paper/45 px-4 py-3 text-ink outline-none transition-colors focus:border-ink/35"
           />
-          {error ? <p className="text-sm text-danger" role="alert">{error}</p> : null}
+          {error ? <p className="text-sm text-dangerInk" role="alert">{error}</p> : null}
           <button
             type="submit"
             disabled={isSubmitting || !password}
@@ -185,8 +185,8 @@ export function SettingsPanel() {
 
       <div className="flex flex-col gap-4 border-t border-line/75 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <div aria-live="polite">
-          {message ? <p className="text-sm text-success">{message}</p> : null}
-          {error ? <p className="text-sm text-danger" role="alert">{error}</p> : null}
+          {message ? <p className="text-sm text-successInk">{message}</p> : null}
+          {error ? <p className="text-sm text-dangerInk" role="alert">{error}</p> : null}
         </div>
         <button
           type="button"

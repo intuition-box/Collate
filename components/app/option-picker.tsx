@@ -239,7 +239,7 @@ export function OptionPicker({
                       tabIndex={-1}
                       onMouseEnter={() => setActiveIndex(index)}
                       onClick={() => choose(item)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-left outline-none transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${isSelected ? 'bg-accent-soft text-ink' : activeIndex === index ? 'bg-white text-ink' : 'text-ink hover:bg-white'}`}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-left outline-none transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${isSelected ? 'bg-accentSoft text-ink' : activeIndex === index ? 'bg-white text-ink' : 'text-ink hover:bg-white'}`}
                     >
                       {numbered && item.number ? <span className="w-6 shrink-0 font-mono text-xs text-muted">{String(item.number).padStart(2, '0')}</span> : null}
                       <span className="min-w-0 flex-1">

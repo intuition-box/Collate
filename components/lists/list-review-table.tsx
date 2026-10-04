@@ -116,7 +116,7 @@ function CandidateOption({
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-2">
             <span className="truncate text-sm text-ink">{atom.label}</span>
-            <span className={`shrink-0 text-[0.64rem] uppercase tracking-terminal ${isSelected ? 'text-success' : 'text-muted'}`}>
+            <span className={`shrink-0 text-[0.64rem] uppercase tracking-terminal ${isSelected ? 'text-successInk' : 'text-muted'}`}>
               {isSelected ? 'Selected' : `Option ${index + 1}`}
             </span>
           </span>
@@ -176,7 +176,7 @@ function CandidateOption({
           </dl>
 
           {isSelected ? (
-            <span className="mt-3 inline-flex rounded-full border border-success/30 bg-success/10 px-4 py-2 text-[0.76rem] text-success">
+            <span className="mt-3 inline-flex rounded-full border border-success/30 bg-success/10 px-4 py-2 text-[0.76rem] text-successInk">
               Currently selected
             </span>
           ) : (
@@ -277,7 +277,7 @@ export function ListReviewTable({
                     {row.payload.errors?.length ? (
                       <div className="mt-1 space-y-1">
                         {row.payload.errors.map((error) => (
-                          <p key={`${row.id}-${error}`} className="text-[#8a4b38]">
+                          <p key={`${row.id}-${error}`} className="text-dangerInk">
                             {error}
                           </p>
                         ))}

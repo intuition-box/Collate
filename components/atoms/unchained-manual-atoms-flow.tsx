@@ -211,7 +211,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
               type="button"
               onClick={() => { void publish(); }}
               disabled={!reviewRows || !eligible.length || !canWrite || isReviewing || isPublishing || !!writeResult}
-              className="rounded-full border border-[#5d8a62] bg-[#edf6ee] px-5 py-3 text-sm text-[#1f5a2d] disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
+              className="rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
             >
               {isPublishing ? 'Publishing...' : writeResult ? 'Published' : isSingle ? 'Publish atom' : 'Publish eligible atoms'}
             </button>
@@ -224,7 +224,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
         </div>
         {disabledReason && !writeResult ? <p className="mt-3 text-sm leading-6 text-muted">{disabledReason}</p> : null}
         {status ? <p className="mt-3 text-sm leading-6 text-muted">{status}</p> : null}
-        {error ? <p className="mt-3 text-sm leading-6 text-[#8a4b38]">{error}</p> : null}
+        {error ? <p className="mt-3 text-sm leading-6 text-dangerInk">{error}</p> : null}
         {writeResult?.txHash ? (
           <a href={`${networkConfig.explorerUrl}/tx/${writeResult.txHash}`} target="_blank" rel="noreferrer" className="mt-3 block break-all font-mono text-xs text-ink underline underline-offset-4">
             View transaction: {writeResult.txHash}

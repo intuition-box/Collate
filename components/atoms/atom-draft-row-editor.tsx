@@ -351,18 +351,18 @@ export function AtomDraftRowEditor({
                 </div>
               </div>
               {isPreparedLocalImage ? (
-                <div className="rounded-xl border border-[#5d8a62]/25 bg-[#edf6ee] p-4">
+                <div className="rounded-xl border border-success/30 bg-accentSoft p-4">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-3">
                       {imagePreviewUrl ? (
                         <img
                           src={imagePreviewUrl}
                           alt=""
-                          className="h-14 w-14 shrink-0 rounded-lg border border-[#5d8a62]/20 object-cover"
+                          className="h-14 w-14 shrink-0 rounded-lg border border-success/30 object-cover"
                         />
                       ) : null}
                       <div className="space-y-1">
-                        <p className="text-sm text-[#1f5a2d]">Local image prepared</p>
+                        <p className="text-sm text-successInk">Local image prepared</p>
                         <p className="text-sm leading-6 text-muted">
                           The image will be pinned inside this atom&apos;s metadata during review.
                         </p>
@@ -377,7 +377,7 @@ export function AtomDraftRowEditor({
                         setImageUploadError(null);
                       }}
                       disabled={disabled || imageUploadStatus === 'uploading'}
-                      className="inline-flex rounded-full border border-[#5d8a62]/30 bg-white/80 px-3 py-2 text-sm text-[#1f5a2d] transition-colors duration-150 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex rounded-full border border-success/30 bg-success/10 px-3 py-2 text-sm text-successInk transition-colors duration-150 hover:bg-success/20 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Remove
                     </button>
@@ -401,9 +401,9 @@ export function AtomDraftRowEditor({
                 <p>Local images are resized and converted to JPG before metadata pinning.</p>
                 {selectedImageName ? <p>Selected file: {selectedImageName}</p> : null}
                 {imageUploadStatus === 'uploaded' && draft.image.trim() ? (
-                  <p className="text-[#1f8a62]">{isPreparedLocalImage ? 'Image prepared for pinning during review.' : 'Image pinned and ready for this atom.'}</p>
+                  <p className="text-successInk">{isPreparedLocalImage ? 'Image prepared for pinning during review.' : 'Image pinned and ready for this atom.'}</p>
                 ) : null}
-                {imageUploadError ? <p className="text-[#8a4b38]">{imageUploadError}</p> : null}
+                {imageUploadError ? <p className="text-dangerInk">{imageUploadError}</p> : null}
               </div>
             </div>
             {(draft.schemaType === 'Person' || draft.schemaType === 'Organization') ? (
@@ -501,7 +501,7 @@ export function AtomDraftRowEditor({
           Similar atoms are checked automatically while you type, so creation does not start blind.
         </p>
 
-        {lookupError ? <p className="mt-3 text-sm leading-7 text-[#8a4b38]">{lookupError}</p> : null}
+        {lookupError ? <p className="mt-3 text-sm leading-7 text-dangerInk">{lookupError}</p> : null}
 
         {!hasLookupQuery ? (
           <p className="mt-3 text-sm leading-7 text-muted">
@@ -527,7 +527,7 @@ export function AtomDraftRowEditor({
                   key={result.termId}
                   className={
                     likelyExactMatch
-                      ? 'rounded-xl border border-[#5d8a62]/35 bg-[#edf6ee] p-4'
+                      ? 'rounded-xl border border-success/35 bg-accentSoft p-4'
                       : 'rounded-xl border border-line/80 bg-white/80 p-4'
                   }
                 >
@@ -546,7 +546,7 @@ export function AtomDraftRowEditor({
                           <span
                             className={
                               likelyExactMatch
-                                ? 'rounded-full border border-[#5d8a62]/25 bg-white/70 px-2 py-1 text-[0.68rem] uppercase tracking-terminal text-[#1f5a2d]'
+                                ? 'rounded-full border border-success/30 bg-success/10 px-2 py-1 text-[0.68rem] uppercase tracking-terminal text-successInk'
                                 : 'rounded-full border border-line/80 bg-paper/70 px-2 py-1 text-[0.68rem] uppercase tracking-terminal text-muted'
                             }
                           >
