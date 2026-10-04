@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getActivityDatabasePool } from '@/lib/activity/database';
+import { readRemoteActivitySummary, shouldReadRemoteActivity } from '@/lib/activity/remote-read';
 import type { PublicIntuitionNetwork } from '@/types/api';
 
 export const runtime = 'nodejs';
@@ -17,6 +18,17 @@ export async function GET(request: NextRequest) {
 
   if (network === undefined) {
     return NextResponse.json({ error: 'Unsupported network filter.' }, { status: 400 });
+  }
+
+  if (shouldReadRemoteActivity()) {
+    try {
+      return NextResponse.json(await readRemoteActivitySummary(network), {
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    } catch (error) {
+      console.error('[activity-summary] Unable to read live activity in development.', error);
+      return NextResponse.json({ error: 'Live activity is temporarily unavailable.' }, { status: 503 });
+    }
   }
 
   try {

@@ -1,90 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
+import { GraphImage } from '@/components/graph/graph-image';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
-import { getImagePreviewCandidates, resolveIntuitionImageUrl } from '@/lib/intuition/images';
+import { getGraphDetailHref } from '@/lib/intuition/graph-detail-route';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
-import type { ActivityAtomDetails, ConfirmedActivityItem } from '@/types/activity';
-
-function ActivityImage({ image, label, large = false }: { image: string | null; label: string; large?: boolean }) {
-  const candidates = getImagePreviewCandidates(image);
-  const [candidateIndex, setCandidateIndex] = useState(0);
-
-  useEffect(() => setCandidateIndex(0), [image]);
-
-  const size = large ? 'h-16 w-16 rounded-2xl' : 'h-12 w-12 rounded-xl';
-  if (candidateIndex >= candidates.length) {
-    return (
-      <span className={`flex shrink-0 items-center justify-center border border-line bg-paper/70 text-muted ${size}`} aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="h-5 w-5">
-          <path d="M4 5.5h16v13H4zM4 15l4.5-4.5 4 4 2.5-2.5 5 5M16.5 9h.01" />
-        </svg>
-      </span>
-    );
-  }
-
-  return (
-    <img
-      src={candidates[candidateIndex]}
-      alt={label}
-      loading="lazy"
-      onError={() => setCandidateIndex((index) => index + 1)}
-      className={`shrink-0 border border-line bg-paper object-cover ${size}`}
-    />
-  );
-}
-
-function sourceHref(url: string | null): string | null {
-  const resolved = resolveIntuitionImageUrl(url);
-  if (!resolved) return null;
-  try {
-    const parsed = new URL(resolved);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : null;
-  } catch {
-    return null;
-  }
-}
-
-function AtomDetails({ atom, role, missingReason = 'pending' }: { atom: ActivityAtomDetails | null; role?: string; missingReason?: 'pending' | 'unavailable' }) {
-  if (!atom) {
-    return (
-      <div className="min-w-0 rounded-xl border border-dashed border-line px-4 py-4 text-sm text-muted">
-        {role ? `${role}: ` : null}{unavailableCopy(missingReason)}
-      </div>
-    );
-  }
-
-  const href = sourceHref(atom.url);
-  return (
-    <div className="min-w-0 rounded-xl border border-line/80 bg-white/55 p-4">
-      {role ? <p className="mb-3 text-[0.65rem] uppercase tracking-terminal text-muted">{role}</p> : null}
-      <div className="flex min-w-0 items-start gap-3">
-        <ActivityImage image={atom.image} label={`${atom.label} image`} large />
-        <div className="min-w-0">
-          <p className="break-words text-sm font-semibold text-ink">{atom.label}</p>
-          {atom.type ? <p className="mt-1 text-xs text-muted">{atom.type}</p> : null}
-        </div>
-      </div>
-      {atom.description ? <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-muted">{atom.description}</p> : null}
-      {href ? (
-        <div className="mt-4 min-w-0">
-          <p className="text-[0.65rem] uppercase tracking-terminal text-muted">Source</p>
-          <a href={href} target="_blank" rel="noreferrer" className="mt-1 inline-block break-all text-xs font-medium text-ink underline decoration-line underline-offset-4 hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-            {atom.url}
-          </a>
-        </div>
-      ) : null}
-    </div>
-  );
-}
+import type { ConfirmedActivityItem } from '@/types/activity';
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
-function unavailableCopy(state: 'pending' | 'unavailable') {
-  return state === 'pending' ? 'Details are becoming available.' : 'Details unavailable right now.';
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value));
 }
 
 function titleFor(item: ConfirmedActivityItem): string {
@@ -102,86 +31,85 @@ function titleFor(item: ConfirmedActivityItem): string {
 
 function summaryFor(item: ConfirmedActivityItem): string {
   const display = item.display;
-  if (display.state === 'pending' || display.state === 'unavailable') return unavailableCopy(display.state);
+  if (display.state === 'pending') return 'Details are becoming available.';
+  if (display.state === 'unavailable') return 'Details unavailable right now.';
   if (display.atom) return display.atom.description ?? display.atom.type ?? 'Atom created on Intuition.';
   if (!display.triple) return 'Claim details are becoming available.';
-  if (display.state === 'partial') return unavailableCopy(display.reason ?? 'pending');
+  if (display.state === 'partial') {
+    return display.reason === 'unavailable' ? 'Some details are unavailable right now.' : 'Some details are becoming available.';
+  }
   return item.kind === 'list_entry'
     ? display.triple.subject?.description ?? 'A member was added to this list.'
     : 'A new connection on the knowledge graph.';
 }
 
-export function ActivityFeedItem({ item, expanded, onToggle }: { item: ConfirmedActivityItem; expanded: boolean; onToggle: () => void }) {
+export function ActivityFeedItem({ item }: { item: ConfirmedActivityItem }) {
   const networkConfig = getIntuitionNetwork(item.network);
   const title = titleFor(item);
+  const summary = summaryFor(item);
   const display = item.display;
   const thumbnail = display.state === 'ready' || display.state === 'partial'
     ? display.atom?.image ?? display.triple?.subject?.image ?? display.triple?.object?.image ?? null
     : null;
-  const detailsId = `activity-details-${item.id}`;
+  const detailHref = getGraphDetailHref(item.network, item.kind === 'atom' ? 'atom' : 'triple', item.protocolId);
 
   return (
-    <article className="min-w-0 px-4 py-4 sm:px-6 sm:py-5">
-      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-        <ActivityImage image={thumbnail} label={`${title} image`} />
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[0.65rem] uppercase tracking-terminal text-muted">
-            <span>{item.kind === 'atom' ? 'Atom' : item.kind === 'list_entry' ? 'List member' : 'Claim'}</span>
-            <span aria-hidden="true">·</span>
-            <span>{item.network}</span>
-          </div>
-          <button
-            type="button"
-            aria-expanded={expanded}
-            aria-controls={detailsId}
-            onClick={onToggle}
-            className="group mt-1.5 flex w-full min-w-0 items-start justify-between gap-3 rounded-lg text-left text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-          >
-            <span className="min-w-0 break-words text-sm font-semibold leading-6 sm:text-base">
-              {item.kind === 'list_entry' && display.triple ? (
-                <>Added <strong>{display.triple.subject?.label ?? 'a member'}</strong> to <strong>{display.triple.object?.label ?? 'a list'}</strong></>
-              ) : title}
-            </span>
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className={`mt-1 h-5 w-5 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}>
-              <path d="m5 7.5 5 5 5-5" />
-            </svg>
-          </button>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted sm:line-clamp-1">{summaryFor(item)}</p>
-          <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted">
-            <span>by</span>
-            <WalletIdentity address={item.creatorWallet} href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`} size={22} showAddress={false} />
-            <span aria-hidden="true">·</span>
-            <time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time>
-          </div>
+    <article className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2 transition-colors hover:bg-paper/40 sm:gap-4 sm:px-6 sm:py-2.5">
+      <GraphImage image={thumbnail} label={`${title} image`} compact />
+
+      <div className="min-w-0">
+        <Link
+          href={detailHref}
+          className="block w-fit max-w-full truncate rounded-sm text-sm font-semibold leading-5 text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          title={title}
+        >
+          {title}
+        </Link>
+        <p className="truncate text-xs leading-4 text-muted" title={summary}>{summary}</p>
+        <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-4 text-muted">
+          <span>{item.kind === 'atom' ? 'Atom' : item.kind === 'list_entry' ? 'List member' : 'Claim'}</span>
+          <span aria-hidden="true">·</span>
+          <span>{item.network === 'mainnet' ? 'Mainnet' : 'Testnet'}</span>
+          <span aria-hidden="true">·</span>
+          <span>by</span>
+          <WalletIdentity
+            address={item.creatorWallet}
+            href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`}
+            size={18}
+            showAddress={false}
+            className="max-w-[8rem] sm:max-w-[12rem]"
+          />
+          <span aria-hidden="true" className="md:hidden">·</span>
+          <time dateTime={item.createdAt} title={formatDate(item.createdAt)} className="whitespace-nowrap md:hidden">{formatShortDate(item.createdAt)}</time>
         </div>
       </div>
 
-      {expanded ? (
-        <div id={detailsId} className="mt-5 min-w-0 border-t border-line/70 pt-5 sm:ml-16">
-          {display.state === 'pending' || display.state === 'unavailable' ? (
-            <p className="rounded-xl border border-dashed border-line px-4 py-5 text-sm text-muted">{unavailableCopy(display.state)}</p>
-          ) : display.atom ? (
-            <AtomDetails atom={display.atom} />
-          ) : display.triple ? (
-            <>
-              {display.state === 'partial' ? <p className="mb-4 text-sm text-muted">{unavailableCopy(display.reason ?? 'pending')}</p> : null}
-              <div className="grid min-w-0 gap-3 md:grid-cols-3">
-                <AtomDetails atom={display.triple.subject} role="Subject" missingReason={display.reason ?? 'pending'} />
-                <AtomDetails atom={display.triple.predicate} role="Predicate" missingReason={display.reason ?? 'pending'} />
-                <AtomDetails atom={display.triple.object} role={item.kind === 'list_entry' ? 'List' : 'Object'} missingReason={display.reason ?? 'pending'} />
-              </div>
-            </>
-          ) : null}
-          <a
-            href={`${networkConfig.explorerUrl}/tx/${item.txHash}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 inline-flex items-center gap-1.5 rounded-lg text-xs font-medium text-muted underline decoration-line underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            View transaction <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      ) : null}
+      <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <time dateTime={item.createdAt} className="hidden whitespace-nowrap text-xs text-muted md:block">
+          {formatDate(item.createdAt)}
+        </time>
+        <a
+          href={`${networkConfig.explorerUrl}/tx/${item.txHash}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`View transaction for ${title}`}
+          title="View transaction"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+            <path d="M8 5h7v7M15 5l-9 9M13 15H5V7" />
+          </svg>
+        </a>
+        <Link
+          href={detailHref}
+          aria-label={`View details for ${title}`}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-ink/30 hover:bg-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4">
+            <path d="M4 10h11M11 6l4 4-4 4" />
+          </svg>
+        </Link>
+      </div>
     </article>
   );
 }

@@ -3,6 +3,7 @@ import { isAddress } from 'viem';
 
 import { getActivityDatabasePool } from '@/lib/activity/database';
 import { enrichActivityItems } from '@/lib/activity/enrich-items';
+import { readRemoteActivityItems, shouldReadRemoteActivity } from '@/lib/activity/remote-read';
 import type { ActivityItemRecord } from '@/types/activity';
 
 export const runtime = 'nodejs';
@@ -31,6 +32,21 @@ export async function GET(request: NextRequest) {
 
   if (cursor && (!/^\d+$/.test(cursor) || cursor === '0')) {
     return NextResponse.json({ error: 'Cursor is invalid.' }, { status: 400 });
+  }
+
+  if (shouldReadRemoteActivity()) {
+    try {
+      return NextResponse.json(await readRemoteActivityItems({
+        network: network === 'mainnet' || network === 'testnet' ? network : null,
+        kind: kind === 'atom' || kind === 'list_entry' || kind === 'claim' ? kind : null,
+        wallet,
+        cursor,
+        limit,
+      }), { headers: { 'Cache-Control': 'no-store' } });
+    } catch (error) {
+      console.error('[activity-items] Unable to read live activity in development.', error);
+      return NextResponse.json({ error: 'Live activity is temporarily unavailable.' }, { status: 503 });
+    }
   }
 
   const clauses: string[] = [];

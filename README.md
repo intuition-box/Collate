@@ -35,6 +35,7 @@ Required:
 Optional overrides:
 
 - `DATABASE_URL`
+- `ACTIVITY_READ_ORIGIN` (development-only activity read source; defaults to `https://collate.intuition.box`)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 - `NEXT_PUBLIC_APP_URL`
 - `ETHEREUM_RPC_URL`
@@ -65,14 +66,16 @@ Run the dev server:
 npm run dev
 ```
 
-To exercise activity tracking locally, point `DATABASE_URL` at a local PostgreSQL database and apply the schema:
+Without `DATABASE_URL`, the local Activity page reads the deployed Collate feed and leaderboard. This is read-only: creations published from localhost are not added to the live activity totals. Set `ACTIVITY_READ_ORIGIN` only if the deployed site moves.
+
+To record activity from local publishes, point `DATABASE_URL` at a separate development PostgreSQL database and apply the schema:
 
 ```bash
 npm run db:migrate
 npm run dev
 ```
 
-Ordinary `npm run dev` remains supported without PostgreSQL for work unrelated to activity tracking. Protocol publishing still works, while activity APIs remain unavailable until `DATABASE_URL` is configured.
+The development database path takes priority whenever `DATABASE_URL` is set. Production never falls back to the remote read source.
 
 Open:
 

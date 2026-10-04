@@ -1,4 +1,5 @@
 import { queryIntuitionGraph } from '@/lib/intuition/graph';
+import { GRAPH_ATOM_FIELDS, mapGraphAtom, type GraphAtom } from '@/lib/intuition/graph-atoms';
 import type { ActivityAtomDetails, ActivityItemRecord, ConfirmedActivityItem } from '@/types/activity';
 import type { PublicIntuitionNetwork } from '@/types/api';
 
@@ -8,36 +9,10 @@ const GRAPH_TIMEOUT_MS = 4000;
 const ACTIVITY_ATOMS_QUERY = `
   query ActivityAtoms($ids: [String!]!, $limit: Int!) {
     atoms(where: { term_id: { _in: $ids } }, limit: $limit) {
-      term_id
-      label
-      type
-      image
-      value {
-        thing { description image url }
-        person { description image url }
-        organization { description image url }
-      }
+      ${GRAPH_ATOM_FIELDS}
     }
   }
 `;
-
-interface GraphAtom {
-  term_id: string;
-  label: string | null;
-  type: string | null;
-  image?: string | null;
-  value?: {
-    thing?: GraphValue | null;
-    person?: GraphValue | null;
-    organization?: GraphValue | null;
-  } | null;
-}
-
-interface GraphValue {
-  description?: string | null;
-  image?: string | null;
-  url?: string | null;
-}
 
 export type ActivityAtomFetcher = (
   network: PublicIntuitionNetwork,
@@ -53,24 +28,6 @@ async function fetchActivityAtoms(network: PublicIntuitionNetwork, ids: string[]
     signal,
   );
   return response.atoms;
-}
-
-function normalized(value: string | null | undefined): string | null {
-  return value?.trim() || null;
-}
-
-function toDetails(atom: GraphAtom): ActivityAtomDetails | null {
-  const label = normalized(atom.label);
-  if (!label) return null;
-
-  const value = atom.value?.thing ?? atom.value?.person ?? atom.value?.organization;
-  return {
-    label,
-    type: normalized(atom.type),
-    image: normalized(value?.image) ?? normalized(atom.image),
-    description: normalized(value?.description),
-    url: normalized(value?.url),
-  };
 }
 
 function itemIds(item: ActivityItemRecord): string[] {
@@ -113,7 +70,7 @@ export async function enrichActivityItems(
         const requested = new Set(ids.map((id) => id.toLowerCase()));
         for (const atom of atoms) {
           if (!requested.has(atom.term_id.toLowerCase())) continue;
-          const mapped = toDetails(atom);
+          const mapped = mapGraphAtom(atom);
           if (mapped) details.set(graphKey(network, atom.term_id), mapped);
         }
       } catch (error) {

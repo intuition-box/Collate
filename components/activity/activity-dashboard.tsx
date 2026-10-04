@@ -73,13 +73,11 @@ export function ActivityDashboard() {
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const loadMoreController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     loadMoreController.current?.abort();
-    setExpandedItemId(null);
 
     async function loadDashboard() {
       setIsLoading(true);
@@ -324,14 +322,7 @@ export function ActivityDashboard() {
               ) : (
                 <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-line/90 bg-white/72">
                   <div className="divide-y divide-line/65">
-                    {items.map((item) => (
-                      <ActivityFeedItem
-                        key={item.id}
-                        item={item}
-                        expanded={expandedItemId === item.id}
-                        onToggle={() => setExpandedItemId((current) => current === item.id ? null : item.id)}
-                      />
-                    ))}
+                    {items.map((item) => <ActivityFeedItem key={item.id} item={item} />)}
                   </div>
 
                   {nextCursor ? (
