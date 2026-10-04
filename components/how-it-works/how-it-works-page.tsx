@@ -112,13 +112,19 @@ function GuideTaskIcon({ id, selected }: { id: HowItWorksGuideId; selected: bool
 
 function VisualShell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div role="img" aria-label={label} className="overflow-hidden rounded-2xl border border-line bg-white/85">
-      <div className="flex items-center justify-between border-b border-line px-4 py-3">
-        <p className="text-xs uppercase tracking-terminal text-muted">{label}</p>
-        <span className="h-2 w-2 rounded-full bg-ink/20" />
+    <figure role="img" aria-label={label} className="pointer-events-none select-none overflow-hidden rounded-3xl border border-line bg-paper/70 p-2 sm:p-3">
+      <div aria-hidden="true" className="overflow-hidden rounded-2xl border border-line bg-white/90">
+        <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-ink/25" />
+            <span className="h-1.5 w-1.5 rounded-full bg-ink/15" />
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+          </span>
+          <span className="ml-auto text-xs font-medium uppercase tracking-terminal text-muted">{label}</span>
+        </div>
+        <div className="p-4 sm:p-5">{children}</div>
       </div>
-      <div className="p-4 sm:p-5">{children}</div>
-    </div>
+    </figure>
   );
 }
 
