@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 
 import { ActivityOutboxProvider } from '@/components/app/activity-outbox-provider';
+import { PublishToastProvider } from '@/components/app/publish-toast-provider';
 import { ThemeProvider } from '@/components/app/theme-provider';
 import { WalletProvider } from '@/components/wallet/wallet-provider';
 import './globals.css';
@@ -37,9 +38,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
       <body className="font-sans">
         <ThemeProvider>
-          <ActivityOutboxProvider>
-            <WalletProvider>{children}</WalletProvider>
-          </ActivityOutboxProvider>
+          <PublishToastProvider>
+            <ActivityOutboxProvider>
+              <WalletProvider>{children}</WalletProvider>
+            </ActivityOutboxProvider>
+          </PublishToastProvider>
         </ThemeProvider>
       </body>
     </html>

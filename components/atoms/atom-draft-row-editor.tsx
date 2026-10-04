@@ -333,7 +333,7 @@ export function AtomDraftRowEditor({
                     disabled={disabled || imageUploadStatus === 'uploading' || isPreparedLocalImage}
                     className="inline-flex rounded-full border border-line bg-white/80 px-3 py-2 text-sm text-ink transition-colors duration-150 hover:border-ink/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {imageUploadStatus === 'uploading' ? 'Pinning...' : 'Pin from URL'}
+                    {imageUploadStatus === 'uploading' ? 'Pinning image...' : 'Pin image from URL'}
                   </button>
                   <label className="inline-flex cursor-pointer rounded-full border border-line bg-white/80 px-3 py-2 text-sm text-ink transition-colors duration-150 hover:border-ink/15 disabled:cursor-not-allowed disabled:opacity-60">
                     <input
@@ -397,7 +397,7 @@ export function AtomDraftRowEditor({
                 />
               )}
               <div className="space-y-1 text-sm leading-6 text-muted">
-                <p>Upload your own image, or paste a public HTTPS image URL and select Pin from URL to save a copy through Intuition.</p>
+                <p>Upload your own image, or paste a public HTTPS image URL and select Pin image from URL to save a copy to IPFS through Intuition.</p>
                 <p>Local images are resized and converted to JPG before metadata pinning.</p>
                 {selectedImageName ? <p>Selected file: {selectedImageName}</p> : null}
                 {imageUploadStatus === 'uploaded' && draft.image.trim() ? (

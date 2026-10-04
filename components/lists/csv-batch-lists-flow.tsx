@@ -7,6 +7,8 @@ import { useAccount, useChainId, useWalletClient } from 'wagmi';
 import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { AtomSearchSelect } from '@/components/lists/atom-search-select';
 import { CsvListPreviewTable } from '@/components/lists/csv-list-preview-table';
@@ -33,6 +35,7 @@ export function CsvBatchListsFlow() {
   const chainId = useChainId();
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
+  const showConfirmedPublish = usePublishToast();
 
   const [listQuery, setListQuery] = useState('');
   const [listAtom, setListAtom] = useState<IntuitionAtomSearchResult | null>(null);
@@ -223,6 +226,7 @@ export function CsvBatchListsFlow() {
 
       setWriteResult(result);
       setStatus(`CSV batch confirmed. ${result.createdIds.length} list entries were created on ${networkConfig.name}.`);
+      showConfirmedPublish({ result, kind: 'list_entry', network });
     } catch (caughtError) {
       setStatus(null);
       setError(caughtError instanceof Error ? `CSV list publish failed: ${caughtError.message}` : 'CSV list publish failed.');
@@ -421,17 +425,7 @@ export function CsvBatchListsFlow() {
             {error ? <p className="mt-4 text-sm leading-7 text-dangerInk">{error}</p> : null}
 
             {writeResult?.txHash ? (
-              <div className="mt-4 rounded-xl border border-line/80 bg-white/75 p-4">
-                <p className="text-[0.68rem] uppercase tracking-terminal text-muted">Transaction</p>
-                <a
-                  href={`${networkConfig.explorerUrl}/tx/${writeResult.txHash}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex break-all font-mono text-[0.78rem] leading-6 text-ink underline decoration-line underline-offset-4"
-                >
-                  {writeResult.txHash}
-                </a>
-              </div>
+              <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
             ) : null}
           </div>
     </div>

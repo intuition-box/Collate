@@ -7,6 +7,8 @@ import { useAccount, useChainId, useWalletClient } from 'wagmi';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { UnchainedAtomReviewTable } from '@/components/atoms/unchained-atom-review-table';
 import { UnchainedManualAtomEditor } from '@/components/atoms/unchained-manual-atom-editor';
 import { publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
@@ -31,6 +33,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
   const chainId = useChainId();
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
+  const showConfirmedPublish = usePublishToast();
   const [drafts, setDrafts] = useState<UnchainedManualAtomDraft[]>(() => initialDrafts(mode));
   const [reviewRows, setReviewRows] = useState<UnchainedAtomReviewRow[] | null>(null);
   const [approvedMatchIds, setApprovedMatchIds] = useState<Set<string>>(new Set());
@@ -144,6 +147,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
       });
       setWriteResult(result);
       setStatus(`Transaction confirmed. ${result.createdIds.length} canonical ${result.createdIds.length === 1 ? 'atom was' : 'atoms were'} created on ${networkConfig.name}.`);
+      showConfirmedPublish({ result, kind: 'atom', network });
     } catch (caughtError) {
       setStatus(null);
       setError(caughtError instanceof Error ? `Atom publish failed: ${caughtError.message}` : 'Atom publish failed.');
@@ -226,9 +230,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
         {status ? <p className="mt-3 text-sm leading-6 text-muted">{status}</p> : null}
         {error ? <p className="mt-3 text-sm leading-6 text-dangerInk">{error}</p> : null}
         {writeResult?.txHash ? (
-          <a href={`${networkConfig.explorerUrl}/tx/${writeResult.txHash}`} target="_blank" rel="noreferrer" className="mt-3 block break-all font-mono text-xs text-ink underline underline-offset-4">
-            View transaction: {writeResult.txHash}
-          </a>
+          <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
         ) : null}
       </div>
     </div>

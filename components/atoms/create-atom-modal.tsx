@@ -5,6 +5,7 @@ import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { usePublishToast } from '@/components/app/publish-toast-provider';
 import { AtomDraftRowEditor } from '@/components/atoms/atom-draft-row-editor';
 import { createEmptyAtomDraft } from '@/lib/intuition/atom-prepare';
 import { mapPreparedAtomToSearchResult } from '@/lib/intuition/atom-search-result';
@@ -44,6 +45,7 @@ export function CreateAtomModal({
   onCreated: (atom: IntuitionAtomSearchResult) => void;
 }) {
   const { network } = useSelectedNetwork();
+  const showConfirmedPublish = usePublishToast();
   const { address, status: accountStatus } = useAccount();
   const chainId = useChainId();
   const { data: walletClient } = useWalletClient();
@@ -108,6 +110,7 @@ export function CreateAtomModal({
           ? `This atom already exists. Using the existing atom as the ${contextLabel}.`
           : createdStatus,
       );
+      showConfirmedPublish({ result: writeResult, kind: 'atom', network });
       onCreated(createdAtom);
     } catch (caughtError) {
       setStatus(null);

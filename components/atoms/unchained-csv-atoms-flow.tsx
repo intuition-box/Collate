@@ -9,6 +9,8 @@ import { FlowSteps } from '@/components/app/flow-steps';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { UnchainedClassificationPicker } from '@/components/atoms/unchained-classification-picker';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { getUnchainedAtomDisplayName, parseUnchainedAtomCsvText } from '@/lib/csv/unchained-atom-csv';
 import { downloadUnchainedAtomCsvTemplate, getUnchainedAtomCsvTemplate } from '@/lib/csv/unchained-atom-templates';
 import { publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
@@ -28,6 +30,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
   const chainId = useChainId();
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
+  const showConfirmedPublish = usePublishToast();
   const [classification, setClassification] = useState(STARTER_CLASSIFICATION);
   const [csvText, setCsvText] = useState(STARTER_CSV);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -179,6 +182,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
       });
       setWriteResult(result);
       setStatus(`Transaction confirmed. ${result.createdIds.length} canonical atoms were created on ${networkConfig.name}.`);
+      showConfirmedPublish({ result, kind: 'atom', network });
     } catch (caughtError) {
       setStatus(null);
       setError(caughtError instanceof Error ? `Publish failed: ${caughtError.message}` : 'Publish failed. No success was recorded.');
@@ -308,9 +312,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
         {status ? <p className="mt-3 text-sm text-muted">{status}</p> : null}
         {error ? <p className="mt-3 text-sm text-dangerInk">{error}</p> : null}
         {writeResult?.txHash ? (
-          <a href={`${networkConfig.explorerUrl}/tx/${writeResult.txHash}`} target="_blank" rel="noreferrer" className="mt-3 block break-all font-mono text-xs text-ink underline underline-offset-4">
-            View transaction: {writeResult.txHash}
-          </a>
+          <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
         ) : null}
       </div>
     </div>
