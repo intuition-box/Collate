@@ -60,7 +60,7 @@ export function CsvAtomPreviewTable({ rows }: { rows: CsvAtomParseRow[] }) {
                     {row.errors.length > 0 ? (
                       <div className="space-y-1">
                         {row.errors.map((error) => (
-                          <p key={`${row.atom.id}-${error}`} className="text-dangerInk">
+                          <p key={`${row.atom.id}-${error}`} className="break-words text-dangerInk [overflow-wrap:anywhere]">
                             {error}
                           </p>
                         ))}

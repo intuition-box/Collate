@@ -277,7 +277,7 @@ export function ListReviewTable({
                     {row.payload.errors?.length ? (
                       <div className="mt-1 space-y-1">
                         {row.payload.errors.map((error) => (
-                          <p key={`${row.id}-${error}`} className="text-dangerInk">
+                          <p key={`${row.id}-${error}`} className="break-words text-dangerInk [overflow-wrap:anywhere]">
                             {error}
                           </p>
                         ))}

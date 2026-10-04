@@ -5,6 +5,7 @@ import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
 import { AtomDraftRowEditor } from '@/components/atoms/atom-draft-row-editor';
 import { createEmptyAtomDraft } from '@/lib/intuition/atom-prepare';
@@ -180,7 +181,7 @@ export function CreateAtomModal({
               </div>
 
               {status ? <p className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
-              {error ? <p className="mt-4 text-sm leading-7 text-dangerInk">{error}</p> : null}
+              {error ? <ErrorNotice message={error} className="mt-4" /> : null}
             </div>
           </div>
         </div>

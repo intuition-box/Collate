@@ -5,6 +5,7 @@ import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
 import { ClearFormButton } from '@/components/app/clear-form-button';
+import { ErrorNotice } from '@/components/app/error-notice';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
@@ -228,7 +229,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
         </div>
         {disabledReason && !writeResult ? <p className="mt-3 text-sm leading-6 text-muted">{disabledReason}</p> : null}
         {status ? <p className="mt-3 text-sm leading-6 text-muted">{status}</p> : null}
-        {error ? <p className="mt-3 text-sm leading-6 text-dangerInk">{error}</p> : null}
+        {error ? <ErrorNotice message={error} className="mt-3" /> : null}
         {writeResult?.txHash ? (
           <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
         ) : null}

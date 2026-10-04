@@ -78,7 +78,7 @@ export function AtomReviewTable({
                     {row.payload.errors?.length ? (
                       <div className="mt-1 space-y-1">
                         {row.payload.errors.map((error) => (
-                          <p key={error} className="text-dangerInk">{error}</p>
+                          <p key={error} className="break-words text-dangerInk [overflow-wrap:anywhere]">{error}</p>
                         ))}
                       </div>
                     ) : null}

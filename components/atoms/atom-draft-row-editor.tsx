@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 
 import { OptionPicker } from '@/components/app/option-picker';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { ErrorNotice } from '@/components/app/error-notice';
 import { CLASSIC_ATOM_TYPE_OPTIONS } from '@/components/atoms/classic-atom-type-options';
 import {
   getImageDataUri,
@@ -403,7 +404,7 @@ export function AtomDraftRowEditor({
                 {imageUploadStatus === 'uploaded' && draft.image.trim() ? (
                   <p className="text-successInk">{isPreparedLocalImage ? 'Image prepared for pinning during review.' : 'Image pinned and ready for this atom.'}</p>
                 ) : null}
-                {imageUploadError ? <p className="text-dangerInk">{imageUploadError}</p> : null}
+                {imageUploadError ? <ErrorNotice message={imageUploadError} /> : null}
               </div>
             </div>
             {(draft.schemaType === 'Person' || draft.schemaType === 'Organization') ? (
@@ -501,7 +502,7 @@ export function AtomDraftRowEditor({
           Similar atoms are checked automatically while you type, so creation does not start blind.
         </p>
 
-        {lookupError ? <p className="mt-3 text-sm leading-7 text-dangerInk">{lookupError}</p> : null}
+        {lookupError ? <ErrorNotice message={lookupError} className="mt-3" /> : null}
 
         {!hasLookupQuery ? (
           <p className="mt-3 text-sm leading-7 text-muted">

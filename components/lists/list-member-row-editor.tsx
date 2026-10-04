@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CreateAtomModal } from '@/components/atoms/create-atom-modal';
+import { ErrorNotice } from '@/components/app/error-notice';
 import { resolveIntuitionImageUrl } from '@/lib/intuition/images';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import { searchAtoms } from '@/lib/intuition/search';
@@ -288,7 +289,7 @@ export function ListMemberRowEditor({
             </div>
           ) : null}
 
-          {error ? <p className="text-sm leading-7 text-dangerInk">{error}</p> : null}
+          {error ? <ErrorNotice message={error} /> : null}
         </div>
       </div>
 

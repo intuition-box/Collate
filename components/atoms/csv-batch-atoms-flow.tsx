@@ -7,6 +7,7 @@ import { useAccount, useChainId, useWalletClient } from 'wagmi';
 import { OptionPicker } from '@/components/app/option-picker';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { ClearFormButton } from '@/components/app/clear-form-button';
@@ -346,7 +347,7 @@ export function CsvBatchAtomsFlow() {
             {publishDisabledReason ? <p className="mt-4 text-sm leading-7 text-muted">{publishDisabledReason}</p> : null}
 
             {status ? <p className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
-            {error ? <p className="mt-4 text-sm leading-7 text-dangerInk">{error}</p> : null}
+            {error ? <ErrorNotice message={error} className="mt-4" /> : null}
 
             {writeResult?.txHash ? (
               <TransactionExplorerLink network={network} txHash={writeResult.txHash} />

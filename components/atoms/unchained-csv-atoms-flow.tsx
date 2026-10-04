@@ -9,6 +9,7 @@ import { FlowSteps } from '@/components/app/flow-steps';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { UnchainedClassificationPicker } from '@/components/atoms/unchained-classification-picker';
 import { useSelectedNetwork } from '@/components/app/network-provider';
+import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { getUnchainedAtomDisplayName, parseUnchainedAtomCsvText } from '@/lib/csv/unchained-atom-csv';
@@ -280,7 +281,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
                   <td className="p-3 align-top text-muted">{getClassification(atom.classification)?.displayName ?? atom.classification}</td>
                   <td className="max-w-72 p-3 align-top text-muted"><div className="break-words font-mono text-xs">{JSON.stringify(atom.values)}</div></td>
                   <td className="p-3 align-top text-muted">
-                    {errors.length ? <span className="text-dangerInk">{errors.join(' ')}</span> : 'Ready for graph review.'}
+                    {errors.length ? <span className="break-words text-dangerInk [overflow-wrap:anywhere]">{errors.join(' ')}</span> : 'Ready for graph review.'}
                     <button type="button" onClick={() => removeRow(atom.id)} className="mt-2 block text-xs text-ink underline underline-offset-4">Remove row</button>
                   </td>
                 </tr>
@@ -310,7 +311,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
         </div>
         {disabledReason && !writeResult ? <p className="mt-3 text-sm text-muted">{disabledReason}</p> : null}
         {status ? <p className="mt-3 text-sm text-muted">{status}</p> : null}
-        {error ? <p className="mt-3 text-sm text-dangerInk">{error}</p> : null}
+        {error ? <ErrorNotice message={error} className="mt-3" /> : null}
         {writeResult?.txHash ? (
           <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
         ) : null}
