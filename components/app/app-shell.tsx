@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -25,7 +26,7 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
   const navItems = showActivity ? [...CORE_NAV_ITEMS, { href: '/activity', label: 'Activity', shortLabel: 'Activity' }] : CORE_NAV_ITEMS;
 
   return (
-    <div className="min-h-screen w-full overflow-x-clip pb-16 pt-8 sm:pt-10">
+    <div className="flex min-h-screen w-full flex-col overflow-x-clip pt-8 sm:pt-10">
       <header
         className={`mx-auto grid w-full max-w-[92rem] min-w-0 items-center gap-4 px-5 sm:px-8 xl:grid-cols-[minmax(18rem,1fr)_auto_minmax(18rem,1fr)] ${
           isHome ? 'mb-0' : 'mb-10'
@@ -68,7 +69,24 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
           <WalletButton />
         </div>
       </header>
-      {fullBleed ? children : <div className="mx-auto w-full max-w-[92rem] px-5 sm:px-8">{children}</div>}
+      <div className={fullBleed ? 'w-full flex-1' : 'mx-auto w-full max-w-[92rem] flex-1 px-5 sm:px-8'}>{children}</div>
+      <footer className="mt-16 w-full border-t border-line/70">
+        <div className="mx-auto flex w-full max-w-[92rem] flex-col items-start gap-4 px-5 py-7 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <span>Collate is a community tool.</span>
+          <div className="flex items-center gap-2">
+            <span>Built on the</span>
+            <a
+              href="https://intuition.systems/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-sm font-medium text-ink underline-offset-4 transition-colors hover:text-muted hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+            >
+              <Image src="/brand/intuition-logo-mark-on-ink.png" alt="" width={28} height={28} className="rounded-full" />
+              <span>Intuition protocol</span>
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
