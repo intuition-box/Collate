@@ -3,6 +3,7 @@ import { isAddress } from 'viem';
 
 import { getActivityDatabasePool } from '@/lib/activity/database';
 import { enrichActivityItems } from '@/lib/activity/enrich-items';
+import { buildActivityItemsQuery } from '@/lib/activity/items-query';
 import { readRemoteActivityItems, shouldReadRemoteActivity } from '@/lib/activity/remote-read';
 import type { ActivityItemRecord } from '@/types/activity';
 
@@ -49,18 +50,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const clauses: string[] = [];
-  const values: unknown[] = [];
-  const addFilter = (sql: string, value: unknown) => {
-    values.push(value);
-    clauses.push(sql.replace('?', `$${values.length}`));
-  };
-
-  if (network) addFilter('network = ?', network);
-  if (kind) addFilter('item_kind = ?', kind);
-  if (wallet) addFilter('LOWER(creator_wallet) = LOWER(?)', wallet);
-  if (cursor) addFilter('id < ?', cursor);
-  values.push(limit + 1);
+  const query = buildActivityItemsQuery({
+    network: network === 'mainnet' || network === 'testnet' ? network : null,
+    kind: kind === 'atom' || kind === 'list_entry' || kind === 'claim' ? kind : null,
+    wallet,
+    cursor,
+    limit,
+  });
 
   try {
     const result = await getActivityDatabasePool().query<{
@@ -75,15 +71,7 @@ export async function GET(request: NextRequest) {
       object_id: string | null;
       block_number: string;
       created_at: Date | string;
-    }>(
-      `SELECT id::text, item_kind, network, tx_hash, creator_wallet, protocol_id,
-        subject_id, predicate_id, object_id, block_number::text, created_at
-      FROM collate_activity_items
-      ${clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''}
-      ORDER BY id DESC
-      LIMIT $${values.length}`,
-      values,
-    );
+    }>(query.text, query.values);
     const hasMore = result.rows.length > limit;
     const rows = result.rows.slice(0, limit);
 
