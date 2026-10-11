@@ -5,6 +5,7 @@ import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
 import { ClearFormButton } from '@/components/app/clear-form-button';
+import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
@@ -14,6 +15,7 @@ import { UnchainedAtomReviewTable } from '@/components/atoms/unchained-atom-revi
 import { UnchainedManualAtomEditor } from '@/components/atoms/unchained-manual-atom-editor';
 import { publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { getCreatableUnchainedAtoms, reviewUnchainedAtoms } from '@/lib/intuition/unchained-csv-atoms';
 import { createUnchainedManualAtomDraft, prepareUnchainedManualAtom } from '@/lib/intuition/unchained-manual-atoms';
@@ -84,7 +86,9 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
   }
 
   function addDraft() {
-    setDrafts((current) => [...current, createUnchainedManualAtomDraft()]);
+    setDrafts((current) =>
+      current.length < MAX_CREATION_ITEMS_PER_TRANSACTION ? [...current, createUnchainedManualAtomDraft()] : current,
+    );
     clearReview();
   }
 
@@ -193,13 +197,20 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
 
       <div className="flex flex-wrap gap-3">
         {isSingle ? null : (
-          <button type="button" onClick={addDraft} disabled={isReviewing || isPublishing} className="rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper disabled:opacity-60">
-            + Add atom
-          </button>
+          <DisabledActionTooltip
+            reason={drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION ? `Maximum ${MAX_CREATION_ITEMS_PER_TRANSACTION} atoms per transaction. Publish this batch before adding more.` : null}
+          >
+            <button type="button" onClick={addDraft} disabled={isReviewing || isPublishing || drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION} className="rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper disabled:cursor-not-allowed disabled:opacity-60">
+              + Add atom
+            </button>
+          </DisabledActionTooltip>
         )}
         <button type="button" onClick={() => { void review(); }} disabled={isReviewing || isPublishing} className="rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-ink disabled:opacity-60">
           {isReviewing ? `Reviewing ${isSingle ? 'atom' : 'atoms'}...` : `Review ${isSingle ? 'atom' : 'atoms'}`}
         </button>
+        {!isSingle ? (
+          <span className="self-center text-xs text-muted">{drafts.length} of {MAX_CREATION_ITEMS_PER_TRANSACTION} atom rows per transaction</span>
+        ) : null}
       </div>
 
       {reviewRows ? <UnchainedAtomReviewTable rows={reviewRows} nativeSymbol={networkConfig.nativeSymbol} onApproveDistinct={approveDistinct} /> : null}

@@ -1,9 +1,10 @@
 import { createEmptyAtomDraft, isRichAtomSchemaType, validateAtomDraft } from '@/lib/intuition/atom-prepare';
 import { findDuplicateHeaders, findHeaderIndex, parseCsvRows, slugifyCsvHeader } from '@/lib/csv/parse-csv';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createLocalId } from '@/lib/utils/ids';
 import type { AtomSchemaType, CsvAtomParseRow, CsvAtomRow } from '@/types/atoms';
 
-export const MAX_CSV_BATCH_SIZE = 50;
+export const MAX_CSV_BATCH_SIZE = MAX_CREATION_ITEMS_PER_TRANSACTION;
 
 export function normalizeCsvSchemaType(value: string): AtomSchemaType | null {
   const normalized = slugifyCsvHeader(value);

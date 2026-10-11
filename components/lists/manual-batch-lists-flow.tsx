@@ -15,6 +15,7 @@ import { ListMemberRowEditor } from '@/components/lists/list-member-row-editor';
 import { ListReviewTable } from '@/components/lists/list-review-table';
 import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import {
   getCreatablePreparedListEntries,
   publishManualBatchLists,
@@ -95,7 +96,9 @@ export function ManualBatchListsFlow() {
   }
 
   function addMemberRow() {
-    setMemberRows((current) => [...current, createEmptyMemberRow()]);
+    setMemberRows((current) =>
+      current.length < MAX_CREATION_ITEMS_PER_TRANSACTION ? [...current, createEmptyMemberRow()] : current,
+    );
     resetReviewState();
   }
 
@@ -246,14 +249,18 @@ export function ManualBatchListsFlow() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={addMemberRow}
-              disabled={isReviewing || isPublishing}
-              className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
+            <DisabledActionTooltip
+              reason={memberRows.length >= MAX_CREATION_ITEMS_PER_TRANSACTION ? `Maximum ${MAX_CREATION_ITEMS_PER_TRANSACTION} list entries per transaction. Publish this batch before adding more.` : null}
             >
-              + Add member
-            </button>
+              <button
+                type="button"
+                onClick={addMemberRow}
+                disabled={isReviewing || isPublishing || memberRows.length >= MAX_CREATION_ITEMS_PER_TRANSACTION}
+                className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                + Add member
+              </button>
+            </DisabledActionTooltip>
             <DisabledActionTooltip reason={reviewDisabledReason}>
               <button
                 type="button"
@@ -266,6 +273,7 @@ export function ManualBatchListsFlow() {
                 {isReviewing ? 'Reviewing list entries...' : 'Review list entries'}
               </button>
             </DisabledActionTooltip>
+            <span className="text-xs text-muted">{memberRows.length} of {MAX_CREATION_ITEMS_PER_TRANSACTION} member rows per transaction</span>
           </div>
 
           {reviewRows ? <ListReviewTable rows={reviewRows} nativeSymbol={networkConfig.nativeSymbol} /> : null}

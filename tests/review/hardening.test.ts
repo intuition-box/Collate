@@ -10,6 +10,7 @@ import {
 import { getCreatablePreparedAtoms, publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getCreatablePreparedListEntries, publishManualBatchLists } from '@/lib/intuition/manual-batch-lists';
 import { prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { IntuitionAtomSearchResult } from '@/types/api';
@@ -330,6 +331,45 @@ test('prepareCreateTriplesTransaction includes only eligible list entry assets',
   ]);
 
   assert.equal(prepared.value, 7n);
+});
+
+test('atom and list writes accept 50 items and reject larger batches before wallet submission', async () => {
+  const atoms: PreparedAtomDraft[] = Array.from({ length: MAX_CREATION_ITEMS_PER_TRANSACTION + 1 }, (_, index) => ({
+    id: `a${index}`,
+    displayName: `atom ${index}`,
+    dataString: `atom ${index}`,
+    atomId: '0x01',
+    assetWei: 1n,
+    supportWei: 0n,
+    existsOnChain: false,
+  }));
+  const entries: PreparedListEntry[] = Array.from({ length: MAX_CREATION_ITEMS_PER_TRANSACTION + 1 }, (_, index) => ({
+    id: `m${index}`,
+    listTermId: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    memberTermId: '0x1111111111111111111111111111111111111111111111111111111111111111',
+    tripleId: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    assetWei: 1n,
+    alreadyExistsOnChain: false,
+  }));
+
+  assert.equal(prepareCreateAtomsTransaction(atoms.slice(0, -1)).value, 50n);
+  assert.equal(prepareCreateTriplesTransaction(entries.slice(0, -1)).value, 50n);
+  assert.throws(() => prepareCreateAtomsTransaction(atoms), /at most 50 atoms/);
+  assert.throws(() => prepareCreateTriplesTransaction(entries), /at most 50 list entries/);
+
+  const walletClient = {
+    sendTransaction: async () => {
+      throw new Error('Wallet must not be called for an oversized batch.');
+    },
+  } as never;
+  const options = {
+    network: 'testnet' as const,
+    publicClient: {} as never,
+    walletClient,
+    walletAddress: '0x1111111111111111111111111111111111111111' as const,
+  };
+  await assert.rejects(() => publishManualBatchAtoms({ ...options, atoms }), /at most 50 atoms/);
+  await assert.rejects(() => publishManualBatchLists({ ...options, entries }), /at most 50 list entries/);
 });
 
 test('getPublishDisabledReason explains zero eligible rows clearly', () => {

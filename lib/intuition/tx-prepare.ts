@@ -1,6 +1,7 @@
 import { encodeFunctionData, stringToHex, type Hex } from 'viem';
 
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
+import { assertCreationBatchSize } from '@/lib/intuition/write-limits';
 import type { PreparedAtomDraft } from '@/types/atoms';
 import type { PreparedListEntry } from '@/types/lists';
 
@@ -10,6 +11,7 @@ export interface PreparedWriteTransaction {
 }
 
 export function prepareCreateAtomsTransaction(atoms: PreparedAtomDraft[]): PreparedWriteTransaction {
+  assertCreationBatchSize(atoms.length, 'atoms');
   const atomDatas = atoms.map((atom) => stringToHex(atom.dataString));
   const assets = atoms.map((atom) => atom.assetWei);
   const value = assets.reduce((total, asset) => total + asset, 0n);
@@ -25,6 +27,7 @@ export function prepareCreateAtomsTransaction(atoms: PreparedAtomDraft[]): Prepa
 }
 
 export function prepareCreateTriplesTransaction(entries: PreparedListEntry[]): PreparedWriteTransaction {
+  assertCreationBatchSize(entries.length, 'list entries');
   const subjectIds = entries.map((entry) => entry.memberTermId);
   const predicateIds = entries.map(() => HAS_TAG_PREDICATE_TERM_ID);
   const objectIds = entries.map((entry) => entry.listTermId);

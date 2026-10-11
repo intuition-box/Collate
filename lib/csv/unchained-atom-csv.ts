@@ -2,11 +2,12 @@ import { CLASSIFICATION_SPECS, getClassification, type ClassificationFieldSpec }
 import { buildAtom } from '@0xintuition/primitives/atom';
 
 import { parseCsvRows } from '@/lib/csv/parse-csv';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createLocalId } from '@/lib/utils/ids';
 import { parseOptionalSupport } from '@/lib/utils/validation';
 import type { UnchainedCsvAtomParseRow } from '@/types/atoms';
 
-export const MAX_UNCHAINED_CSV_BATCH_SIZE = 50;
+export const MAX_UNCHAINED_CSV_BATCH_SIZE = MAX_CREATION_ITEMS_PER_TRANSACTION;
 
 export function normalizeUnchainedCsvHeader(header: string): string {
   return header.trim().toLowerCase().replace(/[^a-z0-9]/g, '');

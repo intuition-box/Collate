@@ -1,8 +1,9 @@
 import { findDuplicateHeaders, findHeaderIndex, parseCsvRows, slugifyCsvHeader } from '@/lib/csv/parse-csv';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createLocalId } from '@/lib/utils/ids';
 import type { CsvListParseRow, ListMemberRow } from '@/types/lists';
 
-export const MAX_LIST_BATCH_SIZE = 50;
+export const MAX_LIST_BATCH_SIZE = MAX_CREATION_ITEMS_PER_TRANSACTION;
 
 export function parseCsvListText(
   text: string,

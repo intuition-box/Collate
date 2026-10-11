@@ -7,6 +7,7 @@ import { useAccount, useChainId, useWalletClient } from 'wagmi';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ClearFormButton } from '@/components/app/clear-form-button';
+import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
@@ -16,6 +17,7 @@ import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { createEmptyAtomDraft } from '@/lib/intuition/atom-prepare';
 import { getCreatablePreparedAtoms, publishManualBatchAtoms, reviewManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
+import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createLocalId } from '@/lib/utils/ids';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { AtomDraft, ManualAtomReviewRow } from '@/types/atoms';
@@ -85,7 +87,9 @@ export function ManualBatchAtomsFlow({
   }
 
   function addDraft() {
-    setDrafts((current) => [...current, createDraft()]);
+    setDrafts((current) =>
+      current.length < MAX_CREATION_ITEMS_PER_TRANSACTION ? [...current, createDraft()] : current,
+    );
     setReviewRows(null);
     setStatus(null);
     setError(null);
@@ -222,14 +226,18 @@ export function ManualBatchAtomsFlow({
 
           <div className="flex flex-wrap items-center gap-3">
             {isSingleMode ? null : (
-              <button
-                type="button"
-                onClick={addDraft}
-                disabled={isReviewing || isPublishing}
-                className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
+              <DisabledActionTooltip
+                reason={drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION ? `Maximum ${MAX_CREATION_ITEMS_PER_TRANSACTION} atoms per transaction. Publish this batch before adding more.` : null}
               >
-                + Add atom
-              </button>
+                <button
+                  type="button"
+                  onClick={addDraft}
+                  disabled={isReviewing || isPublishing || drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION}
+                  className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  + Add atom
+                </button>
+              </DisabledActionTooltip>
             )}
             <button
               type="button"
@@ -241,6 +249,9 @@ export function ManualBatchAtomsFlow({
             >
               {isReviewing ? `Reviewing ${isSingleMode ? 'atom' : 'atoms'}...` : `Review ${isSingleMode ? 'atom' : 'atoms'}`}
             </button>
+            {!isSingleMode ? (
+              <span className="text-xs text-muted">{drafts.length} of {MAX_CREATION_ITEMS_PER_TRANSACTION} atom rows per transaction</span>
+            ) : null}
           </div>
 
           {reviewRows ? <AtomReviewTable rows={reviewRows} nativeSymbol={networkConfig.nativeSymbol} /> : null}
