@@ -10,12 +10,12 @@ import { ErrorNotice } from '@/components/app/error-notice';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { useCreationLimits } from '@/components/app/use-creation-limits';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { UnchainedAtomReviewTable } from '@/components/atoms/unchained-atom-review-table';
 import { UnchainedManualAtomEditor } from '@/components/atoms/unchained-manual-atom-editor';
 import { publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
-import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { getCreatableUnchainedAtoms, reviewUnchainedAtoms } from '@/lib/intuition/unchained-csv-atoms';
 import { createUnchainedManualAtomDraft, prepareUnchainedManualAtom } from '@/lib/intuition/unchained-manual-atoms';
@@ -37,6 +37,8 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
   const showConfirmedPublish = usePublishToast();
+  const { limits, isPending: limitsPending, isError: limitsError } = useCreationLimits(address);
+  const atomLimit = limits.atomLimit;
   const [drafts, setDrafts] = useState<UnchainedManualAtomDraft[]>(() => initialDrafts(mode));
   const [reviewRows, setReviewRows] = useState<UnchainedAtomReviewRow[] | null>(null);
   const [approvedMatchIds, setApprovedMatchIds] = useState<Set<string>>(new Set());
@@ -54,7 +56,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
   const hasNetworkMismatch = walletReady && walletNetwork?.key !== network;
   const canWrite = walletReady && !hasNetworkMismatch && network === 'testnet';
   const eligible = reviewRows ? getCreatableUnchainedAtoms(reviewRows) : [];
-  const disabledReason = network === 'mainnet'
+  const disabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : drafts.length > atomLimit ? `This batch exceeds the current ${atomLimit}-atom limit. Remove rows or use another wallet.` : network === 'mainnet'
     ? 'Canonical Unchained publishing is available on Testnet while graph display is being verified. Switch to Testnet, or use Classic creation on Mainnet.'
     : getPublishDisabledReason({
         hasReview: !!reviewRows,
@@ -87,7 +89,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
 
   function addDraft() {
     setDrafts((current) =>
-      current.length < MAX_CREATION_ITEMS_PER_TRANSACTION ? [...current, createUnchainedManualAtomDraft()] : current,
+      current.length < atomLimit ? [...current, createUnchainedManualAtomDraft()] : current,
     );
     clearReview();
   }
@@ -98,6 +100,10 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
   }
 
   async function review() {
+    if (limitsPending || limitsError || drafts.length > atomLimit) {
+      setError(`This batch has ${drafts.length} rows. The current atom limit is ${atomLimit}. Remove rows before reviewing.`);
+      return;
+    }
     setIsReviewing(true);
     setReviewRows(null);
     setError(null);
@@ -125,6 +131,10 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
   }
 
   async function publish() {
+    if (limitsPending || limitsError || drafts.length > atomLimit) {
+      setError(disabledReason ?? 'Batch limits are unavailable. Try again.');
+      return;
+    }
     if (!reviewRows || !eligible.length) {
       setError(`Review ${isSingle ? 'the atom' : 'the batch'} before publishing.`);
       return;
@@ -140,7 +150,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
 
     setIsPublishing(true);
     setError(null);
-    setStatus('Waiting for wallet approval...');
+    setStatus('Checking limits before requesting wallet approval...');
     try {
       const result = await publishManualBatchAtoms({
         atoms: eligible,
@@ -149,6 +159,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
         walletClient,
         walletAddress: getAddress(address) as Hex,
         activityFlow: isSingle ? 'single_atom' : 'batch_atoms',
+        limit: atomLimit,
       });
       setWriteResult(result);
       setStatus(`Transaction confirmed. ${result.createdIds.length} canonical ${result.createdIds.length === 1 ? 'atom was' : 'atoms were'} created on ${networkConfig.name}.`);
@@ -198,9 +209,9 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
       <div className="flex flex-wrap gap-3">
         {isSingle ? null : (
           <DisabledActionTooltip
-            reason={drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION ? `Maximum ${MAX_CREATION_ITEMS_PER_TRANSACTION} atoms per transaction. Publish this batch before adding more.` : null}
+            reason={drafts.length >= atomLimit ? `Maximum ${atomLimit} atoms per transaction. Publish this batch before adding more.` : null}
           >
-            <button type="button" onClick={addDraft} disabled={isReviewing || isPublishing || drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION} className="rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" onClick={addDraft} disabled={isReviewing || isPublishing || drafts.length >= atomLimit} className="rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper disabled:cursor-not-allowed disabled:opacity-60">
               + Add atom
             </button>
           </DisabledActionTooltip>
@@ -209,7 +220,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
           {isReviewing ? `Reviewing ${isSingle ? 'atom' : 'atoms'}...` : `Review ${isSingle ? 'atom' : 'atoms'}`}
         </button>
         {!isSingle ? (
-          <span className="self-center text-xs text-muted">{drafts.length} of {MAX_CREATION_ITEMS_PER_TRANSACTION} atom rows per transaction</span>
+          <span className="self-center text-xs text-muted">{drafts.length} of {atomLimit} atom rows per transaction</span>
         ) : null}
       </div>
 
@@ -226,7 +237,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
             <button
               type="button"
               onClick={() => { void publish(); }}
-              disabled={!reviewRows || !eligible.length || !canWrite || isReviewing || isPublishing || !!writeResult}
+              disabled={!reviewRows || !eligible.length || !canWrite || isReviewing || isPublishing || !!writeResult || !!disabledReason}
               className="rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
             >
               {isPublishing ? 'Publishing...' : writeResult ? 'Published' : isSingle ? 'Publish atom' : 'Publish eligible atoms'}
@@ -242,7 +253,7 @@ export function UnchainedManualAtomsFlow({ mode, active = true }: { mode: Mode; 
         {status ? <p className="mt-3 text-sm leading-6 text-muted">{status}</p> : null}
         {error ? <ErrorNotice message={error} className="mt-3" /> : null}
         {writeResult?.txHash ? (
-          <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
+          <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
         ) : null}
       </div>
     </div>

@@ -7,6 +7,7 @@ import { useAccount, useChainId, useWalletClient } from 'wagmi';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ClearFormButton } from '@/components/app/clear-form-button';
+import { useCreationLimits } from '@/components/app/use-creation-limits';
 import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
@@ -17,7 +18,6 @@ import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { createEmptyAtomDraft } from '@/lib/intuition/atom-prepare';
 import { getCreatablePreparedAtoms, publishManualBatchAtoms, reviewManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
-import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createLocalId } from '@/lib/utils/ids';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { AtomDraft, ManualAtomReviewRow } from '@/types/atoms';
@@ -48,6 +48,8 @@ export function ManualBatchAtomsFlow({
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
   const showConfirmedPublish = usePublishToast();
+  const { limits, isPending: limitsPending, isError: limitsError } = useCreationLimits(address);
+  const atomLimit = limits.atomLimit;
 
   const [drafts, setDrafts] = useState<AtomDraft[]>(() => getInitialDrafts(mode));
   const [reviewRows, setReviewRows] = useState<ManualAtomReviewRow[] | null>(null);
@@ -68,7 +70,7 @@ export function ManualBatchAtomsFlow({
   const isSingleDraftMode = drafts.length === 1;
   const hasSingleEligibleAtom = creatableAtoms.length === 1;
   const isSingleMode = mode === 'single';
-  const publishDisabledReason = getPublishDisabledReason({
+  const publishDisabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : drafts.length > atomLimit ? `This batch has ${drafts.length} rows, above the current ${atomLimit}-atom limit. Remove rows or use another wallet.` : getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableAtoms.length,
     walletReady,
@@ -88,7 +90,7 @@ export function ManualBatchAtomsFlow({
 
   function addDraft() {
     setDrafts((current) =>
-      current.length < MAX_CREATION_ITEMS_PER_TRANSACTION ? [...current, createDraft()] : current,
+      current.length < atomLimit ? [...current, createDraft()] : current,
     );
     setReviewRows(null);
     setStatus(null);
@@ -115,6 +117,10 @@ export function ManualBatchAtomsFlow({
   }
 
   async function handleReview() {
+    if (limitsPending || limitsError || drafts.length > atomLimit) {
+      setError(`This batch has ${drafts.length} rows. The current atom limit is ${atomLimit}. Remove rows before reviewing.`);
+      return;
+    }
     setIsReviewing(true);
     setError(null);
     setWriteResult(null);
@@ -139,6 +145,10 @@ export function ManualBatchAtomsFlow({
   }
 
   async function handlePublish() {
+    if (limitsPending || limitsError || drafts.length > atomLimit) {
+      setError(publishDisabledReason ?? 'Batch limits are unavailable. Try again.');
+      return;
+    }
     if (!reviewRows || creatableAtoms.length === 0) {
       setError(`Review the ${isSingleMode ? 'atom' : 'atoms'} before publishing.`);
       return;
@@ -151,7 +161,7 @@ export function ManualBatchAtomsFlow({
 
     setIsPublishing(true);
     setError(null);
-    setStatus(`Waiting for wallet approval to create ${isSingleMode ? 'this atom' : 'the eligible atoms'}...`);
+    setStatus(`Checking limits before requesting wallet approval for ${isSingleMode ? 'this atom' : 'the eligible atoms'}...`);
     setWriteResult(null);
 
     try {
@@ -162,6 +172,7 @@ export function ManualBatchAtomsFlow({
         walletClient,
         walletAddress: getAddress(address) as Hex,
         activityFlow: isSingleMode ? 'single_atom' : 'batch_atoms',
+        limit: atomLimit,
       });
 
       setWriteResult(result);
@@ -227,12 +238,12 @@ export function ManualBatchAtomsFlow({
           <div className="flex flex-wrap items-center gap-3">
             {isSingleMode ? null : (
               <DisabledActionTooltip
-                reason={drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION ? `Maximum ${MAX_CREATION_ITEMS_PER_TRANSACTION} atoms per transaction. Publish this batch before adding more.` : null}
+                reason={drafts.length >= atomLimit ? `Maximum ${atomLimit} atoms per transaction. Publish this batch before adding more.` : null}
               >
                 <button
                   type="button"
                   onClick={addDraft}
-                  disabled={isReviewing || isPublishing || drafts.length >= MAX_CREATION_ITEMS_PER_TRANSACTION}
+                  disabled={isReviewing || isPublishing || drafts.length >= atomLimit}
                   className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   + Add atom
@@ -250,7 +261,7 @@ export function ManualBatchAtomsFlow({
               {isReviewing ? `Reviewing ${isSingleMode ? 'atom' : 'atoms'}...` : `Review ${isSingleMode ? 'atom' : 'atoms'}`}
             </button>
             {!isSingleMode ? (
-              <span className="text-xs text-muted">{drafts.length} of {MAX_CREATION_ITEMS_PER_TRANSACTION} atom rows per transaction</span>
+              <span className="text-xs text-muted">{drafts.length} of {atomLimit} atom rows per transaction</span>
             ) : null}
           </div>
 
@@ -274,7 +285,7 @@ export function ManualBatchAtomsFlow({
                 onClick={() => {
                   void handlePublish();
                 }}
-                disabled={!reviewRows || creatableAtoms.length === 0 || !canWrite || isPublishing || isReviewing}
+                disabled={!reviewRows || creatableAtoms.length === 0 || !canWrite || isPublishing || isReviewing || !!publishDisabledReason}
                 className="inline-flex rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk transition-colors duration-150 hover:bg-accent/25 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
               >
                 {isPublishing
@@ -309,7 +320,7 @@ export function ManualBatchAtomsFlow({
             {error ? <ErrorNotice message={error} className="mt-4" /> : null}
 
             {writeResult?.txHash ? (
-              <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
+              <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
             ) : null}
           </div>
     </div>

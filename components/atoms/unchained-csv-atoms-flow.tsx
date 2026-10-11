@@ -11,6 +11,7 @@ import { UnchainedClassificationPicker } from '@/components/atoms/unchained-clas
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { useCreationLimits } from '@/components/app/use-creation-limits';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { getUnchainedAtomDisplayName, parseUnchainedAtomCsvText } from '@/lib/csv/unchained-atom-csv';
 import { downloadUnchainedAtomCsvTemplate, getUnchainedAtomCsvTemplate } from '@/lib/csv/unchained-atom-templates';
@@ -32,11 +33,14 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
   const showConfirmedPublish = usePublishToast();
+  const { limits, isPending: limitsPending, isError: limitsError } = useCreationLimits(address);
+  const atomLimit = limits.atomLimit;
   const [classification, setClassification] = useState(STARTER_CLASSIFICATION);
   const [csvText, setCsvText] = useState(STARTER_CSV);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [parsedRows, setParsedRows] = useState<UnchainedCsvAtomParseRow[] | null>(null);
+  const [previewLimit, setPreviewLimit] = useState<number | null>(null);
   const [reviewRows, setReviewRows] = useState<UnchainedCsvAtomReviewRow[] | null>(null);
   const [approvedMatchIds, setApprovedMatchIds] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<string | null>(null);
@@ -54,7 +58,8 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
   const hasNetworkMismatch = walletReady && walletNetwork?.key !== network;
   const canWrite = walletReady && !hasNetworkMismatch && network === 'testnet';
   const eligible = reviewRows ? getCreatableUnchainedAtoms(reviewRows) : [];
-  const disabledReason = network === 'mainnet'
+  const limitChanged = previewLimit !== null && previewLimit !== atomLimit;
+  const disabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : limitChanged ? `Your atom limit changed to ${atomLimit}. Preview the CSV again before publishing.` : network === 'mainnet'
     ? 'Unchained publishing is available on Testnet while graph display is being verified. Switch to Testnet, or use Classic CSV on Mainnet.'
     : getPublishDisabledReason({
     hasReview: !!reviewRows,
@@ -68,6 +73,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
 
   function clearReview() {
     setParsedRows(null);
+    setPreviewLimit(null);
     setReviewRows(null);
     setApprovedMatchIds(new Set());
     setStatus(null);
@@ -105,9 +111,14 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
   }
 
   function previewRows() {
+    if (limitsPending || limitsError) {
+      setError('Batch limits are unavailable. Try previewing again shortly.');
+      return;
+    }
     clearReview();
     try {
-      const result = parseUnchainedAtomCsvText(csvText, classification);
+      const result = parseUnchainedAtomCsvText(csvText, classification, atomLimit);
+      setPreviewLimit(atomLimit);
       setParsedRows(result.rows);
       const invalid = result.rows.filter((row) => row.errors.length).length;
       setStatus(`Parsed ${result.rows.length} rows. ${invalid} need correction before publishing.`);
@@ -117,6 +128,10 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
   }
 
   async function reviewRowsNow() {
+    if (limitChanged) {
+      setError(`Your atom limit changed to ${atomLimit}. Preview the CSV again before reviewing.`);
+      return;
+    }
     if (!parsedRows?.length) {
       setError('Preview the CSV rows first.');
       return;
@@ -156,6 +171,10 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
   }
 
   async function publish() {
+    if (limitsPending || limitsError || limitChanged) {
+      setError(disabledReason ?? 'Batch limits are unavailable. Try again.');
+      return;
+    }
     if (!reviewRows || !eligible.length) {
       setError('Review at least one eligible row before publishing.');
       return;
@@ -171,7 +190,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
 
     setIsPublishing(true);
     setError(null);
-    setStatus('Waiting for wallet approval...');
+    setStatus('Checking limits before requesting wallet approval...');
     try {
       const result = await publishManualBatchAtoms({
         atoms: eligible,
@@ -180,6 +199,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
         walletClient,
         walletAddress: getAddress(address) as Hex,
         activityFlow: 'csv_atoms',
+        limit: atomLimit,
       });
       setWriteResult(result);
       setStatus(`Transaction confirmed. ${result.createdIds.length} canonical atoms were created on ${networkConfig.name}.`);
@@ -303,7 +323,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
           <button
             type="button"
             onClick={() => { void publish(); }}
-            disabled={!reviewRows || !eligible.length || !canWrite || isReviewing || isPublishing || !!writeResult}
+            disabled={!reviewRows || !eligible.length || !canWrite || isReviewing || isPublishing || !!writeResult || !!disabledReason}
             className="rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
           >
             {isPublishing ? 'Publishing...' : writeResult ? 'Published' : 'Publish eligible atoms'}
@@ -313,7 +333,7 @@ export function UnchainedCsvAtomsFlow({ active = true }: { active?: boolean }) {
         {status ? <p className="mt-3 text-sm text-muted">{status}</p> : null}
         {error ? <ErrorNotice message={error} className="mt-3" /> : null}
         {writeResult?.txHash ? (
-          <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
+          <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
         ) : null}
       </div>
     </div>

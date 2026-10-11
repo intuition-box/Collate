@@ -8,7 +8,7 @@ import type {
 } from '@/types/activity';
 
 const OUTBOX_KEY = 'collate.activity.outbox.v1';
-const INTENT_TIMEOUT_MS = 5_000;
+const INTENT_TIMEOUT_MS = 20_000;
 const CONFIRM_TIMEOUT_MS = 15_000;
 const MAX_OUTBOX_ENTRIES = 100;
 const MAX_OUTBOX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -38,13 +38,14 @@ function readOutbox(): ActivityOutboxEntry[] {
   }
 }
 
-function writeOutbox(entries: ActivityOutboxEntry[]) {
-  if (typeof window === 'undefined') return;
+function writeOutbox(entries: ActivityOutboxEntry[]): boolean {
+  if (typeof window === 'undefined') return false;
 
   try {
     window.localStorage.setItem(OUTBOX_KEY, JSON.stringify(entries.slice(-MAX_OUTBOX_ENTRIES)));
+    return true;
   } catch {
-    // Tracking remains best effort when browser storage is unavailable.
+    return false;
   }
 }
 
@@ -76,21 +77,67 @@ export async function createActivityIntentBestEffort(
       INTENT_TIMEOUT_MS,
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      if (response.status === 403) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        const error = new Error(payload.error ?? 'This batch exceeds the current wallet limit.');
+        error.name = 'ActivityLimitError';
+        throw error;
+      }
+      return null;
+    }
     const payload = (await response.json()) as Partial<ActivityIntentResponse>;
 
     return typeof payload.intentId === 'string' && typeof payload.expiresAt === 'string'
       ? { intentId: payload.intentId, expiresAt: payload.expiresAt }
       : null;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ActivityLimitError') throw error;
     return null;
   }
 }
 
-export function enqueueActivityConfirmation(entry: Omit<ActivityOutboxEntry, 'queuedAt'>): void {
+export async function createActivityIntentRequired(request: ActivityIntentRequest): Promise<ActivityIntentResponse> {
+  if (typeof window === 'undefined') throw new Error('Activity tracking is unavailable. Please try again.');
+  let response: Response;
+  try {
+    response = await fetchWithTimeout('/api/activity/intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+      cache: 'no-store',
+    }, INTENT_TIMEOUT_MS);
+  } catch {
+    throw new Error('Could not prepare this publish. No wallet request was sent. Please try again.');
+  }
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(payload.error ?? 'Could not prepare this publish. No wallet request was sent.');
+  }
+  const payload = (await response.json()) as Partial<ActivityIntentResponse>;
+  if (typeof payload.intentId !== 'string' || typeof payload.expiresAt !== 'string') {
+    throw new Error('Could not prepare this publish. No wallet request was sent.');
+  }
+  return { intentId: payload.intentId, expiresAt: payload.expiresAt };
+}
+
+export function isActivityConfirmationPending(intentId: string): boolean {
+  return readOutbox().some((entry) => entry.intentId === intentId);
+}
+
+export function enqueueActivityConfirmation(entry: Omit<ActivityOutboxEntry, 'queuedAt'>): boolean {
   const current = readOutbox().filter((candidate) => candidate.intentId !== entry.intentId);
   current.push({ ...entry, queuedAt: new Date().toISOString() });
-  writeOutbox(current);
+  const persisted = writeOutbox(current);
+  if (!persisted && typeof window !== 'undefined') {
+    void fetchWithTimeout('/api/activity/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+      cache: 'no-store',
+    }, CONFIRM_TIMEOUT_MS).catch(() => undefined);
+  }
+  return persisted;
 }
 
 async function flushEntries() {

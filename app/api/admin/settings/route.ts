@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin/auth';
-import { getPublicSettings, updatePublicSettings } from '@/lib/settings/database';
+import { getAdminSettings, updateAdminSettings } from '@/lib/settings/database';
+import { validateAdminSettings } from '@/lib/settings/creation-limits';
 import type { AdminSettingsResponse } from '@/types/settings';
 
 export const runtime = 'nodejs';
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) return unauthorized();
 
   try {
-    const response: AdminSettingsResponse = { authenticated: true, settings: await getPublicSettings() };
+    const response: AdminSettingsResponse = { authenticated: true, settings: await getAdminSettings() };
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('[admin-settings] Unable to read settings.', error);
@@ -40,21 +41,24 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'This settings request was rejected.' }, { status: 403 });
   }
 
-  let body: { showActivityInNav?: unknown };
+  let body: unknown;
   try {
-    body = (await request.json()) as { showActivityInNav?: unknown };
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Valid settings are required.' }, { status: 400 });
   }
 
-  if (typeof body.showActivityInNav !== 'boolean') {
-    return NextResponse.json({ error: 'Activity visibility must be enabled or disabled.' }, { status: 400 });
+  let settings;
+  try {
+    settings = validateAdminSettings(body);
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Invalid settings.' }, { status: 400 });
   }
 
   try {
     const response: AdminSettingsResponse = {
       authenticated: true,
-      settings: await updatePublicSettings({ showActivityInNav: body.showActivityInNav }),
+      settings: await updateAdminSettings(settings),
     };
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {

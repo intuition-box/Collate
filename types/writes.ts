@@ -6,4 +6,6 @@ export interface WriteResult {
   createdIds: Hex[];
   skippedIds: Hex[];
   error?: string;
+  trackingPending?: boolean;
+  trackingUnavailable?: boolean;
 }

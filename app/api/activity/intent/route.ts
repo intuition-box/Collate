@@ -6,6 +6,7 @@ import { getAddress, isAddress, isHex, keccak256, type Hex } from 'viem';
 import { decodeActivityCalldata } from '@/lib/activity/calldata';
 import { createActivityIntent } from '@/lib/activity/database';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
+import { getEffectiveCreationLimits } from '@/lib/settings/database';
 import { ACTIVITY_SOURCE_FLOWS, type ActivityIntentRequest, type ActivitySourceFlow } from '@/types/activity';
 import type { PublicIntuitionNetwork } from '@/types/api';
 
@@ -55,6 +56,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const limits = await getEffectiveCreationLimits(body.walletAddress);
+    const limit = decoded.itemKind === 'atom' ? limits.atomLimit : limits.listLimit;
+    if (decoded.itemCount > limit) {
+      return NextResponse.json(
+        { error: `This wallet can publish at most ${limit} ${decoded.itemKind === 'atom' ? 'atoms' : 'list entries'} per transaction. Reduce this batch and review again.`, code: 'limit_exceeded' },
+        { status: 403 },
+      );
+    }
     const networkConfig = getIntuitionNetwork(body.network);
     const intentId = randomUUID();
     const expiresAt = new Date(Date.now() + INTENT_LIFETIME_MS);
@@ -75,6 +84,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ intentId, expiresAt: expiresAt.toISOString() }, { status: 201 });
   } catch (error) {
     console.error('[activity-intent] Unable to store activity intent.', error);
-    return NextResponse.json({ error: 'Activity tracking is temporarily unavailable.' }, { status: 503 });
+    return NextResponse.json({ error: 'Publishing is temporarily unavailable. No wallet request was sent. Please try again.' }, { status: 503 });
   }
 }

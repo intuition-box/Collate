@@ -9,6 +9,7 @@ import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { useCreationLimits } from '@/components/app/use-creation-limits';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { AtomSearchSelect } from '@/components/lists/atom-search-select';
@@ -37,12 +38,15 @@ export function CsvBatchListsFlow() {
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
   const showConfirmedPublish = usePublishToast();
+  const { limits, isPending: limitsPending, isError: limitsError } = useCreationLimits(address);
+  const listLimit = limits.listLimit;
 
   const [listQuery, setListQuery] = useState('');
   const [listAtom, setListAtom] = useState<IntuitionAtomSearchResult | null>(null);
   const [csvText, setCsvText] = useState(DEFAULT_CSV_TEXT);
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsedRows, setParsedRows] = useState<CsvListParseRow[] | null>(null);
+  const [previewLimit, setPreviewLimit] = useState<number | null>(null);
   const [reviewRows, setReviewRows] = useState<ManualListReviewRow[] | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +73,8 @@ export function CsvBatchListsFlow() {
     isBusy: isParsing || isReviewing || isPublishing,
     missingInputMessage: 'Preview at least one CSV row before reviewing.',
   });
-  const publishDisabledReason = getPublishDisabledReason({
+  const limitChanged = previewLimit !== null && previewLimit !== listLimit;
+  const publishDisabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : limitChanged ? `Your list-entry limit changed to ${listLimit}. Preview the CSV again before publishing.` : getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableEntries.length,
     walletReady,
@@ -81,6 +86,7 @@ export function CsvBatchListsFlow() {
 
   function resetDownstreamState() {
     setParsedRows(null);
+    setPreviewLimit(null);
     setReviewRows(null);
     setStatus(null);
     setError(null);
@@ -115,6 +121,10 @@ export function CsvBatchListsFlow() {
   }
 
   function handlePreview() {
+    if (limitsPending || limitsError) {
+      setError('Batch limits are unavailable. Try previewing again shortly.');
+      return;
+    }
     setIsParsing(true);
     setError(null);
     setStatus('Parsing CSV rows...');
@@ -122,7 +132,8 @@ export function CsvBatchListsFlow() {
     setReviewRows(null);
 
     try {
-      const result = parseCsvListText(csvText);
+      const result = parseCsvListText(csvText, listLimit);
+      setPreviewLimit(listLimit);
       setParsedRows(result.parsedRows);
       setStatus(
         result.parsedRows.length === 0 ? 'No CSV rows were parsed.' : `Parsed ${result.parsedRows.length} list rows. Continue to review for resolution and duplicate checks.`,
@@ -137,6 +148,10 @@ export function CsvBatchListsFlow() {
   }
 
   async function handleReview() {
+    if (limitChanged) {
+      setError(`Your list-entry limit changed to ${listLimit}. Preview the CSV again before reviewing.`);
+      return;
+    }
     if (!listAtom) {
       setError('Select an existing list atom before reviewing CSV rows.');
       return;
@@ -200,6 +215,10 @@ export function CsvBatchListsFlow() {
   }
 
   async function handlePublish() {
+    if (limitsPending || limitsError || limitChanged) {
+      setError(publishDisabledReason ?? 'Batch limits are unavailable. Try again.');
+      return;
+    }
     if (!reviewRows || creatableEntries.length === 0) {
       setError('Review the CSV list batch before publishing.');
       return;
@@ -213,7 +232,7 @@ export function CsvBatchListsFlow() {
     setIsPublishing(true);
     setError(null);
     setWriteResult(null);
-    setStatus('Waiting for wallet approval to create the eligible list entries...');
+    setStatus('Checking limits before requesting wallet approval for the eligible list entries...');
 
     try {
       const result = await publishManualBatchLists({
@@ -223,6 +242,7 @@ export function CsvBatchListsFlow() {
         walletClient,
         walletAddress: getAddress(address) as Hex,
         activityFlow: 'csv_lists',
+        limit: listLimit,
       });
 
       setWriteResult(result);
@@ -413,7 +433,7 @@ export function CsvBatchListsFlow() {
                 onClick={() => {
                   void handlePublish();
                 }}
-                disabled={!reviewRows || creatableEntries.length === 0 || !canWrite || isPublishing || isReviewing || isParsing}
+                disabled={!reviewRows || creatableEntries.length === 0 || !canWrite || isPublishing || isReviewing || isParsing || !!publishDisabledReason}
                 className="inline-flex rounded-full border border-ink px-5 py-3 text-sm text-ink transition-colors duration-150 hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPublishing ? 'Publishing batch...' : hasNetworkMismatch ? 'Wrong network' : 'Publish eligible list entries'}
@@ -426,7 +446,7 @@ export function CsvBatchListsFlow() {
             {error ? <ErrorNotice message={error} className="mt-4" /> : null}
 
             {writeResult?.txHash ? (
-              <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
+              <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
             ) : null}
           </div>
     </div>

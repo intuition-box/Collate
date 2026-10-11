@@ -2,8 +2,10 @@ import type { Hex, PublicClient, WalletClient } from 'viem';
 
 import {
   createActivityIntentBestEffort,
+  createActivityIntentRequired,
   enqueueActivityConfirmation,
   flushActivityOutbox,
+  isActivityConfirmationPending,
 } from '@/lib/activity/client';
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
 import { buildListReviewRows, isCreatableListReviewStatus } from '@/lib/intuition/list-duplicates';
@@ -28,6 +30,7 @@ interface PublishManualBatchListsOptions {
   walletClient: WalletClient;
   walletAddress: Hex;
   activityFlow?: ActivitySourceFlow;
+  limit?: number;
 }
 
 function buildInvalidRow(row: ListMemberRow, errors: string[]): ManualListReviewRow {
@@ -137,6 +140,7 @@ export async function publishManualBatchLists({
   walletClient,
   walletAddress,
   activityFlow,
+  limit,
 }: PublishManualBatchListsOptions): Promise<WriteResult> {
   if (entries.length === 0) {
     return {
@@ -146,14 +150,20 @@ export async function publishManualBatchLists({
     };
   }
 
-  const preparedTransaction = prepareCreateTriplesTransaction(entries);
-  const activityIntent = activityFlow
-    ? await createActivityIntentBestEffort({
+  const preparedTransaction = prepareCreateTriplesTransaction(entries, limit);
+  if (process.env.NODE_ENV === 'production' && !activityFlow) {
+    throw new Error('Activity tracking must be prepared before publishing. No wallet request was sent.');
+  }
+  const activityRequest = activityFlow ? {
         network,
         sourceFlow: activityFlow,
         walletAddress,
         data: preparedTransaction.data,
-      })
+      } : null;
+  const activityIntent = activityRequest
+    ? process.env.NODE_ENV === 'production'
+      ? await createActivityIntentRequired(activityRequest)
+      : await createActivityIntentBestEffort(activityRequest)
     : null;
   const txHash = await walletClient.sendTransaction({
     account: walletAddress,
@@ -163,8 +173,9 @@ export async function publishManualBatchLists({
     value: preparedTransaction.value,
   });
 
+  let confirmationPersisted = false;
   if (activityIntent) {
-    enqueueActivityConfirmation({ intentId: activityIntent.intentId, network, txHash });
+    confirmationPersisted = enqueueActivityConfirmation({ intentId: activityIntent.intentId, network, txHash });
     void flushActivityOutbox();
   }
 
@@ -174,12 +185,14 @@ export async function publishManualBatchLists({
     throw new Error('The createTriples transaction was reverted on-chain. No list entries were confirmed as created.');
   }
 
-  if (activityIntent) void flushActivityOutbox();
+  if (activityIntent) await flushActivityOutbox();
 
   return {
     kind: 'created',
     txHash,
     createdIds: entries.map((entry) => entry.tripleId),
     skippedIds: [],
+    trackingPending: activityIntent ? !confirmationPersisted || isActivityConfirmationPending(activityIntent.intentId) : false,
+    trackingUnavailable: !activityIntent,
   };
 }

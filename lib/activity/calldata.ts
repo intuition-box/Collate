@@ -6,7 +6,7 @@ import type { ActivityItemKind, ActivityOperation, ActivitySourceFlow } from '@/
 
 const ATOM_FLOWS = new Set<ActivitySourceFlow>(['single_atom', 'batch_atoms', 'csv_atoms', 'inline_atom']);
 const LIST_FLOWS = new Set<ActivitySourceFlow>(['manual_lists', 'csv_lists']);
-// Older activity intents may contain larger batches, so keep decoding them after new writes are capped at 50.
+// Older activity intents may contain larger batches, so keep this above Collate's editable write caps.
 const MAX_TRACKED_ITEMS = 250;
 
 interface DecodedActivityBase {

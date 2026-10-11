@@ -3,8 +3,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { getAddress, isAddress } from 'viem';
 
-import type { AdminSettingsResponse, PublicAppSettings, PublicSettingsResponse } from '@/types/settings';
+import type { AdminAppSettings, AdminSettingsResponse, PublicSettingsResponse } from '@/types/settings';
 
 type SessionState = 'loading' | 'signed_out' | 'signed_in';
 
@@ -18,7 +19,8 @@ export function SettingsPanel() {
   const queryClient = useQueryClient();
   const [sessionState, setSessionState] = useState<SessionState>('loading');
   const [password, setPassword] = useState('');
-  const [settings, setSettings] = useState<PublicAppSettings | null>(null);
+  const [settings, setSettings] = useState<AdminAppSettings | null>(null);
+  const [walletInput, setWalletInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -80,8 +82,9 @@ export function SettingsPanel() {
       });
       const payload = await readResponse<AdminSettingsResponse>(response);
       setSettings(payload.settings);
-      queryClient.setQueryData<PublicSettingsResponse>(['public-settings'], { settings: payload.settings });
-      setMessage('Settings saved. The public navigation has been updated.');
+      queryClient.setQueryData<PublicSettingsResponse>(['public-settings'], { settings: { showActivityInNav: payload.settings.showActivityInNav } });
+      await queryClient.invalidateQueries({ queryKey: ['creation-limits'] });
+      setMessage('Settings saved. New limits apply before the next wallet prompt.');
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Settings could not be saved.');
     } finally {
@@ -102,6 +105,23 @@ export function SettingsPanel() {
     }
   }
 
+  function addWallet() {
+    const candidate = walletInput.trim();
+    if (!isAddress(candidate)) {
+      setError('Enter a valid Ethereum wallet address.');
+      return;
+    }
+    const wallet = getAddress(candidate);
+    if (settings?.allowlistedWallets.some((item) => item.toLowerCase() === wallet.toLowerCase())) {
+      setError('That wallet is already on the allowlist.');
+      return;
+    }
+    setSettings((current) => current ? { ...current, allowlistedWallets: [...current.allowlistedWallets, wallet] } : current);
+    setWalletInput('');
+    setError(null);
+    setMessage(null);
+  }
+
   if (sessionState === 'loading') {
     return <div className="h-72 animate-pulse rounded-[1.5rem] border border-line bg-white/60" aria-label="Loading settings" />;
   }
@@ -111,7 +131,7 @@ export function SettingsPanel() {
       <section className="mx-auto max-w-xl rounded-[1.5rem] border border-line/90 bg-white/76 p-6 sm:p-8">
         <p className="text-[0.68rem] uppercase tracking-terminal text-muted">Private access</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-5xl">Open settings.</h1>
-        <p className="mt-4 text-sm leading-7 text-muted">Enter the admin password to manage Collate’s public feature controls.</p>
+        <p className="mt-4 text-sm leading-7 text-muted">Enter the admin password to manage Collate settings.</p>
 
         <form onSubmit={signIn} className="mt-8 space-y-4">
           <label className="block text-sm text-ink" htmlFor="admin-password">
@@ -180,6 +200,57 @@ export function SettingsPanel() {
             />
             <span className="sr-only">Toggle Activity navigation visibility</span>
           </button>
+        </div>
+        <div className="mt-6 rounded-[1.25rem] border border-line/80 bg-paper/45 p-5 sm:p-6">
+          <h2 className="text-lg font-medium text-ink">Batch limits</h2>
+          <p className="mt-2 text-sm leading-6 text-muted">Set the number of atoms or list entries allowed in one transaction on Mainnet and Testnet.</p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {([
+              ['atomLimit', 'Normal atoms', 100],
+              ['listLimit', 'Normal list entries', 100],
+              ['privilegedLimit', 'Allowlisted wallets', 150],
+            ] as const).map(([key, label, max]) => (
+              <label key={key} className="block text-sm text-ink">
+                {label}
+                <input
+                  type="number"
+                  min={2}
+                  max={max}
+                  step={1}
+                  value={settings?.[key] ?? ''}
+                  onChange={(event) => setSettings((current) => current ? { ...current, [key]: event.target.value === '' ? NaN : Number(event.target.value) } : current)}
+                  className="mt-2 w-full rounded-xl border border-line bg-white px-4 py-3 text-ink outline-none focus:border-ink/35"
+                />
+              </label>
+            ))}
+          </div>
+          <p className="mt-3 text-xs leading-5 text-muted">Normal limits: 2 to 100. Allowlisted limit: up to 150 and at least as high as both normal limits. These are Collate limits, not protocol limits.</p>
+        </div>
+        <div className="mt-6 rounded-[1.25rem] border border-line/80 bg-paper/45 p-5 sm:p-6">
+          <h2 className="text-lg font-medium text-ink">Wallet allowlist</h2>
+          <p className="mt-2 text-sm leading-6 text-muted">These wallets receive the higher limit for both creation paths.</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              value={walletInput}
+              onChange={(event) => setWalletInput(event.target.value)}
+              placeholder="0x... wallet address"
+              aria-label="Wallet address to allowlist"
+              className="min-w-0 flex-1 rounded-xl border border-line bg-white px-4 py-3 font-mono text-sm text-ink outline-none focus:border-ink/35"
+            />
+            <button type="button" onClick={addWallet} disabled={!walletInput.trim()} className="rounded-full border border-ink px-5 py-3 text-sm text-ink disabled:opacity-45">Add wallet</button>
+          </div>
+          {settings?.allowlistedWallets.length ? (
+            <ul className="mt-5 divide-y divide-line/75 border-t border-line/75">
+              {settings.allowlistedWallets.map((wallet) => (
+                <li key={wallet} className="flex min-w-0 items-center justify-between gap-3 py-3">
+                  <span className="min-w-0 break-all font-mono text-xs text-ink">{wallet}</span>
+                  <button type="button" onClick={() => setSettings((current) => current ? { ...current, allowlistedWallets: current.allowlistedWallets.filter((item) => item !== wallet) } : current)} className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-muted hover:text-ink" aria-label={`Remove ${wallet}`}>Remove</button>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="mt-4 text-sm text-muted">No wallets added yet.</p>}
+          <p className="mt-4 text-xs text-muted">Add or remove wallets here, then select Save changes to apply the allowlist.</p>
         </div>
       </div>
 

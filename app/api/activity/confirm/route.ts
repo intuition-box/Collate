@@ -105,6 +105,11 @@ export async function POST(request: NextRequest) {
       transport: http(networkConfig.rpcUrl),
     });
     const txHash = body.txHash as Hex;
+    if (intent.tx_hash && intent.tx_hash.toLowerCase() !== txHash.toLowerCase()) {
+      return NextResponse.json({ error: 'This activity intent is already linked to another transaction.' }, { status: 409 });
+    }
+    // Keep the broadcast hash even if the RPC has not indexed the transaction yet.
+    await markActivityPending(intent.id, txHash);
 
     let transaction;
 
@@ -112,7 +117,6 @@ export async function POST(request: NextRequest) {
       transaction = await publicClient.getTransaction({ hash: txHash });
     } catch (error) {
       if (error instanceof TransactionNotFoundError) {
-        await markActivityPending(intent.id, txHash);
         return activityResponse('pending', 0, true, 202);
       }
       throw error;
@@ -136,8 +140,6 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json({ error: 'The verified transaction payload differs from the stored activity intent.' }, { status: 422 });
     }
-
-    await markActivityPending(intent.id, txHash);
 
     let receipt;
 

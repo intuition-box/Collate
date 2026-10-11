@@ -9,6 +9,7 @@ import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { useCreationLimits } from '@/components/app/use-creation-limits';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { ClearFormButton } from '@/components/app/clear-form-button';
 import { AtomReviewTable } from '@/components/atoms/atom-review-table';
@@ -31,11 +32,14 @@ export function CsvBatchAtomsFlow() {
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
   const showConfirmedPublish = usePublishToast();
+  const { limits, isPending: limitsPending, isError: limitsError } = useCreationLimits(address);
+  const atomLimit = limits.atomLimit;
 
   const [defaultSchemaType, setDefaultSchemaType] = useState<AtomSchemaType>('Thing');
   const [csvText, setCsvText] = useState(DEFAULT_CSV_TEXT);
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsedRows, setParsedRows] = useState<CsvAtomParseRow[] | null>(null);
+  const [previewLimit, setPreviewLimit] = useState<number | null>(null);
   const [reviewRows, setReviewRows] = useState<AtomReviewRow[] | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +58,8 @@ export function CsvBatchAtomsFlow() {
 
   const creatableAtoms = useMemo(() => (reviewRows ? getCreatablePreparedAtoms(reviewRows) : []), [reviewRows]);
   const invalidPreviewRows = useMemo(() => parsedRows?.filter((row) => row.errors.length > 0).length ?? 0, [parsedRows]);
-  const publishDisabledReason = getPublishDisabledReason({
+  const limitChanged = previewLimit !== null && previewLimit !== atomLimit;
+  const publishDisabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : limitChanged ? `Your atom limit changed to ${atomLimit}. Preview the CSV again before publishing.` : getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableAtoms.length,
     walletReady,
@@ -66,6 +71,7 @@ export function CsvBatchAtomsFlow() {
 
   function resetDownstreamState() {
     setParsedRows(null);
+    setPreviewLimit(null);
     setReviewRows(null);
     setStatus(null);
     setError(null);
@@ -99,6 +105,10 @@ export function CsvBatchAtomsFlow() {
   }
 
   function handlePreview() {
+    if (limitsPending || limitsError) {
+      setError('Batch limits are unavailable. Try previewing again shortly.');
+      return;
+    }
     setIsParsing(true);
     setError(null);
     setStatus('Parsing CSV rows...');
@@ -106,7 +116,8 @@ export function CsvBatchAtomsFlow() {
     setReviewRows(null);
 
     try {
-      const result = parseCsvAtomText(csvText, defaultSchemaType);
+      const result = parseCsvAtomText(csvText, defaultSchemaType, atomLimit);
+      setPreviewLimit(atomLimit);
       const nextInvalidCount = result.rows.filter((row) => row.errors.length > 0).length;
       setParsedRows(result.rows);
       setStatus(
@@ -124,6 +135,10 @@ export function CsvBatchAtomsFlow() {
   }
 
   async function handleReview() {
+    if (limitChanged) {
+      setError(`Your atom limit changed to ${atomLimit}. Preview the CSV again before reviewing.`);
+      return;
+    }
     if (!parsedRows || parsedRows.length === 0) {
       setError('Preview the CSV before reviewing it.');
       return;
@@ -157,6 +172,10 @@ export function CsvBatchAtomsFlow() {
   }
 
   async function handlePublish() {
+    if (limitsPending || limitsError || limitChanged) {
+      setError(publishDisabledReason ?? 'Batch limits are unavailable. Try again.');
+      return;
+    }
     if (!reviewRows || creatableAtoms.length === 0) {
       setError('Review the CSV batch before publishing.');
       return;
@@ -169,7 +188,7 @@ export function CsvBatchAtomsFlow() {
 
     setIsPublishing(true);
     setError(null);
-    setStatus('Waiting for wallet approval to create the eligible CSV atoms...');
+    setStatus('Checking limits before requesting wallet approval for the eligible CSV atoms...');
     setWriteResult(null);
 
     try {
@@ -180,6 +199,7 @@ export function CsvBatchAtomsFlow() {
         walletClient,
         walletAddress: getAddress(address) as Hex,
         activityFlow: 'csv_atoms',
+        limit: atomLimit,
       });
 
       setWriteResult(result);
@@ -337,7 +357,7 @@ export function CsvBatchAtomsFlow() {
                 onClick={() => {
                   void handlePublish();
                 }}
-                disabled={!reviewRows || creatableAtoms.length === 0 || !canWrite || isPublishing || isReviewing || isParsing}
+                disabled={!reviewRows || creatableAtoms.length === 0 || !canWrite || isPublishing || isReviewing || isParsing || !!publishDisabledReason}
                 className="inline-flex rounded-full border border-success/40 bg-accentSoft px-5 py-3 text-sm text-successInk transition-colors duration-150 hover:bg-accent/25 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-muted disabled:opacity-60"
               >
                 {isPublishing ? 'Publishing batch...' : hasNetworkMismatch ? 'Wrong network' : 'Publish eligible CSV atoms'}
@@ -350,7 +370,7 @@ export function CsvBatchAtomsFlow() {
             {error ? <ErrorNotice message={error} className="mt-4" /> : null}
 
             {writeResult?.txHash ? (
-              <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
+              <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
             ) : null}
           </div>
     </div>

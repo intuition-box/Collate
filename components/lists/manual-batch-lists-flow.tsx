@@ -9,13 +9,13 @@ import { ErrorNotice } from '@/components/app/error-notice';
 import { FlowSteps } from '@/components/app/flow-steps';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
+import { useCreationLimits } from '@/components/app/use-creation-limits';
 import { TransactionExplorerLink } from '@/components/app/transaction-explorer-link';
 import { AtomSearchSelect } from '@/components/lists/atom-search-select';
 import { ListMemberRowEditor } from '@/components/lists/list-member-row-editor';
 import { ListReviewTable } from '@/components/lists/list-review-table';
 import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuition/networks';
-import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import {
   getCreatablePreparedListEntries,
   publishManualBatchLists,
@@ -44,6 +44,8 @@ export function ManualBatchListsFlow() {
   const { data: walletClient } = useWalletClient();
   const { network } = useSelectedNetwork();
   const showConfirmedPublish = usePublishToast();
+  const { limits, isPending: limitsPending, isError: limitsError } = useCreationLimits(address);
+  const listLimit = limits.listLimit;
 
   const [listQuery, setListQuery] = useState('');
   const [listAtom, setListAtom] = useState<IntuitionAtomSearchResult | null>(null);
@@ -73,7 +75,7 @@ export function ManualBatchListsFlow() {
     isBusy: isReviewing || isPublishing,
     missingInputMessage: 'Select at least one member atom before reviewing.',
   });
-  const publishDisabledReason = getPublishDisabledReason({
+  const publishDisabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : memberRows.length > listLimit ? `This batch has ${memberRows.length} rows, above the current ${listLimit}-entry limit. Remove rows or use another wallet.` : getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableEntries.length,
     walletReady,
@@ -97,7 +99,7 @@ export function ManualBatchListsFlow() {
 
   function addMemberRow() {
     setMemberRows((current) =>
-      current.length < MAX_CREATION_ITEMS_PER_TRANSACTION ? [...current, createEmptyMemberRow()] : current,
+      current.length < listLimit ? [...current, createEmptyMemberRow()] : current,
     );
     resetReviewState();
   }
@@ -108,6 +110,10 @@ export function ManualBatchListsFlow() {
   }
 
   async function handleReview() {
+    if (limitsPending || limitsError || memberRows.length > listLimit) {
+      setError(`This batch has ${memberRows.length} rows. The current list-entry limit is ${listLimit}. Remove rows before reviewing.`);
+      return;
+    }
     if (!listAtom) {
       setError('Select an existing list atom before reviewing entries.');
       return;
@@ -143,6 +149,10 @@ export function ManualBatchListsFlow() {
   }
 
   async function handlePublish() {
+    if (limitsPending || limitsError || memberRows.length > listLimit) {
+      setError(publishDisabledReason ?? 'Batch limits are unavailable. Try again.');
+      return;
+    }
     if (!reviewRows || creatableEntries.length === 0) {
       setError('Review the list batch before publishing.');
       return;
@@ -156,7 +166,7 @@ export function ManualBatchListsFlow() {
     setIsPublishing(true);
     setError(null);
     setWriteResult(null);
-    setStatus('Waiting for wallet approval to create the eligible list entries...');
+    setStatus('Checking limits before requesting wallet approval for the eligible list entries...');
 
     try {
       const result = await publishManualBatchLists({
@@ -166,6 +176,7 @@ export function ManualBatchListsFlow() {
         walletClient,
         walletAddress: getAddress(address) as Hex,
         activityFlow: 'manual_lists',
+        limit: listLimit,
       });
 
       setWriteResult(result);
@@ -250,12 +261,12 @@ export function ManualBatchListsFlow() {
 
           <div className="flex flex-wrap items-center gap-3">
             <DisabledActionTooltip
-              reason={memberRows.length >= MAX_CREATION_ITEMS_PER_TRANSACTION ? `Maximum ${MAX_CREATION_ITEMS_PER_TRANSACTION} list entries per transaction. Publish this batch before adding more.` : null}
+              reason={memberRows.length >= listLimit ? `Maximum ${listLimit} list entries per transaction. Publish this batch before adding more.` : null}
             >
               <button
                 type="button"
                 onClick={addMemberRow}
-                disabled={isReviewing || isPublishing || memberRows.length >= MAX_CREATION_ITEMS_PER_TRANSACTION}
+                disabled={isReviewing || isPublishing || memberRows.length >= listLimit}
                 className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 + Add member
@@ -273,7 +284,7 @@ export function ManualBatchListsFlow() {
                 {isReviewing ? 'Reviewing list entries...' : 'Review list entries'}
               </button>
             </DisabledActionTooltip>
-            <span className="text-xs text-muted">{memberRows.length} of {MAX_CREATION_ITEMS_PER_TRANSACTION} member rows per transaction</span>
+            <span className="text-xs text-muted">{memberRows.length} of {listLimit} member rows per transaction</span>
           </div>
 
           {reviewRows ? <ListReviewTable rows={reviewRows} nativeSymbol={networkConfig.nativeSymbol} /> : null}
@@ -296,7 +307,7 @@ export function ManualBatchListsFlow() {
                 onClick={() => {
                   void handlePublish();
                 }}
-                disabled={!reviewRows || creatableEntries.length === 0 || !canWrite || isPublishing || isReviewing}
+                disabled={!reviewRows || creatableEntries.length === 0 || !canWrite || isPublishing || isReviewing || !!publishDisabledReason}
                 className="inline-flex rounded-full border border-ink px-5 py-3 text-sm text-ink transition-colors duration-150 hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPublishing ? 'Publishing batch...' : hasNetworkMismatch ? 'Wrong network' : 'Publish eligible list entries'}
@@ -309,7 +320,7 @@ export function ManualBatchListsFlow() {
             {error ? <ErrorNotice message={error} className="mt-4" /> : null}
 
             {writeResult?.txHash ? (
-              <TransactionExplorerLink network={network} txHash={writeResult.txHash} />
+              <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
             ) : null}
           </div>
     </div>

@@ -43,7 +43,7 @@ export function getUnchainedAtomDisplayName(values: Record<string, unknown>): st
   return 'Untitled atom';
 }
 
-export function parseUnchainedAtomCsvText(text: string, defaultClassification: string): {
+export function parseUnchainedAtomCsvText(text: string, defaultClassification: string, maxBatchSize = MAX_UNCHAINED_CSV_BATCH_SIZE): {
   rows: UnchainedCsvAtomParseRow[];
 } {
   const records = parseCsvRows(text);
@@ -121,9 +121,9 @@ export function parseUnchainedAtomCsvText(text: string, defaultClassification: s
   }
 
   if (!rows.length) throw new Error('CSV did not contain any atom rows.');
-  if (rows.length > MAX_UNCHAINED_CSV_BATCH_SIZE) {
-    rows.slice(MAX_UNCHAINED_CSV_BATCH_SIZE).forEach((row) => {
-      row.errors.push(`Import is limited to ${MAX_UNCHAINED_CSV_BATCH_SIZE} atoms per transaction.`);
+  if (rows.length > maxBatchSize) {
+    rows.slice(maxBatchSize).forEach((row) => {
+      row.errors.push(`Import is limited to ${maxBatchSize} atoms per transaction.`);
     });
   }
 

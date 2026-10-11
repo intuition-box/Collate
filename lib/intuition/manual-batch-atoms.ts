@@ -2,8 +2,10 @@ import type { Hex, PublicClient, WalletClient } from 'viem';
 
 import {
   createActivityIntentBestEffort,
+  createActivityIntentRequired,
   enqueueActivityConfirmation,
   flushActivityOutbox,
+  isActivityConfirmationPending,
 } from '@/lib/activity/client';
 import { getIntuitionNetwork, INTUITION_CHAINS } from '@/lib/intuition/networks';
 import { prepareAtomDraft, validateAtomDraft } from '@/lib/intuition/atom-prepare';
@@ -29,6 +31,7 @@ interface PublishManualBatchAtomsOptions {
   walletClient: WalletClient;
   walletAddress: Hex;
   activityFlow?: ActivitySourceFlow;
+  limit?: number;
 }
 
 interface CreateSingleAtomOptions {
@@ -117,6 +120,7 @@ export async function publishManualBatchAtoms({
   walletClient,
   walletAddress,
   activityFlow,
+  limit,
 }: PublishManualBatchAtomsOptions): Promise<WriteResult> {
   if (atoms.length === 0) {
     return {
@@ -126,14 +130,20 @@ export async function publishManualBatchAtoms({
     };
   }
 
-  const preparedTransaction = prepareCreateAtomsTransaction(atoms);
-  const activityIntent = activityFlow
-    ? await createActivityIntentBestEffort({
+  const preparedTransaction = prepareCreateAtomsTransaction(atoms, limit);
+  if (process.env.NODE_ENV === 'production' && !activityFlow) {
+    throw new Error('Activity tracking must be prepared before publishing. No wallet request was sent.');
+  }
+  const activityRequest = activityFlow ? {
         network,
         sourceFlow: activityFlow,
         walletAddress,
         data: preparedTransaction.data,
-      })
+      } : null;
+  const activityIntent = activityRequest
+    ? process.env.NODE_ENV === 'production'
+      ? await createActivityIntentRequired(activityRequest)
+      : await createActivityIntentBestEffort(activityRequest)
     : null;
   const txHash = await walletClient.sendTransaction({
     account: walletAddress,
@@ -143,8 +153,9 @@ export async function publishManualBatchAtoms({
     value: preparedTransaction.value,
   });
 
+  let confirmationPersisted = false;
   if (activityIntent) {
-    enqueueActivityConfirmation({ intentId: activityIntent.intentId, network, txHash });
+    confirmationPersisted = enqueueActivityConfirmation({ intentId: activityIntent.intentId, network, txHash });
     void flushActivityOutbox();
   }
 
@@ -154,13 +165,15 @@ export async function publishManualBatchAtoms({
     throw new Error('The createAtoms transaction was reverted on-chain. No atoms were confirmed as created.');
   }
 
-  if (activityIntent) void flushActivityOutbox();
+  if (activityIntent) await flushActivityOutbox();
 
   return {
     kind: 'created',
     txHash,
     createdIds: atoms.map((atom) => atom.atomId),
     skippedIds: [],
+    trackingPending: activityIntent ? !confirmationPersisted || isActivityConfirmationPending(activityIntent.intentId) : false,
+    trackingUnavailable: !activityIntent,
   };
 }
 

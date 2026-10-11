@@ -7,6 +7,7 @@ export const MAX_LIST_BATCH_SIZE = MAX_CREATION_ITEMS_PER_TRANSACTION;
 
 export function parseCsvListText(
   text: string,
+  maxBatchSize = MAX_LIST_BATCH_SIZE,
 ): { rows: ListMemberRow[]; parsedRows: CsvListParseRow[]; errors: string[] } {
   const rows = parseCsvRows(text);
 
@@ -61,9 +62,9 @@ export function parseCsvListText(
     throw new Error('CSV did not contain any usable members.');
   }
 
-  if (parsedRows.length > MAX_LIST_BATCH_SIZE) {
-    rowResults.slice(MAX_LIST_BATCH_SIZE).forEach((entry) => {
-      entry.errors.push(`CSV import is limited to ${MAX_LIST_BATCH_SIZE} list entries per transaction.`);
+  if (parsedRows.length > maxBatchSize) {
+    rowResults.slice(maxBatchSize).forEach((entry) => {
+      entry.errors.push(`CSV import is limited to ${maxBatchSize} list entries per transaction.`);
     });
   }
 

@@ -10,8 +10,8 @@ export interface PreparedWriteTransaction {
   value: bigint;
 }
 
-export function prepareCreateAtomsTransaction(atoms: PreparedAtomDraft[]): PreparedWriteTransaction {
-  assertCreationBatchSize(atoms.length, 'atoms');
+export function prepareCreateAtomsTransaction(atoms: PreparedAtomDraft[], limit?: number): PreparedWriteTransaction {
+  assertCreationBatchSize(atoms.length, 'atoms', limit);
   const atomDatas = atoms.map((atom) => stringToHex(atom.dataString));
   const assets = atoms.map((atom) => atom.assetWei);
   const value = assets.reduce((total, asset) => total + asset, 0n);
@@ -26,8 +26,8 @@ export function prepareCreateAtomsTransaction(atoms: PreparedAtomDraft[]): Prepa
   };
 }
 
-export function prepareCreateTriplesTransaction(entries: PreparedListEntry[]): PreparedWriteTransaction {
-  assertCreationBatchSize(entries.length, 'list entries');
+export function prepareCreateTriplesTransaction(entries: PreparedListEntry[], limit?: number): PreparedWriteTransaction {
+  assertCreationBatchSize(entries.length, 'list entries', limit);
   const subjectIds = entries.map((entry) => entry.memberTermId);
   const predicateIds = entries.map(() => HAS_TAG_PREDICATE_TERM_ID);
   const objectIds = entries.map((entry) => entry.listTermId);

@@ -3,7 +3,7 @@ import type { Hex } from 'viem';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type { PublicIntuitionNetwork } from '@/types/api';
 
-export function TransactionExplorerLink({ network, txHash }: { network: PublicIntuitionNetwork; txHash: Hex }) {
+export function TransactionExplorerLink({ network, txHash, trackingPending = false, trackingUnavailable = false }: { network: PublicIntuitionNetwork; txHash: Hex; trackingPending?: boolean | undefined; trackingUnavailable?: boolean | undefined }) {
   const { explorerUrl } = getIntuitionNetwork(network);
 
   return (
@@ -20,6 +20,8 @@ export function TransactionExplorerLink({ network, txHash }: { network: PublicIn
           <path d="M8 5h7v7M15 5l-9 9M13 15H5V7" />
         </svg>
       </a>
+      {trackingPending ? <p className="mt-3 text-xs leading-5 text-muted" role="status">Activity is still updating. Keep this transaction link for reference.</p> : null}
+      {trackingUnavailable ? <p className="mt-3 text-xs leading-5 text-muted" role="status">This local publish will not appear in Activity.</p> : null}
     </div>
   );
 }

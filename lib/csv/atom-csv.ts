@@ -75,6 +75,7 @@ export function mapCsvRecordToAtom(
 export function parseCsvAtomText(
   text: string,
   defaultSchemaType: AtomSchemaType = 'Thing',
+  maxBatchSize = MAX_CSV_BATCH_SIZE,
 ): { atoms: CsvAtomRow[]; rows: CsvAtomParseRow[]; errors: string[] } {
   const rows = parseCsvRows(text);
 
@@ -130,9 +131,9 @@ export function parseCsvAtomText(
     throw new Error('CSV did not contain any usable atoms.');
   }
 
-  if (atoms.length > MAX_CSV_BATCH_SIZE) {
-    parsedRows.slice(MAX_CSV_BATCH_SIZE).forEach((row) => {
-      row.errors.push(`CSV import is limited to ${MAX_CSV_BATCH_SIZE} atoms per transaction.`);
+  if (atoms.length > maxBatchSize) {
+    parsedRows.slice(maxBatchSize).forEach((row) => {
+      row.errors.push(`CSV import is limited to ${maxBatchSize} atoms per transaction.`);
     });
   }
 

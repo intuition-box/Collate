@@ -22,7 +22,7 @@ All four flows are review-first: rows are previewed, validated, classified, and 
 - Node.js 20.6+
 - npm
 - An Intuition pinning API key for rich atom metadata creation
-- PostgreSQL only when testing the optional community Activity page locally
+- PostgreSQL for production publishing, activity, and admin-managed batch limits
 
 ## Environment
 
@@ -32,9 +32,13 @@ Required:
 
 - `INTUITION_PIN_API_KEY`
 
+Required for production publishing and admin settings:
+
+- `DATABASE_URL` (apply the existing migrations with `npm run db:migrate`)
+- `ADMIN_PASSWORD_HASH` and `ADMIN_AUTH_SECRET` to access private settings
+
 Optional overrides:
 
-- `DATABASE_URL`
 - `ACTIVITY_READ_ORIGIN` (development-only activity read source; defaults to `https://collate.intuition.box`)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 - `NEXT_PUBLIC_APP_URL`
@@ -76,6 +80,8 @@ npm run dev
 ```
 
 The development database path takes priority whenever `DATABASE_URL` is set. Production never falls back to the remote read source.
+
+In local development without a database, publishing remains possible but activity is not recorded. In production, an activity intent must be stored before a wallet request is sent. The admin settings page controls normal atom and list-entry limits (default 50 each) and a wallet allowlist with a higher limit (default 150). The server rechecks the connected wallet's current limit before every publish.
 
 Open:
 
