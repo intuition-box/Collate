@@ -188,17 +188,19 @@ export function SettingsPanel() {
             type="button"
             role="switch"
             aria-checked={settings?.showActivityInNav ?? false}
+            aria-label="Show Activity in navigation"
             onClick={() => setSettings((current) => current ? { ...current, showActivityInNav: !current.showActivityInNav } : current)}
-            className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors ${
+            disabled={isSubmitting}
+            className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${
               settings?.showActivityInNav ? 'border-accent bg-accent' : 'border-line bg-white'
             }`}
           >
             <span
-              className={`absolute top-1 h-6 w-6 rounded-full bg-ink transition-transform ${
-                settings?.showActivityInNav ? 'translate-x-6' : 'translate-x-1'
+              aria-hidden="true"
+              className={`absolute left-1 top-1 h-6 w-6 rounded-full transition-[transform,background-color] motion-reduce:transition-none ${
+                settings?.showActivityInNav ? 'translate-x-6 bg-black' : 'translate-x-0 bg-ink'
               }`}
             />
-            <span className="sr-only">Toggle Activity navigation visibility</span>
           </button>
         </div>
         <div className="mt-6 rounded-[1.25rem] border border-line/80 bg-paper/45 p-5 sm:p-6">
