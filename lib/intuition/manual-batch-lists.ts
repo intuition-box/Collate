@@ -9,8 +9,9 @@ import {
 } from '@/lib/activity/client';
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
 import { buildListReviewRows, isCreatableListReviewStatus } from '@/lib/intuition/list-duplicates';
+import { getRecognizedHasTagPredicateTermIds } from '@/lib/intuition/list-predicate';
 import { INTUITION_CHAINS, getIntuitionNetwork } from '@/lib/intuition/networks';
-import { HAS_TAG_PREDICATE_TERM_ID, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
+import { prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
 import type { IntuitionAtomSearchResult, PublicIntuitionNetwork } from '@/types/api';
 import type { ListMemberRow, ManualListReviewRow, PreparedListEntry } from '@/types/lists';
 import type { WriteResult } from '@/types/writes';
@@ -88,19 +89,25 @@ export async function reviewManualBatchLists({
 
   for (const row of validRows) {
     const memberAtom = row.selectedAtom!;
-    const tripleId = (await publicClient.readContract({
-      address: getIntuitionNetwork(network).multiVault,
-      abi: MULTIVAULT_ABI,
-      functionName: 'calculateTripleId',
-      args: [memberAtom.termId, HAS_TAG_PREDICATE_TERM_ID, listAtom.termId],
-    })) as Hex;
-
-    const alreadyExistsOnChain = (await publicClient.readContract({
-      address: getIntuitionNetwork(network).multiVault,
-      abi: MULTIVAULT_ABI,
-      functionName: 'isTermCreated',
-      args: [tripleId],
-    })) as boolean;
+    const tripleIds = await Promise.all(getRecognizedHasTagPredicateTermIds(network).map(async (predicateId) => (
+      await publicClient.readContract({
+        address: getIntuitionNetwork(network).multiVault,
+        abi: MULTIVAULT_ABI,
+        functionName: 'calculateTripleId',
+        args: [memberAtom.termId, predicateId, listAtom.termId],
+      }) as Hex
+    )));
+    const existing = await Promise.all(tripleIds.map(async (tripleId) => (
+      await publicClient.readContract({
+        address: getIntuitionNetwork(network).multiVault,
+        abi: MULTIVAULT_ABI,
+        functionName: 'isTermCreated',
+        args: [tripleId],
+      }) as boolean
+    )));
+    const existingIndex = existing.findIndex(Boolean);
+    const tripleId = tripleIds[existingIndex >= 0 ? existingIndex : 0]!;
+    const alreadyExistsOnChain = existingIndex >= 0;
 
     preparedEntries.push({
       id: row.id,
@@ -150,7 +157,7 @@ export async function publishManualBatchLists({
     };
   }
 
-  const preparedTransaction = prepareCreateTriplesTransaction(entries, limit);
+  const preparedTransaction = prepareCreateTriplesTransaction(entries, network, limit);
   if (process.env.NODE_ENV === 'production' && !activityFlow) {
     throw new Error('Activity tracking must be prepared before publishing. No wallet request was sent.');
   }

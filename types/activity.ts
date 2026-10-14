@@ -111,3 +111,20 @@ export interface ActivityItemsResponse {
   items: ConfirmedActivityItem[];
   nextCursor: string | null;
 }
+
+export interface ActivityPublish {
+  id: string;
+  network: PublicIntuitionNetwork;
+  txHash: Hex;
+  creatorWallet: Hex;
+  kind: ActivityItemKind;
+  sourceFlow: ActivitySourceFlow;
+  itemCount: number;
+  createdAt: string;
+  previewItems: ConfirmedActivityItem[];
+}
+
+export interface ActivityPublishesResponse {
+  publishes: ActivityPublish[];
+  nextCursor: string | null;
+}

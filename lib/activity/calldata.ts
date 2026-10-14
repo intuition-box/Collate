@@ -1,7 +1,8 @@
 import { decodeFunctionData, isHex, type Hex } from 'viem';
 
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
-import { HAS_TAG_PREDICATE_TERM_ID } from '@/lib/intuition/tx-prepare';
+import { isHasTagPredicateTermId } from '@/lib/intuition/list-predicate';
+import type { PublicIntuitionNetwork } from '@/types/api';
 import type { ActivityItemKind, ActivityOperation, ActivitySourceFlow } from '@/types/activity';
 
 const ATOM_FLOWS = new Set<ActivitySourceFlow>(['single_atom', 'batch_atoms', 'csv_atoms', 'inline_atom']);
@@ -37,7 +38,7 @@ function assertItemCount(count: number) {
   }
 }
 
-export function decodeActivityCalldata(data: Hex, sourceFlow: ActivitySourceFlow): DecodedActivityCalldata {
+export function decodeActivityCalldata(data: Hex, sourceFlow: ActivitySourceFlow, network: PublicIntuitionNetwork): DecodedActivityCalldata {
   if (!isHex(data) || data.length < 10) {
     throw new Error('Transaction calldata is invalid.');
   }
@@ -80,7 +81,7 @@ export function decodeActivityCalldata(data: Hex, sourceFlow: ActivitySourceFlow
       throw new Error('Triple input counts do not match.');
     }
 
-    if (predicateIds.some((predicateId) => predicateId.toLowerCase() !== HAS_TAG_PREDICATE_TERM_ID.toLowerCase())) {
+    if (predicateIds.some((predicateId) => !isHasTagPredicateTermId(network, predicateId))) {
       throw new Error('List activity must use the expected list-entry predicate.');
     }
 

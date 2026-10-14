@@ -3,9 +3,9 @@ import { isAddress } from 'viem';
 
 import { getActivityDatabasePool } from '@/lib/activity/database';
 import { enrichActivityItems } from '@/lib/activity/enrich-items';
+import { mapActivityItemRow, type ActivityItemDatabaseRow } from '@/lib/activity/item-row';
 import { buildActivityItemsQuery } from '@/lib/activity/items-query';
 import { readRemoteActivityItems, shouldReadRemoteActivity } from '@/lib/activity/remote-read';
-import type { ActivityItemRecord } from '@/types/activity';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,35 +59,11 @@ export async function GET(request: NextRequest) {
   });
 
   try {
-    const result = await getActivityDatabasePool().query<{
-      id: string;
-      item_kind: string;
-      network: string;
-      tx_hash: string;
-      creator_wallet: string;
-      protocol_id: string;
-      subject_id: string | null;
-      predicate_id: string | null;
-      object_id: string | null;
-      block_number: string;
-      created_at: Date | string;
-    }>(query.text, query.values);
+    const result = await getActivityDatabasePool().query<ActivityItemDatabaseRow>(query.text, query.values);
     const hasMore = result.rows.length > limit;
     const rows = result.rows.slice(0, limit);
 
-    const items: ActivityItemRecord[] = rows.map((row) => ({
-      id: row.id,
-      kind: row.item_kind as ActivityItemRecord['kind'],
-      network: row.network as ActivityItemRecord['network'],
-      txHash: row.tx_hash as ActivityItemRecord['txHash'],
-      creatorWallet: row.creator_wallet as ActivityItemRecord['creatorWallet'],
-      protocolId: row.protocol_id as ActivityItemRecord['protocolId'],
-      subjectId: row.subject_id as ActivityItemRecord['subjectId'],
-      predicateId: row.predicate_id as ActivityItemRecord['predicateId'],
-      objectId: row.object_id as ActivityItemRecord['objectId'],
-      blockNumber: row.block_number,
-      createdAt: new Date(row.created_at).toISOString(),
-    }));
+    const items = rows.map(mapActivityItemRow);
 
     return NextResponse.json(
       {

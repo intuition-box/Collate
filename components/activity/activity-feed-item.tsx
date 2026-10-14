@@ -43,7 +43,7 @@ function summaryFor(item: ConfirmedActivityItem): string {
     : 'A new connection on the knowledge graph.';
 }
 
-export function ActivityFeedItem({ item }: { item: ConfirmedActivityItem }) {
+export function ActivityFeedItem({ item, nested = false }: { item: ConfirmedActivityItem; nested?: boolean }) {
   const networkConfig = getIntuitionNetwork(item.network);
   const title = titleFor(item);
   const summary = summaryFor(item);
@@ -54,7 +54,7 @@ export function ActivityFeedItem({ item }: { item: ConfirmedActivityItem }) {
   const detailHref = getGraphDetailHref(item.network, item.kind === 'atom' ? 'atom' : 'triple', item.protocolId);
 
   return (
-    <article className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2 transition-colors hover:bg-paper/40 sm:gap-4 sm:px-6 sm:py-2.5">
+    <article className={`grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2 transition-colors hover:bg-paper/40 sm:gap-4 sm:py-2.5 ${nested ? 'sm:px-10' : 'sm:px-6'}`}>
       <GraphImage image={thumbnail} label={`${title} image`} compact />
 
       <div className="min-w-0">
@@ -68,38 +68,46 @@ export function ActivityFeedItem({ item }: { item: ConfirmedActivityItem }) {
         <p className="truncate text-xs leading-4 text-muted" title={summary}>{summary}</p>
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-4 text-muted">
           <span>{item.kind === 'atom' ? 'Atom' : item.kind === 'list_entry' ? 'List member' : 'Claim'}</span>
-          <span aria-hidden="true">·</span>
-          <span>{item.network === 'mainnet' ? 'Mainnet' : 'Testnet'}</span>
-          <span aria-hidden="true">·</span>
-          <span>by</span>
-          <WalletIdentity
-            address={item.creatorWallet}
-            href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`}
-            size={18}
-            showAddress={false}
-            className="max-w-[8rem] sm:max-w-[12rem]"
-          />
-          <span aria-hidden="true" className="md:hidden">·</span>
-          <time dateTime={item.createdAt} title={formatDate(item.createdAt)} className="whitespace-nowrap md:hidden">{formatShortDate(item.createdAt)}</time>
+          {!nested ? (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{item.network === 'mainnet' ? 'Mainnet' : 'Testnet'}</span>
+              <span aria-hidden="true">·</span>
+              <span>by</span>
+              <WalletIdentity
+                address={item.creatorWallet}
+                href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`}
+                size={18}
+                showAddress={false}
+                className="max-w-[8rem] sm:max-w-[12rem]"
+              />
+              <span aria-hidden="true" className="md:hidden">·</span>
+              <time dateTime={item.createdAt} title={formatDate(item.createdAt)} className="whitespace-nowrap md:hidden">{formatShortDate(item.createdAt)}</time>
+            </>
+          ) : null}
         </div>
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2.5">
-        <time dateTime={item.createdAt} className="hidden whitespace-nowrap text-xs text-muted md:block">
-          {formatDate(item.createdAt)}
-        </time>
-        <a
-          href={`${networkConfig.explorerUrl}/tx/${item.txHash}`}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`View transaction for ${title}`}
-          title="View transaction"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
-            <path d="M8 5h7v7M15 5l-9 9M13 15H5V7" />
-          </svg>
-        </a>
+        {!nested ? (
+          <>
+            <time dateTime={item.createdAt} className="hidden whitespace-nowrap text-xs text-muted md:block">
+              {formatDate(item.createdAt)}
+            </time>
+            <a
+              href={`${networkConfig.explorerUrl}/tx/${item.txHash}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`View transaction for ${title}`}
+              title="View transaction"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+                <path d="M8 5h7v7M15 5l-9 9M13 15H5V7" />
+              </svg>
+            </a>
+          </>
+        ) : null}
         <Link
           href={detailHref}
           aria-label={`View details for ${title}`}

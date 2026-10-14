@@ -5,6 +5,8 @@ import type { Hex } from 'viem';
 
 import {
   readRemoteActivityItems,
+  readRemoteActivityPublishes,
+  readRemotePublishItems,
   readRemoteActivitySummary,
   shouldReadRemoteActivity,
 } from '../../lib/activity/remote-read';
@@ -105,6 +107,43 @@ test('older deployed items without display metadata are enriched locally', async
   assert.deepEqual(enrichedIds, ['17']);
   assert.equal(result.items[0]?.display.state, 'pending');
   assert.equal(result.nextCursor, null);
+});
+
+test('publish reads preserve grouped previews and route item expansion to one publish', async () => {
+  const publishId = '11111111-1111-4111-8111-111111111111';
+  const enriched = { ...atom, display: { state: 'pending' as const } } satisfies ConfirmedActivityItem;
+  const requestedUrls: string[] = [];
+  const publish = {
+    id: publishId,
+    network: 'testnet',
+    txHash: atom.txHash,
+    creatorWallet: atom.creatorWallet,
+    kind: 'atom',
+    sourceFlow: 'csv_atoms',
+    itemCount: 12,
+    createdAt: atom.createdAt,
+    previewItems: [enriched],
+  };
+  const options = {
+    origin: 'https://collate.example',
+    fetcher: async (url: string) => {
+      requestedUrls.push(url);
+      return Response.json(url.includes('/items')
+        ? { items: [enriched], nextCursor: '0' }
+        : { publishes: [publish], nextCursor: publishId });
+    },
+  };
+
+  const page = await readRemoteActivityPublishes({ network: 'testnet', cursor: publishId, limit: 20 }, options);
+  const items = await readRemotePublishItems(publishId, '0', 25, options);
+  assert.equal(page.publishes[0]?.previewItems[0]?.display.state, 'pending');
+  assert.equal(page.nextCursor, publishId);
+  assert.equal(items.items[0]?.id, atom.id);
+  assert.equal(items.nextCursor, '0');
+  assert.equal(new URL(requestedUrls[0]!).pathname, '/api/activity/publishes');
+  assert.equal(new URL(requestedUrls[0]!).searchParams.get('cursor'), publishId);
+  assert.equal(new URL(requestedUrls[1]!).pathname, `/api/activity/publishes/${publishId}/items`);
+  assert.equal(new URL(requestedUrls[1]!).searchParams.get('cursor'), '0');
 });
 
 test('bad origins and upstream failures cannot silently masquerade as activity data', async () => {

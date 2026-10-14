@@ -1,7 +1,9 @@
 import { encodeFunctionData, stringToHex, type Hex } from 'viem';
 
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
+import { getHasTagPredicateTermId } from '@/lib/intuition/list-predicate';
 import { assertCreationBatchSize } from '@/lib/intuition/write-limits';
+import type { PublicIntuitionNetwork } from '@/types/api';
 import type { PreparedAtomDraft } from '@/types/atoms';
 import type { PreparedListEntry } from '@/types/lists';
 
@@ -26,10 +28,10 @@ export function prepareCreateAtomsTransaction(atoms: PreparedAtomDraft[], limit?
   };
 }
 
-export function prepareCreateTriplesTransaction(entries: PreparedListEntry[], limit?: number): PreparedWriteTransaction {
+export function prepareCreateTriplesTransaction(entries: PreparedListEntry[], network: PublicIntuitionNetwork, limit?: number): PreparedWriteTransaction {
   assertCreationBatchSize(entries.length, 'list entries', limit);
   const subjectIds = entries.map((entry) => entry.memberTermId);
-  const predicateIds = entries.map(() => HAS_TAG_PREDICATE_TERM_ID);
+  const predicateIds = entries.map(() => getHasTagPredicateTermId(network));
   const objectIds = entries.map((entry) => entry.listTermId);
   const assets = entries.map((entry) => entry.assetWei);
   const value = assets.reduce((total, asset) => total + asset, 0n);
@@ -43,6 +45,3 @@ export function prepareCreateTriplesTransaction(entries: PreparedListEntry[], li
     value,
   };
 }
-
-export const HAS_TAG_PREDICATE_TERM_ID =
-  '0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5' as Hex;

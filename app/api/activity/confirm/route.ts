@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'The on-chain transaction does not match this activity intent.' }, { status: 422 });
     }
 
-    const decoded = decodeActivityCalldata(transaction.input, intent.source_flow);
+    const decoded = decodeActivityCalldata(transaction.input, intent.source_flow, intent.network);
 
     if (
       decoded.operation !== intent.operation ||

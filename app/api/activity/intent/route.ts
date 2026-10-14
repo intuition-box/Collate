@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   let decoded;
 
   try {
-    decoded = decodeActivityCalldata(body.data as Hex, body.sourceFlow);
+    decoded = decodeActivityCalldata(body.data as Hex, body.sourceFlow, body.network);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unsupported activity calldata.' },

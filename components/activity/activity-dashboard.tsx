@@ -2,14 +2,14 @@
 
 import { startTransition, useEffect, useRef, useState } from 'react';
 
-import { ActivityFeedItem } from '@/components/activity/activity-feed-item';
+import { ActivityPublishRow } from '@/components/activity/activity-publish-row';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type {
-  ActivityItemsResponse,
   ActivityNetworkFilter,
+  ActivityPublish,
+  ActivityPublishesResponse,
   ActivitySummaryResponse,
-  ConfirmedActivityItem,
 } from '@/types/activity';
 
 const NETWORK_OPTIONS: Array<{ value: ActivityNetworkFilter; label: string }> = [
@@ -23,7 +23,7 @@ const NUMBER_FORMATTER = new Intl.NumberFormat('en-US');
 function getRequestUrl(path: string, network: ActivityNetworkFilter, cursor?: string | null) {
   const params = new URLSearchParams();
   if (network !== 'all') params.set('network', network);
-  if (path.endsWith('/items')) params.set('limit', '20');
+  if (path.endsWith('/publishes')) params.set('limit', '20');
   if (cursor) params.set('cursor', cursor);
   const query = params.toString();
   return query ? `${path}?${query}` : path;
@@ -65,7 +65,8 @@ function LoadingState() {
 export function ActivityDashboard() {
   const [network, setNetwork] = useState<ActivityNetworkFilter>('all');
   const [summary, setSummary] = useState<ActivitySummaryResponse | null>(null);
-  const [items, setItems] = useState<ConfirmedActivityItem[]>([]);
+  const [publishes, setPublishes] = useState<ActivityPublish[]>([]);
+  const [openPublishId, setOpenPublishId] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -85,23 +86,24 @@ export function ActivityDashboard() {
       setLoadMoreError(null);
 
       try {
-        const [summaryResponse, itemsResponse] = await Promise.all([
+        const [summaryResponse, publishesResponse] = await Promise.all([
           fetch(getRequestUrl('/api/activity/summary', network), { cache: 'no-store', signal: controller.signal }),
-          fetch(getRequestUrl('/api/activity/items', network), { cache: 'no-store', signal: controller.signal }),
+          fetch(getRequestUrl('/api/activity/publishes', network), { cache: 'no-store', signal: controller.signal }),
         ]);
-        const [nextSummary, nextItems] = await Promise.all([
+        const [nextSummary, nextPublishes] = await Promise.all([
           readJson<ActivitySummaryResponse>(summaryResponse),
-          readJson<ActivityItemsResponse>(itemsResponse),
+          readJson<ActivityPublishesResponse>(publishesResponse),
         ]);
 
         setSummary(nextSummary);
-        setItems(nextItems.items);
-        setNextCursor(nextItems.nextCursor);
+        setPublishes(nextPublishes.publishes);
+        setNextCursor(nextPublishes.nextCursor);
+        setOpenPublishId(null);
         setLastUpdated(new Date());
       } catch (caughtError) {
         if (caughtError instanceof DOMException && caughtError.name === 'AbortError') return;
         setSummary(null);
-        setItems([]);
+        setPublishes([]);
         setNextCursor(null);
         setError(caughtError instanceof Error ? caughtError.message : 'Activity could not be loaded.');
       } finally {
@@ -125,10 +127,10 @@ export function ActivityDashboard() {
     setLoadMoreError(null);
 
     try {
-      const response = await fetch(getRequestUrl('/api/activity/items', network, nextCursor), { cache: 'no-store', signal: controller.signal });
-      const payload = await readJson<ActivityItemsResponse>(response);
+      const response = await fetch(getRequestUrl('/api/activity/publishes', network, nextCursor), { cache: 'no-store', signal: controller.signal });
+      const payload = await readJson<ActivityPublishesResponse>(response);
       if (controller.signal.aborted) return;
-      setItems((current) => [...current, ...payload.items]);
+      setPublishes((current) => [...current, ...payload.publishes]);
       setNextCursor(payload.nextCursor);
     } catch (caughtError) {
       if (!controller.signal.aborted) setLoadMoreError(caughtError instanceof Error ? caughtError.message : 'More activity could not be loaded.');
@@ -312,17 +314,24 @@ export function ActivityDashboard() {
                     Recent activity
                   </h2>
                 </div>
-                <p className="text-sm text-muted">Newest creations first.</p>
+                <p className="text-sm text-muted">Newest publishes first.</p>
               </div>
 
-              {items.length === 0 ? (
+              {publishes.length === 0 ? (
                 <div className="mt-6 rounded-[1.4rem] border border-dashed border-line bg-white/45 px-6 py-12 text-center">
                   <p className="text-sm font-medium text-ink">There is no activity in this view yet.</p>
                 </div>
               ) : (
                 <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-line/90 bg-white/72">
                   <div className="divide-y divide-line/65">
-                    {items.map((item) => <ActivityFeedItem key={item.id} item={item} />)}
+                    {publishes.map((publish) => (
+                      <ActivityPublishRow
+                        key={`${network}:${refreshKey}:${publish.id}`}
+                        publish={publish}
+                        expanded={openPublishId === publish.id}
+                        onToggle={() => setOpenPublishId((current) => current === publish.id ? null : publish.id)}
+                      />
+                    ))}
                   </div>
 
                   {nextCursor ? (

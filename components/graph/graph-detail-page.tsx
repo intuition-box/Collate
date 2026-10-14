@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { GraphImage } from '@/components/graph/graph-image';
 import { resolveIntuitionImageUrl } from '@/lib/intuition/images';
-import { HAS_TAG_PREDICATE_TERM_ID } from '@/lib/intuition/tx-prepare';
+import { isHasTagPredicateTermId } from '@/lib/intuition/list-predicate';
 import type { GraphAtomComponent, GraphDetailResult } from '@/lib/intuition/graph-detail';
 import { getGraphDetailHref, type GraphDetailRoute } from '@/lib/intuition/graph-detail-route';
 
@@ -147,7 +147,7 @@ export function GraphDetailPage({ route, result }: { route: GraphDetailRoute; re
     );
   }
 
-  const isListEntry = detail.predicate?.termId.toLowerCase() === HAS_TAG_PREDICATE_TERM_ID.toLowerCase();
+  const isListEntry = isHasTagPredicateTermId(route.network, detail.predicate?.termId);
   const title = isListEntry
     ? `Added ${detail.subject?.label ?? 'a member'} to ${detail.object?.label ?? 'a list'}`
     : `${detail.subject?.label ?? 'Subject'} · ${detail.predicate?.label ?? 'Predicate'} · ${detail.object?.label ?? 'Object'}`;

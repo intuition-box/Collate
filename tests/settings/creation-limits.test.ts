@@ -14,8 +14,9 @@ import { parseCsvAtomText } from '@/lib/csv/atom-csv';
 import { parseCsvListText } from '@/lib/csv/list-csv';
 import { parseUnchainedAtomCsvText } from '@/lib/csv/unchained-atom-csv';
 import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
+import { getHasTagPredicateTermId } from '@/lib/intuition/list-predicate';
 import { publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
-import { HAS_TAG_PREDICATE_TERM_ID, prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
+import { prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
 import { MAX_PRIVILEGED_CREATION_ITEMS } from '@/lib/intuition/write-limits';
 import { DEFAULT_ADMIN_SETTINGS, resolveCreationLimits, validateAdminSettings } from '@/lib/settings/creation-limits';
 import type { PreparedAtomDraft } from '@/types/atoms';
@@ -88,9 +89,9 @@ test('manual and CSV atom/list batches accept 150 only when passed the privilege
   }));
   assert.equal(MAX_PRIVILEGED_CREATION_ITEMS, 150);
   assert.equal(prepareCreateAtomsTransaction(atoms.slice(0, 150), 150).value, 150n);
-  assert.equal(prepareCreateTriplesTransaction(entries.slice(0, 150), 150).value, 150n);
+  assert.equal(prepareCreateTriplesTransaction(entries.slice(0, 150), 'testnet', 150).value, 150n);
   assert.throws(() => prepareCreateAtomsTransaction(atoms, 150), /at most 150 atoms/);
-  assert.throws(() => prepareCreateTriplesTransaction(entries, 150), /at most 150 list entries/);
+  assert.throws(() => prepareCreateTriplesTransaction(entries, 'testnet', 150), /at most 150 list entries/);
   assert.throws(() => prepareCreateAtomsTransaction(atoms.slice(0, 51), 50), /at most 50 atoms/);
 
   const classic = parseCsvAtomText(['name', ...atoms.map((atom) => atom.displayName)].join('\n'), 'Thing', 150);
@@ -102,7 +103,7 @@ test('manual and CSV atom/list batches accept 150 only when passed the privilege
   assert.match(unchained.rows[150]?.errors.join(' ') ?? '', /150/);
   assert.equal(lists.parsedRows[149]?.errors.length, 0);
   assert.match(lists.parsedRows[150]?.errors.join(' ') ?? '', /150/);
-  assert.equal(decodeActivityCalldata(prepareCreateAtomsTransaction(atoms.slice(0, 150), 150).data, 'csv_atoms').itemCount, 150);
+  assert.equal(decodeActivityCalldata(prepareCreateAtomsTransaction(atoms.slice(0, 150), 150).data, 'csv_atoms', 'testnet').itemCount, 150);
 });
 
 test('activity intent applies current wallet limit on both networks before storing', async () => {
@@ -126,9 +127,9 @@ test('activity intent applies current wallet limit on both networks before stori
       abi: MULTIVAULT_ABI, functionName: 'createAtoms',
       args: [Array.from({ length: count }, () => '0x1234' as Hex), Array.from({ length: count }, () => 1n)],
     });
-    const listData = (count: number) => encodeFunctionData({
+    const listData = (count: number, network: 'mainnet' | 'testnet') => encodeFunctionData({
       abi: MULTIVAULT_ABI, functionName: 'createTriples',
-      args: [Array.from({ length: count }, () => TERM), Array.from({ length: count }, () => HAS_TAG_PREDICATE_TERM_ID), Array.from({ length: count }, () => TERM), Array.from({ length: count }, () => 1n)],
+      args: [Array.from({ length: count }, () => TERM), Array.from({ length: count }, () => getHasTagPredicateTermId(network)), Array.from({ length: count }, () => TERM), Array.from({ length: count }, () => 1n)],
     });
     const submit = async (network: 'mainnet' | 'testnet', walletAddress: string, data: Hex, sourceFlow: 'csv_atoms' | 'csv_lists') =>
       createIntent(new NextRequest('http://localhost/api/activity/intent', {
@@ -136,9 +137,9 @@ test('activity intent applies current wallet limit on both networks before stori
       }));
 
     assert.equal((await submit('mainnet', WALLET, atomData(150), 'csv_atoms')).status, 201);
-    assert.equal((await submit('testnet', WALLET, listData(150), 'csv_lists')).status, 201);
+    assert.equal((await submit('testnet', WALLET, listData(150, 'testnet'), 'csv_lists')).status, 201);
     assert.equal((await submit('mainnet', WALLET, atomData(151), 'csv_atoms')).status, 403);
-    assert.equal((await submit('testnet', OTHER_WALLET, listData(51), 'csv_lists')).status, 403);
+    assert.equal((await submit('testnet', OTHER_WALLET, listData(51, 'testnet'), 'csv_lists')).status, 403);
     allowlisted = false;
     assert.equal((await submit('mainnet', WALLET, atomData(51), 'csv_atoms')).status, 403);
     assert.equal(inserts, 2);

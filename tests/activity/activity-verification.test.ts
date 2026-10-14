@@ -13,7 +13,7 @@ import {
 import { decodeActivityCalldata } from '../../lib/activity/calldata';
 import { parseCreatedActivityItems, verifyCreatedActivityItems } from '../../lib/activity/events';
 import { MULTIVAULT_ABI } from '../../lib/intuition/abi';
-import { HAS_TAG_PREDICATE_TERM_ID } from '../../lib/intuition/tx-prepare';
+import { HAS_TAG_PREDICATE_TERM_IDS } from '../../lib/intuition/list-predicate';
 
 const MULTIVAULT = '0x1111111111111111111111111111111111111111' as Address;
 const CREATOR = '0x2222222222222222222222222222222222222222' as Address;
@@ -67,30 +67,39 @@ test('atom flows decode as atom activity and reject list flow labels', () => {
     args: [atomDatas, [1n, 2n]],
   });
 
-  const decoded = decodeActivityCalldata(data, 'batch_atoms');
+  const decoded = decodeActivityCalldata(data, 'batch_atoms', 'mainnet');
   assert.equal(decoded.itemKind, 'atom');
   assert.equal(decoded.itemCount, 2);
   assert.deepEqual(decoded.atomDatas, atomDatas);
-  assert.throws(() => decodeActivityCalldata(data, 'manual_lists'), /cannot submit createAtoms/);
+  assert.throws(() => decodeActivityCalldata(data, 'manual_lists', 'mainnet'), /cannot submit createAtoms/);
 });
 
-test('list flows require the list-entry predicate and stay separate from claims', () => {
+test('list activity accepts each network predicate and historical Testnet entries, but rejects unrelated predicates', () => {
   const data = encodeFunctionData({
     abi: MULTIVAULT_ABI,
     functionName: 'createTriples',
-    args: [[TERM_A], [HAS_TAG_PREDICATE_TERM_ID], [TERM_B], [1n]],
+    args: [[TERM_A], [HAS_TAG_PREDICATE_TERM_IDS.mainnet], [TERM_B], [1n]],
   });
-  const decoded = decodeActivityCalldata(data, 'csv_lists');
+  const decoded = decodeActivityCalldata(data, 'csv_lists', 'mainnet');
 
   assert.equal(decoded.itemKind, 'list_entry');
   assert.equal(decoded.operation, 'createTriples');
+  assert.equal(decodeActivityCalldata(data, 'csv_lists', 'testnet').itemKind, 'list_entry');
+
+  const testnetData = encodeFunctionData({
+    abi: MULTIVAULT_ABI,
+    functionName: 'createTriples',
+    args: [[TERM_A], [HAS_TAG_PREDICATE_TERM_IDS.testnet], [TERM_B], [1n]],
+  });
+  assert.equal(decodeActivityCalldata(testnetData, 'manual_lists', 'testnet').itemKind, 'list_entry');
+  assert.throws(() => decodeActivityCalldata(testnetData, 'csv_lists', 'mainnet'), /list-entry predicate/);
 
   const unrelatedPredicateData = encodeFunctionData({
     abi: MULTIVAULT_ABI,
     functionName: 'createTriples',
     args: [[TERM_A], [TERM_C], [TERM_B], [1n]],
   });
-  assert.throws(() => decodeActivityCalldata(unrelatedPredicateData, 'csv_lists'), /list-entry predicate/);
+  assert.throws(() => decodeActivityCalldata(unrelatedPredicateData, 'csv_lists', 'testnet'), /list-entry predicate/);
 });
 
 test('confirmed atom items come only from matching MultiVault creation events', () => {
@@ -102,6 +111,7 @@ test('confirmed atom items come only from matching MultiVault creation events', 
       args: [[atomData], [1n]],
     }),
     'single_atom',
+    'mainnet',
   );
   const ignoredAddress = '0x4444444444444444444444444444444444444444' as Address;
   const items = parseCreatedActivityItems({
@@ -121,12 +131,13 @@ test('event verification rejects mismatched or incomplete confirmed payloads', (
     encodeFunctionData({
       abi: MULTIVAULT_ABI,
       functionName: 'createTriples',
-      args: [[TERM_A], [HAS_TAG_PREDICATE_TERM_ID], [TERM_B], [1n]],
+      args: [[TERM_A], [HAS_TAG_PREDICATE_TERM_IDS.mainnet], [TERM_B], [1n]],
     }),
     'manual_lists',
+    'mainnet',
   );
   const matchingItems = parseCreatedActivityItems({
-    logs: [tripleLog(TERM_C, TERM_A, HAS_TAG_PREDICATE_TERM_ID, TERM_B)],
+    logs: [tripleLog(TERM_C, TERM_A, HAS_TAG_PREDICATE_TERM_IDS.mainnet, TERM_B)],
     multiVault: MULTIVAULT,
     itemKind: 'list_entry',
   });
@@ -135,7 +146,7 @@ test('event verification rejects mismatched or incomplete confirmed payloads', (
   assert.throws(() => verifyCreatedActivityItems([], decoded), /Expected 1 creation events/);
 
   const wrongItems = parseCreatedActivityItems({
-    logs: [tripleLog(TERM_C, TERM_B, HAS_TAG_PREDICATE_TERM_ID, TERM_A)],
+    logs: [tripleLog(TERM_C, TERM_B, HAS_TAG_PREDICATE_TERM_IDS.mainnet, TERM_A)],
     multiVault: MULTIVAULT,
     itemKind: 'list_entry',
   });

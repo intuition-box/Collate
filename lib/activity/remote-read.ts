@@ -1,7 +1,10 @@
 import { enrichActivityItems } from '@/lib/activity/enrich-items';
+import { ACTIVITY_SOURCE_FLOWS } from '@/types/activity';
 import type {
   ActivityItemRecord,
   ActivityItemsResponse,
+  ActivityPublish,
+  ActivityPublishesResponse,
   ActivitySummaryResponse,
   ConfirmedActivityItem,
 } from '@/types/activity';
@@ -51,12 +54,29 @@ function hasDisplay(value: ActivityItemRecord): value is ConfirmedActivityItem {
   return isRecord(display.triple);
 }
 
+function isActivityPublish(value: unknown): value is ActivityPublish {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string'
+    && (value.network === 'mainnet' || value.network === 'testnet')
+    && (value.kind === 'atom' || value.kind === 'list_entry' || value.kind === 'claim')
+    && typeof value.txHash === 'string'
+    && typeof value.creatorWallet === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.sourceFlow === 'string'
+    && ACTIVITY_SOURCE_FLOWS.includes(value.sourceFlow as ActivityPublish['sourceFlow'])
+    && typeof value.itemCount === 'number'
+    && Number.isInteger(value.itemCount)
+    && value.itemCount > 0
+    && Array.isArray(value.previewItems)
+    && value.previewItems.every((item: unknown) => isActivityItemRecord(item) && hasDisplay(item));
+}
+
 export function shouldReadRemoteActivity(environment: { NODE_ENV?: string; DATABASE_URL?: string } = process.env): boolean {
   return environment.NODE_ENV === 'development' && !environment.DATABASE_URL?.trim();
 }
 
 async function fetchRemoteActivity(
-  resource: 'summary' | 'items',
+  resource: 'summary' | 'items' | 'publishes' | `publishes/${string}/items`,
   params: URLSearchParams,
   options: RemoteReadOptions,
 ): Promise<unknown> {
@@ -85,6 +105,21 @@ async function fetchRemoteActivity(
   }
 }
 
+async function parseRemoteActivityItems(payload: unknown, options: RemoteReadOptions): Promise<ActivityItemsResponse> {
+  if (!isRecord(payload)
+    || !Array.isArray(payload.items)
+    || !payload.items.every(isActivityItemRecord)
+    || (payload.nextCursor !== null && typeof payload.nextCursor !== 'string')) {
+    throw new Error('Live activity items have an unexpected format.');
+  }
+
+  const items = payload.items as ActivityItemRecord[];
+  return {
+    items: items.every(hasDisplay) ? items : await (options.enrichItems ?? enrichActivityItems)(items),
+    nextCursor: payload.nextCursor,
+  };
+}
+
 export async function readRemoteActivitySummary(
   network: PublicIntuitionNetwork | null,
   options: RemoteReadOptions = {},
@@ -109,17 +144,39 @@ export async function readRemoteActivityItems(
   if (filters.cursor) params.set('cursor', filters.cursor);
   params.set('limit', String(filters.limit));
 
-  const payload = await fetchRemoteActivity('items', params, options);
-  if (!isRecord(payload)
-    || !Array.isArray(payload.items)
-    || !payload.items.every(isActivityItemRecord)
-    || (payload.nextCursor !== null && typeof payload.nextCursor !== 'string')) {
-    throw new Error('Live activity items have an unexpected format.');
-  }
+  return parseRemoteActivityItems(await fetchRemoteActivity('items', params, options), options);
+}
 
-  const items = payload.items as ActivityItemRecord[];
-  return {
-    items: items.every(hasDisplay) ? items : await (options.enrichItems ?? enrichActivityItems)(items),
-    nextCursor: payload.nextCursor,
-  };
+export async function readRemoteActivityPublishes(
+  filters: { network: PublicIntuitionNetwork | null; cursor: string | null; limit: number },
+  options: RemoteReadOptions = {},
+): Promise<ActivityPublishesResponse> {
+  const params = new URLSearchParams();
+  if (filters.network) params.set('network', filters.network);
+  if (filters.cursor) params.set('cursor', filters.cursor);
+  params.set('limit', String(filters.limit));
+
+  const payload = await fetchRemoteActivity('publishes', params, options);
+  if (!isRecord(payload)
+    || !Array.isArray(payload.publishes)
+    || !payload.publishes.every(isActivityPublish)
+    || (payload.nextCursor !== null && typeof payload.nextCursor !== 'string')) {
+    throw new Error('Live activity publishes have an unexpected format.');
+  }
+  return payload as unknown as ActivityPublishesResponse;
+}
+
+export async function readRemotePublishItems(
+  publishId: string,
+  cursor: string | null,
+  limit: number,
+  options: RemoteReadOptions = {},
+): Promise<ActivityItemsResponse> {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+  params.set('limit', String(limit));
+  return parseRemoteActivityItems(
+    await fetchRemoteActivity(`publishes/${encodeURIComponent(publishId)}/items`, params, options),
+    options,
+  );
 }

@@ -8,7 +8,8 @@ import {
   reviewCsvBatchLists,
 } from '@/lib/intuition/csv-batch-lists';
 import { getCreatablePreparedAtoms, publishManualBatchAtoms } from '@/lib/intuition/manual-batch-atoms';
-import { getCreatablePreparedListEntries, publishManualBatchLists } from '@/lib/intuition/manual-batch-lists';
+import { getCreatablePreparedListEntries, publishManualBatchLists, reviewManualBatchLists } from '@/lib/intuition/manual-batch-lists';
+import { HAS_TAG_PREDICATE_TERM_IDS } from '@/lib/intuition/list-predicate';
 import { prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
 import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
@@ -212,6 +213,56 @@ test('reviewCsvBatchLists keeps a description-resolved duplicate-name row eligib
   assert.deepEqual(getCreatablePreparedListEntries(rows), [rows[0]?.payload.prepared]);
 });
 
+test('Testnet list review recognizes old Collate entries under the Mainnet predicate', async () => {
+  const memberAtom = candidate('0x1111111111111111111111111111111111111111111111111111111111111111', 'Streaming service.');
+  const testnetTripleId = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const legacyTripleId = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+  const checkedPredicates: string[] = [];
+  let legacyExists = true;
+  const publicClient = {
+    readContract: async ({ functionName, args }: { functionName: string; args?: readonly string[] }) => {
+      if (functionName === 'getTripleCost') return 3n;
+      if (functionName === 'calculateTripleId') {
+        checkedPredicates.push(args![1]!);
+        return args![1] === HAS_TAG_PREDICATE_TERM_IDS.testnet ? testnetTripleId : legacyTripleId;
+      }
+      if (functionName === 'isTermCreated') return legacyExists && args![0] === legacyTripleId;
+      throw new Error(`Unexpected contract read: ${functionName}`);
+    },
+  } as never;
+  const memberRows = [{ id: 'm1', memberName: 'Netflix', memberDescription: 'Streaming service.', selectedAtom: memberAtom, candidates: [] }];
+  const rows = await reviewManualBatchLists({
+    listAtom,
+    rows: memberRows,
+    network: 'testnet',
+    publicClient,
+  });
+
+  assert.deepEqual(checkedPredicates, [HAS_TAG_PREDICATE_TERM_IDS.testnet, HAS_TAG_PREDICATE_TERM_IDS.mainnet]);
+  assert.equal(rows[0]?.status, 'skip_existing');
+  assert.equal(rows[0]?.payload.prepared?.tripleId, legacyTripleId);
+  assert.deepEqual(getCreatablePreparedListEntries(rows), []);
+
+  const csvRows = await reviewCsvBatchLists({
+    listAtom,
+    parsedRows: [{ row: memberRows[0]!, errors: [] }],
+    network: 'testnet',
+    publicClient,
+  });
+  assert.equal(csvRows[0]?.status, 'skip_existing');
+
+  legacyExists = false;
+  checkedPredicates.length = 0;
+  const newRows = await reviewManualBatchLists({ listAtom, rows: memberRows, network: 'testnet', publicClient });
+  assert.deepEqual(checkedPredicates, [HAS_TAG_PREDICATE_TERM_IDS.testnet, HAS_TAG_PREDICATE_TERM_IDS.mainnet]);
+  assert.equal(newRows[0]?.status, 'ready_to_create');
+  assert.equal(newRows[0]?.payload.prepared?.tripleId, testnetTripleId);
+
+  checkedPredicates.length = 0;
+  await reviewManualBatchLists({ listAtom, rows: memberRows, network: 'mainnet', publicClient });
+  assert.deepEqual(checkedPredicates, [HAS_TAG_PREDICATE_TERM_IDS.mainnet]);
+});
+
 test('getCreatablePreparedAtoms only returns ready atom rows', () => {
   const preparedAtom: PreparedAtomDraft = {
     id: 'a1',
@@ -328,7 +379,7 @@ test('prepareCreateTriplesTransaction includes only eligible list entry assets',
       assetWei: 4n,
       alreadyExistsOnChain: false,
     },
-  ]);
+  ], 'testnet');
 
   assert.equal(prepared.value, 7n);
 });
@@ -353,9 +404,9 @@ test('atom and list writes accept 50 items and reject larger batches before wall
   }));
 
   assert.equal(prepareCreateAtomsTransaction(atoms.slice(0, -1)).value, 50n);
-  assert.equal(prepareCreateTriplesTransaction(entries.slice(0, -1)).value, 50n);
+  assert.equal(prepareCreateTriplesTransaction(entries.slice(0, -1), 'testnet').value, 50n);
   assert.throws(() => prepareCreateAtomsTransaction(atoms), /at most 50 atoms/);
-  assert.throws(() => prepareCreateTriplesTransaction(entries), /at most 50 list entries/);
+  assert.throws(() => prepareCreateTriplesTransaction(entries, 'testnet'), /at most 50 list entries/);
 
   const walletClient = {
     sendTransaction: async () => {
