@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPublicClient, fallback, getAddress, http, isAddress } from 'viem';
-import { mainnet } from 'viem/chains';
+import { getAddress, isAddress } from 'viem';
 import { normalize } from 'viem/ens';
 
-const customRpcUrl = process.env.ETHEREUM_RPC_URL?.trim();
-const rpcTransports = [
-  ...(customRpcUrl ? [http(customRpcUrl, { retryCount: 0, timeout: 8_000 })] : []),
-  http('https://ethereum-rpc.publicnode.com', { retryCount: 0, timeout: 8_000 }),
-  http('https://eth.drpc.org', { retryCount: 0, timeout: 8_000 }),
-  http('https://1rpc.io/eth', { retryCount: 0, timeout: 8_000 }),
-];
-
-const ethereumClient = createPublicClient({
-  chain: mainnet,
-  transport: fallback(rpcTransports, { rank: false }),
-});
+import { ethereumClient } from '@/lib/ethereum/client';
 
 export async function GET(request: NextRequest) {
   const addressInput = request.nextUrl.searchParams.get('address')?.trim() ?? '';

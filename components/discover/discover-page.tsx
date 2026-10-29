@@ -7,6 +7,7 @@ import { useDeferredValue, useState } from 'react';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { DiscoverImage } from '@/components/discover/discover-image';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
+import { getContributorHref } from '@/lib/contributors/routes';
 import { filterAndSortCollections, type CollectionSort } from '@/lib/discover/model';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type { DiscoverBatch, DiscoverBatchesResponse, DiscoverCollection, DiscoverCollectionsResponse } from '@/types/discover';
@@ -77,7 +78,7 @@ function BatchRow({ batch }: { batch: DiscoverBatch }) {
       </div>
       <WalletIdentity
         address={batch.creatorWallet}
-        href={`${network.explorerUrl}/address/${batch.creatorWallet}`}
+        href={getContributorHref(batch.creatorWallet, batch.network)}
         size={24}
         showAddress={false}
         className="col-start-1 row-start-2 max-w-full sm:col-auto sm:row-auto"

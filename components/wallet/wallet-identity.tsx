@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { Address } from 'viem';
 
 import { useEnsProfile } from '@/components/wallet/use-ens-profile';
@@ -32,6 +33,18 @@ export function WalletIdentity({
       </span>
     </>
   );
+
+  if (href?.startsWith('/')) {
+    return (
+      <Link
+        href={href}
+        title={address}
+        className={`inline-flex min-w-0 items-center gap-2.5 rounded-lg outline-none transition-opacity hover:opacity-70 focus-visible:ring-2 focus-visible:ring-accent ${className}`}
+      >
+        {content}
+      </Link>
+    );
+  }
 
   if (href) {
     return (

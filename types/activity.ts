@@ -127,4 +127,14 @@ export interface ActivityPublish {
 export interface ActivityPublishesResponse {
   publishes: ActivityPublish[];
   nextCursor: string | null;
+  wallet?: Hex;
+}
+
+export interface ActivityContributorSummaryResponse {
+  wallet: Hex;
+  network: ActivityNetworkFilter;
+  atoms: number;
+  claims: number;
+  listEntries: number;
+  publishes: number;
 }

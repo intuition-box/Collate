@@ -3,7 +3,9 @@
 import Link from 'next/link';
 
 import { GraphImage } from '@/components/graph/graph-image';
+import { RelicBadge } from '@/components/relic/relic-badge';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
+import { getContributorHref } from '@/lib/contributors/routes';
 import { getGraphDetailHref } from '@/lib/intuition/graph-detail-route';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type { ConfirmedActivityItem } from '@/types/activity';
@@ -43,7 +45,7 @@ function summaryFor(item: ConfirmedActivityItem): string {
     : 'A new connection on the knowledge graph.';
 }
 
-export function ActivityFeedItem({ item, nested = false }: { item: ConfirmedActivityItem; nested?: boolean }) {
+export function ActivityFeedItem({ item, nested = false, relicHolder = false, hideCreator = false }: { item: ConfirmedActivityItem; nested?: boolean; relicHolder?: boolean; hideCreator?: boolean }) {
   const networkConfig = getIntuitionNetwork(item.network);
   const title = titleFor(item);
   const summary = summaryFor(item);
@@ -72,15 +74,20 @@ export function ActivityFeedItem({ item, nested = false }: { item: ConfirmedActi
             <>
               <span aria-hidden="true">·</span>
               <span>{item.network === 'mainnet' ? 'Mainnet' : 'Testnet'}</span>
-              <span aria-hidden="true">·</span>
-              <span>by</span>
-              <WalletIdentity
-                address={item.creatorWallet}
-                href={`${networkConfig.explorerUrl}/address/${item.creatorWallet}`}
-                size={18}
-                showAddress={false}
-                className="max-w-[8rem] sm:max-w-[12rem]"
-              />
+              {!hideCreator ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>by</span>
+                  <WalletIdentity
+                    address={item.creatorWallet}
+                    href={getContributorHref(item.creatorWallet, item.network)}
+                    size={18}
+                    showAddress={false}
+                    className="max-w-[8rem] sm:max-w-[12rem]"
+                  />
+                  {relicHolder ? <RelicBadge /> : null}
+                </>
+              ) : null}
               <span aria-hidden="true" className="md:hidden">·</span>
               <time dateTime={item.createdAt} title={formatDate(item.createdAt)} className="whitespace-nowrap md:hidden">{formatShortDate(item.createdAt)}</time>
             </>

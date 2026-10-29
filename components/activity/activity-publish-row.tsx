@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ActivityFeedItem } from '@/components/activity/activity-feed-item';
 import { GraphImage } from '@/components/graph/graph-image';
+import { RelicBadge } from '@/components/relic/relic-badge';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
 import { getPublishPreview, getPublishTitle } from '@/lib/activity/publish-copy';
+import { getContributorHref } from '@/lib/contributors/routes';
 import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type { ActivityItemsResponse, ActivityPublish, ConfirmedActivityItem } from '@/types/activity';
 
@@ -39,10 +41,14 @@ async function loadPublishItems(publishId: string, cursor: string | null, signal
 
 export function ActivityPublishRow({
   publish,
+  relicHolder,
+  hideCreator = false,
   expanded,
   onToggle,
 }: {
   publish: ActivityPublish;
+  relicHolder: boolean;
+  hideCreator?: boolean;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -96,7 +102,7 @@ export function ActivityPublishRow({
     }
   }
 
-  if (publish.itemCount === 1 && first) return <ActivityFeedItem item={first} />;
+  if (publish.itemCount === 1 && first) return <ActivityFeedItem item={first} relicHolder={relicHolder} hideCreator={hideCreator} />;
 
   const title = getPublishTitle(publish);
   const networkConfig = getIntuitionNetwork(publish.network);
@@ -111,15 +117,20 @@ export function ActivityPublishRow({
           <p className="truncate text-xs text-muted" title={getPublishPreview(publish)}>{getPublishPreview(publish)}</p>
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
             <span>{publish.network === 'mainnet' ? 'Mainnet' : 'Testnet'}</span>
-            <span aria-hidden="true">·</span>
-            <span>by</span>
-            <WalletIdentity
-              address={publish.creatorWallet}
-              href={`${networkConfig.explorerUrl}/address/${publish.creatorWallet}`}
-              size={18}
-              showAddress={false}
-              className="max-w-[8rem] sm:max-w-[12rem]"
-            />
+            {!hideCreator ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>by</span>
+                <WalletIdentity
+                  address={publish.creatorWallet}
+                  href={getContributorHref(publish.creatorWallet, publish.network)}
+                  size={18}
+                  showAddress={false}
+                  className="max-w-[8rem] sm:max-w-[12rem]"
+                />
+                {relicHolder ? <RelicBadge /> : null}
+              </>
+            ) : null}
             <span aria-hidden="true" className="md:hidden">·</span>
             <time dateTime={publish.createdAt} title={formatDate(publish.createdAt)} className="md:hidden">{formatShortDate(publish.createdAt)}</time>
           </div>

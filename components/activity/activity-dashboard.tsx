@@ -3,8 +3,11 @@
 import { startTransition, useEffect, useRef, useState } from 'react';
 
 import { ActivityPublishRow } from '@/components/activity/activity-publish-row';
+import { useRelicOwnership } from '@/components/activity/use-relic-ownership';
+import { RelicBadge } from '@/components/relic/relic-badge';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
-import { getIntuitionNetwork } from '@/lib/intuition/networks';
+import { getContributorHref } from '@/lib/contributors/routes';
+import { collectActivityWallets } from '@/lib/relic/activity-wallets';
 import type {
   ActivityNetworkFilter,
   ActivityPublish,
@@ -75,6 +78,12 @@ export function ActivityDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const loadMoreController = useRef<AbortController | null>(null);
+  const visibleWallets = collectActivityWallets(summary, publishes);
+  const { data: relicOwnership } = useRelicOwnership(visibleWallets, !isLoading && !error, refreshKey);
+
+  function isRelicHolder(address: string): boolean {
+    return relicOwnership?.[address.toLowerCase()] === true;
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -275,7 +284,6 @@ export function ActivityDashboard() {
                     </thead>
                     <tbody className="divide-y divide-line/65">
                       {summary.leaderboard.map((entry, index) => {
-                        const explorerNetwork = network === 'all' ? null : getIntuitionNetwork(network);
                         return (
                           <tr key={entry.wallet} className="transition-colors hover:bg-paper/45">
                             <td className="px-5 py-4">
@@ -288,11 +296,14 @@ export function ActivityDashboard() {
                               </span>
                             </td>
                             <td className="px-5 py-4">
-                              <WalletIdentity
-                                address={entry.wallet}
-                                href={explorerNetwork ? `${explorerNetwork.explorerUrl}/address/${entry.wallet}` : undefined}
-                                size={32}
-                              />
+                              <span className="inline-flex min-w-0 items-center gap-2">
+                                <WalletIdentity
+                                  address={entry.wallet}
+                                  href={getContributorHref(entry.wallet, network)}
+                                  size={32}
+                                />
+                                {isRelicHolder(entry.wallet) ? <RelicBadge /> : null}
+                              </span>
                             </td>
                             <td className="px-5 py-4 text-right text-sm text-muted">{NUMBER_FORMATTER.format(entry.atoms)}</td>
                             <td className="px-5 py-4 text-right text-sm text-muted">{NUMBER_FORMATTER.format(entry.claims)}</td>
@@ -328,6 +339,7 @@ export function ActivityDashboard() {
                       <ActivityPublishRow
                         key={`${network}:${refreshKey}:${publish.id}`}
                         publish={publish}
+                        relicHolder={isRelicHolder(publish.creatorWallet)}
                         expanded={openPublishId === publish.id}
                         onToggle={() => setOpenPublishId((current) => current === publish.id ? null : publish.id)}
                       />

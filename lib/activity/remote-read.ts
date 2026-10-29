@@ -1,6 +1,7 @@
 import { enrichActivityItems } from '@/lib/activity/enrich-items';
 import { ACTIVITY_SOURCE_FLOWS } from '@/types/activity';
 import type {
+  ActivityContributorSummaryResponse,
   ActivityItemRecord,
   ActivityItemsResponse,
   ActivityPublish,
@@ -76,7 +77,7 @@ export function shouldReadRemoteActivity(environment: { NODE_ENV?: string; DATAB
 }
 
 async function fetchRemoteActivity(
-  resource: 'summary' | 'items' | 'publishes' | `publishes/${string}/items`,
+  resource: 'summary' | 'items' | 'publishes' | `publishes/${string}/items` | `contributors/${string}/summary`,
   params: URLSearchParams,
   options: RemoteReadOptions,
 ): Promise<unknown> {
@@ -148,11 +149,12 @@ export async function readRemoteActivityItems(
 }
 
 export async function readRemoteActivityPublishes(
-  filters: { network: PublicIntuitionNetwork | null; cursor: string | null; limit: number },
+  filters: { network: PublicIntuitionNetwork | null; cursor: string | null; limit: number; wallet?: string | null },
   options: RemoteReadOptions = {},
 ): Promise<ActivityPublishesResponse> {
   const params = new URLSearchParams();
   if (filters.network) params.set('network', filters.network);
+  if (filters.wallet) params.set('wallet', filters.wallet);
   if (filters.cursor) params.set('cursor', filters.cursor);
   params.set('limit', String(filters.limit));
 
@@ -160,10 +162,31 @@ export async function readRemoteActivityPublishes(
   if (!isRecord(payload)
     || !Array.isArray(payload.publishes)
     || !payload.publishes.every(isActivityPublish)
+    || (filters.wallet && (typeof payload.wallet !== 'string'
+      || payload.wallet.toLowerCase() !== filters.wallet.toLowerCase()
+      || payload.publishes.some((publish: ActivityPublish) => publish.creatorWallet.toLowerCase() !== filters.wallet!.toLowerCase())))
     || (payload.nextCursor !== null && typeof payload.nextCursor !== 'string')) {
     throw new Error('Live activity publishes have an unexpected format.');
   }
   return payload as unknown as ActivityPublishesResponse;
+}
+
+export async function readRemoteContributorSummary(
+  wallet: string,
+  network: PublicIntuitionNetwork | null,
+  options: RemoteReadOptions = {},
+): Promise<ActivityContributorSummaryResponse> {
+  const params = new URLSearchParams({ network: network ?? 'all' });
+  const payload = await fetchRemoteActivity(`contributors/${encodeURIComponent(wallet)}/summary`, params, options);
+  if (!isRecord(payload)
+    || typeof payload.wallet !== 'string'
+    || payload.wallet.toLowerCase() !== wallet.toLowerCase()
+    || payload.network !== (network ?? 'all')
+    || !['atoms', 'claims', 'listEntries', 'publishes'].every((key) =>
+      typeof payload[key] === 'number' && Number.isSafeInteger(payload[key]) && payload[key] >= 0)) {
+    throw new Error('Live contributor summary has an unexpected format.');
+  }
+  return payload as unknown as ActivityContributorSummaryResponse;
 }
 
 export async function readRemotePublishItems(

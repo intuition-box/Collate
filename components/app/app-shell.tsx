@@ -22,7 +22,7 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-clip pt-8 sm:pt-10">
       <header
-        className={`mx-auto grid w-full max-w-[92rem] min-w-0 items-center gap-4 px-5 sm:px-8 xl:grid-cols-[minmax(18rem,1fr)_auto_minmax(18rem,1fr)] ${
+        className={`mx-auto grid w-full max-w-[92rem] min-w-0 items-center gap-4 px-5 sm:px-8 xl:grid-cols-[minmax(8rem,1fr)_auto_auto] ${
           isHome ? 'mb-0' : 'mb-10'
         }`}
       >
@@ -57,7 +57,7 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
           })}
         </nav>
 
-        <div className="flex w-full min-w-0 flex-wrap items-center justify-center gap-2 rounded-full border border-line/85 bg-white/72 p-1.5 xl:w-auto xl:justify-self-end">
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-center gap-2 rounded-full border border-line/85 bg-white/72 p-1.5 xl:w-auto xl:flex-nowrap xl:justify-self-end">
           <NetworkToggle compact />
           <ThemeToggle />
           <WalletButton />

@@ -9,8 +9,8 @@ import { useSelectedNetwork } from '@/components/app/network-provider';
 import { DiscoverImage } from '@/components/discover/discover-image';
 import { GraphImage } from '@/components/graph/graph-image';
 import { WalletIdentity } from '@/components/wallet/wallet-identity';
+import { getContributorHref } from '@/lib/contributors/routes';
 import { getGraphDetailHref } from '@/lib/intuition/graph-detail-route';
-import { getIntuitionNetwork } from '@/lib/intuition/networks';
 import type { PublicIntuitionNetwork } from '@/types/api';
 import type { DiscoverCollectionDetailResponse, DiscoverMember } from '@/types/discover';
 
@@ -20,7 +20,6 @@ function formatDate(value: string) {
 
 function MemberRow({ member, network }: { member: DiscoverMember; network: PublicIntuitionNetwork }) {
   const name = member.name ?? (member.metadataState === 'unavailable' ? 'Atom details unavailable' : 'Atom details pending');
-  const networkConfig = getIntuitionNetwork(network);
   return (
     <li className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-4 px-4 py-4 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:items-center sm:px-6">
       <GraphImage image={member.image} label={`${name} image`} compact />
@@ -29,7 +28,7 @@ function MemberRow({ member, network }: { member: DiscoverMember; network: Publi
         <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted">{member.description ?? 'View this atom on the knowledge graph.'}</p>
       </div>
       <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 pl-14 text-xs text-muted sm:col-span-1 sm:pl-0">
-        <WalletIdentity address={member.creatorWallet} href={`${networkConfig.explorerUrl}/address/${member.creatorWallet}`} size={20} showAddress={false} className="max-w-36" />
+        <WalletIdentity address={member.creatorWallet} href={getContributorHref(member.creatorWallet, network)} size={20} showAddress={false} className="max-w-36" />
         <time dateTime={member.addedAt}>{formatDate(member.addedAt)}</time>
         <Link href={getGraphDetailHref(network, 'atom', member.atomId)} aria-label={`View ${name}`} className="rounded-sm font-medium text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">View atom</Link>
       </div>

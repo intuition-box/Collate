@@ -4,9 +4,10 @@ interface PublishFilters {
   network: PublicIntuitionNetwork | null;
   cursor: string | null;
   limit: number;
+  wallet?: string | null;
 }
 
-export function buildActivityPublishesQuery({ network, cursor, limit }: PublishFilters) {
+export function buildActivityPublishesQuery({ network, cursor, limit, wallet }: PublishFilters) {
   const values: unknown[] = [];
   const filters = ["publish.status = 'confirmed'", 'publish.block_timestamp IS NOT NULL', 'publish.tx_hash IS NOT NULL'];
   let cursorJoin = '';
@@ -14,6 +15,10 @@ export function buildActivityPublishesQuery({ network, cursor, limit }: PublishF
   if (network) {
     values.push(network);
     filters.push(`publish.network = $${values.length}`);
+  }
+  if (wallet) {
+    values.push(wallet);
+    filters.push(`LOWER(publish.expected_wallet) = LOWER($${values.length})`);
   }
   if (cursor) {
     values.push(cursor);

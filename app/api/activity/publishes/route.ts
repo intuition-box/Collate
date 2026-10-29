@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAddress, isAddress } from 'viem';
 
 import { getActivityDatabasePool } from '@/lib/activity/database';
 import { enrichActivityItems } from '@/lib/activity/enrich-items';
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const network = params.get('network');
   const cursor = params.get('cursor');
+  const wallet = params.get('wallet');
   const requestedLimit = Number(params.get('limit') ?? 20);
   const limit = Number.isInteger(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 20;
 
@@ -30,12 +32,17 @@ export async function GET(request: NextRequest) {
   if (cursor && !UUID_PATTERN.test(cursor)) {
     return NextResponse.json({ error: 'Cursor is invalid.' }, { status: 400 });
   }
+  if (wallet && !isAddress(wallet)) {
+    return NextResponse.json({ error: 'Wallet filter is invalid.' }, { status: 400 });
+  }
 
   const selectedNetwork: PublicIntuitionNetwork | null = network === 'mainnet' || network === 'testnet' ? network : null;
-  const filters = { network: selectedNetwork, cursor, limit };
+  const selectedWallet = wallet ? getAddress(wallet) : null;
+  const filters = { network: selectedNetwork, cursor, limit, wallet: selectedWallet };
   if (shouldReadRemoteActivity()) {
     try {
-      return NextResponse.json(await readRemoteActivityPublishes(filters), { headers: { 'Cache-Control': 'no-store' } });
+      const remote = await readRemoteActivityPublishes(filters);
+      return NextResponse.json(remote, { headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {
       console.error('[activity-publishes] Unable to read live activity in development.', error);
       return NextResponse.json({ error: 'Live activity is temporarily unavailable.' }, { status: 503 });
@@ -62,7 +69,7 @@ export async function GET(request: NextRequest) {
     const publishes = assembleActivityPublishes(rows, previews);
 
     return NextResponse.json(
-      { publishes, nextCursor: hasMore ? rows.at(-1)?.id ?? null : null },
+      { publishes, nextCursor: hasMore ? rows.at(-1)?.id ?? null : null, ...(selectedWallet ? { wallet: selectedWallet } : {}) },
       { headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' } },
     );
   } catch (error) {
