@@ -10,20 +10,14 @@ import { ThemeToggle } from '@/components/app/theme-toggle';
 import { usePublicSettings } from '@/components/app/use-public-settings';
 import { CollateLogo } from '@/components/brand/collate-logo';
 import { WalletButton } from '@/components/wallet/wallet-button';
-
-const CORE_NAV_ITEMS = [
-  { href: '/', label: 'Home', shortLabel: 'Home' },
-  { href: '/create', label: 'Create', shortLabel: 'Create' },
-  { href: '/how-it-works', label: 'How it works', shortLabel: 'How' },
-  { href: '/docs', label: 'Docs', shortLabel: 'Docs' },
-];
+import { getPrimaryNavItems } from '@/lib/navigation/primary-nav';
 
 export function AppShell({ children, fullBleed = false }: { children: ReactNode; fullBleed?: boolean }) {
   const pathname = usePathname();
   const isHome = pathname === '/';
   const { data: publicSettings } = usePublicSettings();
-  const showActivity = publicSettings?.settings.showActivityInNav === true;
-  const navItems = showActivity ? [...CORE_NAV_ITEMS, { href: '/activity', label: 'Activity', shortLabel: 'Activity' }] : CORE_NAV_ITEMS;
+  const navItems = getPrimaryNavItems(publicSettings?.settings);
+  const optionalNavCount = navItems.length - 4;
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-clip pt-8 sm:pt-10">
@@ -41,7 +35,7 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
         <nav
           aria-label="Primary navigation"
           className={`inline-flex w-full min-w-0 max-w-full items-center gap-0.5 justify-self-center overflow-hidden rounded-full border border-line/90 bg-white/88 p-1 backdrop-blur transition-[width] sm:gap-1 sm:p-1.5 ${
-            showActivity ? 'sm:w-[34rem]' : 'sm:w-[28rem]'
+            optionalNavCount === 2 ? 'sm:w-[36rem]' : optionalNavCount === 1 ? 'sm:w-[34rem]' : 'sm:w-[28rem]'
           }`}
         >
           {navItems.map((item) => {
@@ -52,12 +46,12 @@ export function AppShell({ children, fullBleed = false }: { children: ReactNode;
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={`inline-flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-2 py-2 text-xs transition-colors duration-150 sm:px-4 sm:text-sm ${
+                className={`inline-flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1 py-2 text-xs transition-colors duration-150 sm:px-4 sm:text-sm ${
                   isActive ? 'bg-accent font-medium text-black' : 'text-ink hover:bg-paper/70'
                 }`}
               >
-                <span className="min-[380px]:hidden">{item.shortLabel}</span>
-                <span className="hidden min-[380px]:inline">{item.label}</span>
+                <span className="sm:hidden">{item.shortLabel}</span>
+                <span className="hidden sm:inline">{item.label}</span>
               </Link>
             );
           })}

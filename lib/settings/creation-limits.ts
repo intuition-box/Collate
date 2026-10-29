@@ -4,6 +4,7 @@ import type { AdminAppSettings, CreationLimits } from '@/types/settings';
 
 export const DEFAULT_ADMIN_SETTINGS: AdminAppSettings = {
   showActivityInNav: false,
+  showDiscoverInNav: false,
   atomLimit: 50,
   listLimit: 50,
   privilegedLimit: 150,
@@ -14,6 +15,7 @@ export function validateAdminSettings(value: unknown): AdminAppSettings {
   if (!value || typeof value !== 'object') throw new Error('Valid settings are required.');
   const settings = value as Partial<AdminAppSettings>;
   if (typeof settings.showActivityInNav !== 'boolean') throw new Error('Activity visibility must be enabled or disabled.');
+  if (typeof settings.showDiscoverInNav !== 'boolean') throw new Error('Discover visibility must be enabled or disabled.');
   for (const [name, limit, maximum] of [
     ['Atom limit', settings.atomLimit, 100],
     ['List-entry limit', settings.listLimit, 100],
@@ -39,6 +41,7 @@ export function validateAdminSettings(value: unknown): AdminAppSettings {
   }
   return {
     showActivityInNav: settings.showActivityInNav,
+    showDiscoverInNav: settings.showDiscoverInNav,
     atomLimit: settings.atomLimit!,
     listLimit: settings.listLimit!,
     privilegedLimit: settings.privilegedLimit!,

@@ -1,5 +1,6 @@
 export interface PublicAppSettings {
   showActivityInNav: boolean;
+  showDiscoverInNav: boolean;
 }
 
 export interface CreationLimits {

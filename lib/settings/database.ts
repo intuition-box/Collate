@@ -4,10 +4,12 @@ import type { AdminAppSettings, CreationLimits, PublicAppSettings } from '@/type
 
 export const DEFAULT_PUBLIC_SETTINGS: PublicAppSettings = {
   showActivityInNav: DEFAULT_ADMIN_SETTINGS.showActivityInNav,
+  showDiscoverInNav: DEFAULT_ADMIN_SETTINGS.showDiscoverInNav,
 };
 
 const SETTING_KEYS = {
   showActivityInNav: 'show_activity_in_nav',
+  showDiscoverInNav: 'show_discover_in_nav',
   atomLimit: 'normal_atom_limit',
   listLimit: 'normal_list_limit',
   privilegedLimit: 'privileged_batch_limit',
@@ -27,8 +29,8 @@ export async function getAdminSettings(): Promise<AdminAppSettings> {
 }
 
 export async function getPublicSettings(): Promise<PublicAppSettings> {
-  const { showActivityInNav } = await getAdminSettings();
-  return { showActivityInNav };
+  const { showActivityInNav, showDiscoverInNav } = await getAdminSettings();
+  return { showActivityInNav, showDiscoverInNav };
 }
 
 export async function getEffectiveCreationLimits(address?: string | null): Promise<CreationLimits> {

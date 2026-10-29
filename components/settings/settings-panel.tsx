@@ -82,9 +82,12 @@ export function SettingsPanel() {
       });
       const payload = await readResponse<AdminSettingsResponse>(response);
       setSettings(payload.settings);
-      queryClient.setQueryData<PublicSettingsResponse>(['public-settings'], { settings: { showActivityInNav: payload.settings.showActivityInNav } });
+      queryClient.setQueryData<PublicSettingsResponse>(['public-settings'], { settings: {
+        showActivityInNav: payload.settings.showActivityInNav,
+        showDiscoverInNav: payload.settings.showDiscoverInNav,
+      } });
       await queryClient.invalidateQueries({ queryKey: ['creation-limits'] });
-      setMessage('Settings saved. New limits apply before the next wallet prompt.');
+      setMessage('Settings saved. Navigation changes are live; new limits apply before the next wallet prompt.');
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Settings could not be saved.');
     } finally {
@@ -199,6 +202,30 @@ export function SettingsPanel() {
               aria-hidden="true"
               className={`absolute left-1 top-1 h-6 w-6 rounded-full transition-[transform,background-color] motion-reduce:transition-none ${
                 settings?.showActivityInNav ? 'translate-x-6 bg-black' : 'translate-x-0 bg-ink'
+              }`}
+            />
+          </button>
+        </div>
+        <div className="mt-4 flex flex-col gap-5 rounded-[1.25rem] border border-line/80 bg-paper/45 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
+            <p className="text-base font-medium text-ink">Discover in navigation</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">Show Discover in the primary navigation. The page stays available by direct link when this is off.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings?.showDiscoverInNav ?? false}
+            aria-label="Show Discover in navigation"
+            onClick={() => setSettings((current) => current ? { ...current, showDiscoverInNav: !current.showDiscoverInNav } : current)}
+            disabled={isSubmitting}
+            className={`relative h-8 w-14 shrink-0 rounded-full border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${
+              settings?.showDiscoverInNav ? 'border-accent bg-accent' : 'border-line bg-white'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`absolute left-1 top-1 h-6 w-6 rounded-full transition-[transform,background-color] motion-reduce:transition-none ${
+                settings?.showDiscoverInNav ? 'translate-x-6 bg-black' : 'translate-x-0 bg-ink'
               }`}
             />
           </button>
