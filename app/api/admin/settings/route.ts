@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin/auth';
-import { getAdminSettings, updateAdminSettings } from '@/lib/settings/database';
+import { getAdminSettings, updateAdminSettings, updateAdminSettingsSection } from '@/lib/settings/database';
 import { validateAdminSettings } from '@/lib/settings/creation-limits';
+import { parseSettingsSectionPatch } from '@/lib/settings/sections';
 import type { AdminSettingsResponse } from '@/types/settings';
 
 export const runtime = 'nodejs';
@@ -63,6 +64,40 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('[admin-settings] Unable to update settings.', error);
+    return NextResponse.json({ error: 'Settings could not be saved.' }, { status: 503 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  if (!isAuthenticated(request)) return unauthorized();
+
+  const fetchSite = request.headers.get('sec-fetch-site');
+  if (fetchSite && fetchSite !== 'same-origin') {
+    return NextResponse.json({ error: 'This settings request was rejected.' }, { status: 403 });
+  }
+
+  let patch;
+  try {
+    patch = parseSettingsSectionPatch(await request.json());
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Valid settings are required.' }, { status: 400 });
+  }
+
+  try {
+    const current = await getAdminSettings();
+    let validated;
+    try {
+      validated = validateAdminSettings({ ...current, ...patch.values });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Invalid settings.' }, { status: 400 });
+    }
+    const response: AdminSettingsResponse = {
+      authenticated: true,
+      settings: await updateAdminSettingsSection(patch.section, validated),
+    };
+    return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (error) {
+    console.error('[admin-settings] Unable to update section.', error);
     return NextResponse.json({ error: 'Settings could not be saved.' }, { status: 503 });
   }
 }

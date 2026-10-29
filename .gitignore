@@ -8,6 +8,7 @@ dist
 .env
 .env.local
 .env.*.local
+.collate-local-settings.json*
 progress.md
 tsconfig.typecheck.tsbuildinfo
 *.tsbuildinfo

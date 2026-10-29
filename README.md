@@ -32,10 +32,13 @@ Required:
 
 - `INTUITION_PIN_API_KEY`
 
-Required for production publishing and admin settings:
+Required for admin access in any environment:
+
+- `ADMIN_PASSWORD_HASH` and `ADMIN_AUTH_SECRET`
+
+Required for production publishing and persistent settings:
 
 - `DATABASE_URL` (apply the existing migrations with `npm run db:migrate`)
-- `ADMIN_PASSWORD_HASH` and `ADMIN_AUTH_SECRET` to access private settings
 
 Optional overrides:
 
@@ -71,6 +74,8 @@ npm run dev
 ```
 
 Without `DATABASE_URL`, the local Activity page reads the deployed Collate feed and leaderboard. This is read-only: creations published from localhost are not added to the live activity totals. Set `ACTIVITY_READ_ORIGIN` only if the deployed site moves.
+
+Without `DATABASE_URL`, local Settings uses an ignored `.collate-local-settings.json` file. You can sign in and preview navigation and batch-limit changes locally; these settings do not change the deployed site. The admin password hash and secret are still required.
 
 To record activity from local publishes, point `DATABASE_URL` at a separate development PostgreSQL database and apply the schema:
 
