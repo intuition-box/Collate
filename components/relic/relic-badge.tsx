@@ -1,16 +1,15 @@
+import Image from 'next/image';
+
 export function RelicBadge() {
   return (
     <span
       role="img"
-      aria-label="Relic holder"
+      aria-label="Relicooor, Relic holder"
       title="Holds a Relic by Intuition"
-      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-semibold leading-4 text-warningInk"
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-line/80 bg-white/65 px-1.5 py-0.5 text-xs font-medium leading-4 text-muted"
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="h-3 w-3" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
-        <path d="M5.2 2.5h5.6l2.7 4-5.5 7-5.5-7 2.7-4Z" />
-        <path d="M2.5 6.5h11M5.2 2.5l1.5 4L8 13.5l1.3-7 1.5-4" />
-      </svg>
-      Relic
+      <Image src="/relics/common.png" alt="" width={16} height={16} className="h-4 w-4 shrink-0 object-contain" />
+      Relicooor
     </span>
   );
 }
