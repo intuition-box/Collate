@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomBytes, scryptSync } from 'node:crypto';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -43,6 +43,9 @@ test('local admin login and settings work without a database', async () => {
 
     const adminRequest = new NextRequest('http://localhost/api/admin/settings', { headers: { cookie } });
     assert.deepEqual((await (await getAdminSettings(adminRequest)).json()).settings, DEFAULT_ADMIN_SETTINGS);
+    const { leaderboardExcludedWallets: _ignored, ...oldSettings } = DEFAULT_ADMIN_SETTINGS;
+    await writeFile(join(directory, '.collate-local-settings.json'), JSON.stringify(oldSettings));
+    assert.deepEqual((await (await getAdminSettings(adminRequest)).json()).settings, DEFAULT_ADMIN_SETTINGS);
 
     const patch = async (section: string, values: object) => patchAdminSettings(new NextRequest('http://localhost/api/admin/settings', {
       method: 'PATCH',
@@ -52,6 +55,7 @@ test('local admin login and settings work without a database', async () => {
     assert.equal((await patch('visibility', { showActivityInNav: true, showDiscoverInNav: true })).status, 200);
     assert.equal((await patch('limits', { atomLimit: 75, listLimit: 60, privilegedLimit: 150 })).status, 200);
     assert.equal((await patch('allowlist', { allowlistedWallets: [WALLET] })).status, 200);
+    assert.equal((await patch('leaderboard', { leaderboardExcludedWallets: [WALLET] })).status, 200);
 
     const settings = (await (await getAdminSettings(adminRequest)).json()).settings;
     assert.deepEqual(settings, {
@@ -61,6 +65,7 @@ test('local admin login and settings work without a database', async () => {
       atomLimit: 75,
       listLimit: 60,
       allowlistedWallets: [WALLET],
+      leaderboardExcludedWallets: [WALLET],
     });
     assert.deepEqual((await (await getPublicSettings()).json()).settings, {
       showActivityInNav: true,

@@ -51,6 +51,16 @@ export async function PUT(request: NextRequest) {
 
   let settings;
   try {
+    if (body && typeof body === 'object' && !Array.isArray(body) && !Object.hasOwn(body, 'leaderboardExcludedWallets')) {
+      const current = await getAdminSettings();
+      body = { ...body, leaderboardExcludedWallets: current.leaderboardExcludedWallets };
+    }
+  } catch (error) {
+    console.error('[admin-settings] Unable to preserve leaderboard exclusions for legacy PUT.', error);
+    return NextResponse.json({ error: 'Settings could not be loaded.' }, { status: 503 });
+  }
+
+  try {
     settings = validateAdminSettings(body);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Invalid settings.' }, { status: 400 });

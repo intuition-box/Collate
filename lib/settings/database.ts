@@ -16,6 +16,7 @@ const SETTING_KEYS = {
   listLimit: 'normal_list_limit',
   privilegedLimit: 'privileged_batch_limit',
   allowlistedWallets: 'batch_allowlisted_wallets',
+  leaderboardExcludedWallets: 'leaderboard_excluded_wallets',
 } as const;
 
 export async function getAdminSettings(): Promise<AdminAppSettings> {

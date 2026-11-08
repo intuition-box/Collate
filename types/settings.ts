@@ -11,6 +11,7 @@ export interface CreationLimits {
 export interface AdminAppSettings extends PublicAppSettings, CreationLimits {
   privilegedLimit: number;
   allowlistedWallets: string[];
+  leaderboardExcludedWallets: string[];
 }
 
 export interface CreationLimitsResponse {

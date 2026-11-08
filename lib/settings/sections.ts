@@ -4,6 +4,7 @@ export const SETTINGS_SECTION_FIELDS = {
   visibility: ['showActivityInNav', 'showDiscoverInNav'],
   limits: ['atomLimit', 'listLimit', 'privilegedLimit'],
   allowlist: ['allowlistedWallets'],
+  leaderboard: ['leaderboardExcludedWallets'],
 } as const;
 
 export type SettingsSection = keyof typeof SETTINGS_SECTION_FIELDS;

@@ -9,7 +9,23 @@ export const DEFAULT_ADMIN_SETTINGS: AdminAppSettings = {
   listLimit: 50,
   privilegedLimit: 150,
   allowlistedWallets: [],
+  leaderboardExcludedWallets: [],
 };
+
+function normalizeWalletList(value: unknown, label: string): string[] {
+  if (!Array.isArray(value)) throw new Error(`${label} must be a list of addresses.`);
+  const wallets: string[] = [];
+  const seen = new Set<string>();
+  for (const wallet of value) {
+    if (typeof wallet !== 'string' || !isAddress(wallet)) throw new Error(`Enter valid Ethereum wallet addresses for ${label.toLowerCase()}.`);
+    const normalized = getAddress(wallet);
+    if (!seen.has(normalized.toLowerCase())) {
+      seen.add(normalized.toLowerCase());
+      wallets.push(normalized);
+    }
+  }
+  return wallets;
+}
 
 export function validateAdminSettings(value: unknown): AdminAppSettings {
   if (!value || typeof value !== 'object') throw new Error('Valid settings are required.');
@@ -28,24 +44,16 @@ export function validateAdminSettings(value: unknown): AdminAppSettings {
   if (settings.privilegedLimit! < Math.max(settings.atomLimit!, settings.listLimit!)) {
     throw new Error('The privileged limit cannot be lower than the normal limits.');
   }
-  if (!Array.isArray(settings.allowlistedWallets)) throw new Error('Wallet allowlist must be a list of addresses.');
-  const wallets: string[] = [];
-  const seen = new Set<string>();
-  for (const wallet of settings.allowlistedWallets) {
-    if (typeof wallet !== 'string' || !isAddress(wallet)) throw new Error('Enter valid Ethereum wallet addresses.');
-    const normalized = getAddress(wallet);
-    if (!seen.has(normalized.toLowerCase())) {
-      seen.add(normalized.toLowerCase());
-      wallets.push(normalized);
-    }
-  }
+  const allowlistedWallets = normalizeWalletList(settings.allowlistedWallets, 'Wallet allowlist');
+  const leaderboardExcludedWallets = normalizeWalletList(settings.leaderboardExcludedWallets, 'Leaderboard exclusions');
   return {
     showActivityInNav: settings.showActivityInNav,
     showDiscoverInNav: settings.showDiscoverInNav,
     atomLimit: settings.atomLimit!,
     listLimit: settings.listLimit!,
     privilegedLimit: settings.privilegedLimit!,
-    allowlistedWallets: wallets,
+    allowlistedWallets,
+    leaderboardExcludedWallets,
   };
 }
 

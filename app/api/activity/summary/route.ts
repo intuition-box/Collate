@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getActivityDatabasePool } from '@/lib/activity/database';
+import { excludeLeaderboardWallets } from '@/lib/activity/leaderboard';
 import { readRemoteActivitySummary, shouldReadRemoteActivity } from '@/lib/activity/remote-read';
+import { getAdminSettings } from '@/lib/settings/database';
 import type { PublicIntuitionNetwork } from '@/types/api';
 
 export const runtime = 'nodejs';
@@ -22,7 +24,8 @@ export async function GET(request: NextRequest) {
 
   if (shouldReadRemoteActivity()) {
     try {
-      return NextResponse.json(await readRemoteActivitySummary(network), {
+      const excludedWallets = (await getAdminSettings()).leaderboardExcludedWallets;
+      return NextResponse.json(excludeLeaderboardWallets(await readRemoteActivitySummary(network), excludedWallets), {
         headers: { 'Cache-Control': 'no-store' },
       });
     } catch (error) {
@@ -33,8 +36,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const pool = getActivityDatabasePool();
+    const excludedWallets = (await getAdminSettings()).leaderboardExcludedWallets.map((wallet) => wallet.toLowerCase());
     const networkClause = network ? 'WHERE network = $1' : '';
     const values = network ? [network] : [];
+    const leaderboardValues = [...values, excludedWallets];
+    const leaderboardClause = `WHERE ${network ? 'network = $1 AND ' : ''}LOWER(creator_wallet) <> ALL($${leaderboardValues.length}::text[])`;
     const [totals, transactions, leaderboard] = await Promise.all([
       pool.query<{ item_kind: string; count: string }>(
         `SELECT item_kind, COUNT(*)::text AS count
@@ -61,11 +67,11 @@ export async function GET(request: NextRequest) {
           COUNT(*) FILTER (WHERE item_kind IN ('list_entry', 'claim'))::text AS claims,
           COUNT(*) FILTER (WHERE item_kind = 'claim')::text AS standalone_claims,
           COUNT(*)::text AS total
-        FROM collate_activity_items ${networkClause}
+        FROM collate_activity_items ${leaderboardClause}
         GROUP BY creator_wallet
         ORDER BY COUNT(*) DESC, creator_wallet ASC
         LIMIT 50`,
-        values,
+        leaderboardValues,
       ),
     ]);
 
@@ -95,7 +101,7 @@ export async function GET(request: NextRequest) {
           total: Number(row.total),
         })),
       },
-      { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } },
+      { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
     console.error('[activity-summary] Unable to read activity summary.', error);

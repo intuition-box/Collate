@@ -44,6 +44,14 @@ test('admin batch settings enforce bounds, normalize wallets, and resolve both l
   assert.throws(() => validateAdminSettings({ ...settings, privilegedLimit: 89 }), /cannot be lower/);
   assert.throws(() => validateAdminSettings({ ...settings, atomLimit: 2.5 }), /whole number/);
   assert.throws(() => validateAdminSettings({ ...settings, allowlistedWallets: ['bad'] }), /valid Ethereum/);
+  const excluded = validateAdminSettings({
+    ...settings,
+    leaderboardExcludedWallets: [OTHER_WALLET, OTHER_WALLET.toUpperCase().replace('0X', '0x')],
+  });
+  assert.deepEqual(excluded.leaderboardExcludedWallets, [OTHER_WALLET]);
+  assert.deepEqual(resolveCreationLimits(excluded, OTHER_WALLET), { atomLimit: 75, listLimit: 90 });
+  assert.throws(() => validateAdminSettings({ ...settings, leaderboardExcludedWallets: ['bad'] }), /valid Ethereum/);
+  assert.throws(() => validateAdminSettings({ ...settings, leaderboardExcludedWallets: 'bad' }), /list of addresses/);
 });
 
 test('settings routes do not expose private settings without an admin session', async () => {

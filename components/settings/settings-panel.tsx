@@ -15,6 +15,7 @@ const SECTIONS: { id: SettingsSection; label: string; mobileLabel: string; descr
   { id: 'visibility', label: 'Visibility', mobileLabel: 'Visibility', description: 'Choose which community pages appear in the main navigation.', saveLabel: 'Save visibility' },
   { id: 'limits', label: 'Batch limits', mobileLabel: 'Limits', description: 'Set how many atoms or list entries can be created in one transaction.', saveLabel: 'Save limits' },
   { id: 'allowlist', label: 'Wallet allowlist', mobileLabel: 'Allowlist', description: 'Give selected wallets access to the higher batch limit.', saveLabel: 'Save allowlist' },
+  { id: 'leaderboard', label: 'Leaderboard exclusions', mobileLabel: 'Exclusions', description: 'Hide selected wallets from the creation leaderboard without removing their contributions.', saveLabel: 'Save exclusions' },
 ];
 
 async function readResponse<ResponseType>(response: Response): Promise<ResponseType> {
@@ -32,6 +33,7 @@ export function SettingsPanel() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('visibility');
   const [feedback, setFeedback] = useState<Partial<Record<SettingsSection, SectionFeedback>>>({});
   const [walletInput, setWalletInput] = useState('');
+  const [excludedWalletInput, setExcludedWalletInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,7 +101,7 @@ export function SettingsPanel() {
           showActivityInNav: payload.settings.showActivityInNav,
           showDiscoverInNav: payload.settings.showDiscoverInNav,
         } });
-      } else {
+      } else if (section === 'limits' || section === 'allowlist') {
         await queryClient.invalidateQueries({ queryKey: ['creation-limits'] });
       }
       setFeedback((current) => ({ ...current, [section]: { kind: 'success', text: `${SECTIONS.find((item) => item.id === section)?.label} saved.` } }));
@@ -142,6 +144,21 @@ export function SettingsPanel() {
     }
     changeSectionSettings('allowlist', (current) => ({ ...current, allowlistedWallets: [...current.allowlistedWallets, wallet] }));
     setWalletInput('');
+  }
+
+  function addExcludedWallet() {
+    const candidate = excludedWalletInput.trim();
+    if (!isAddress(candidate)) {
+      setFeedback((current) => ({ ...current, leaderboard: { kind: 'error', text: 'Enter a valid Ethereum wallet address.' } }));
+      return;
+    }
+    const wallet = getAddress(candidate);
+    if (settings?.leaderboardExcludedWallets.some((item) => item.toLowerCase() === wallet.toLowerCase())) {
+      setFeedback((current) => ({ ...current, leaderboard: { kind: 'error', text: 'That wallet is already excluded.' } }));
+      return;
+    }
+    changeSectionSettings('leaderboard', (current) => ({ ...current, leaderboardExcludedWallets: [...current.leaderboardExcludedWallets, wallet] }));
+    setExcludedWalletInput('');
   }
 
   if (sessionState === 'loading') {
@@ -192,7 +209,7 @@ export function SettingsPanel() {
         <div>
           <p className="text-xs uppercase tracking-terminal text-muted">Admin settings</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-5xl">Control what ships.</h1>
-          <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-muted">Choose which pages appear in navigation and set the limits for each batch.</p>
+          <p className="mt-4 max-w-2xl text-pretty text-sm leading-7 text-muted">Choose which pages appear in navigation, set batch limits, and manage the leaderboard.</p>
         </div>
         <button type="button" onClick={() => void signOut()} disabled={isSubmitting} className="rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-ink/25 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
           Sign out
@@ -201,7 +218,7 @@ export function SettingsPanel() {
 
       <div className="mt-8 grid min-w-0 gap-5 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start">
         <nav aria-label="Settings sections" className="min-w-0 rounded-2xl border border-line/90 bg-white/72 p-2 lg:sticky lg:top-6">
-          <div className="grid grid-cols-3 gap-1 lg:grid-cols-1">
+          <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
             {SECTIONS.map((item) => {
               const active = activeSection === item.id;
               const hasDraft = !!settings && !!savedSettings && isSettingsSectionDirty(settings, savedSettings, item.id);
@@ -309,6 +326,35 @@ export function SettingsPanel() {
                 </ul>
               ) : <p className="mt-5 text-sm text-muted">No wallets added yet.</p>}
               <p className="mt-4 text-xs text-muted">Add or remove wallets, then save this section to apply the allowlist.</p>
+            </div>
+          ) : null}
+
+          {activeSection === 'leaderboard' ? (
+            <div className="mt-6 rounded-2xl border border-line/80 bg-paper/40 p-5 sm:p-6">
+              <p className="text-pretty text-sm leading-6 text-muted">Excluded wallets do not appear in the Activity leaderboard on any network. Their creations still count in the totals and remain visible elsewhere.</p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <input
+                  type="text"
+                  value={excludedWalletInput}
+                  onChange={(event) => setExcludedWalletInput(event.target.value)}
+                  placeholder="0x... wallet address"
+                  aria-label="Wallet address to exclude from leaderboard"
+                  disabled={isSubmitting}
+                  className="min-w-0 flex-1 rounded-xl border border-line bg-white px-4 py-3 font-mono text-sm text-ink outline-none focus-visible:border-ink/35 focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                />
+                <button type="button" onClick={addExcludedWallet} disabled={isSubmitting || !excludedWalletInput.trim()} className="rounded-full border border-ink px-5 py-3 text-sm font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-45">Exclude wallet</button>
+              </div>
+              {settings?.leaderboardExcludedWallets.length ? (
+                <ul className="mt-5 divide-y divide-line/75 border-t border-line/75">
+                  {settings.leaderboardExcludedWallets.map((wallet) => (
+                    <li key={wallet} className="flex min-w-0 items-center justify-between gap-3 py-3">
+                      <span className="min-w-0 break-all font-mono text-xs text-ink">{wallet}</span>
+                      <button type="button" onClick={() => changeSectionSettings('leaderboard', (current) => ({ ...current, leaderboardExcludedWallets: current.leaderboardExcludedWallets.filter((item) => item !== wallet) }))} disabled={isSubmitting} className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50" aria-label={`Remove ${wallet} from leaderboard exclusions`}>Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="mt-5 text-sm text-muted">No wallets excluded yet.</p>}
+              <p className="mt-4 text-xs text-muted">Add or remove wallets, then save this section to update the leaderboard.</p>
             </div>
           ) : null}
 

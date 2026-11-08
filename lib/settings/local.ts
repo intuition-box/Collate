@@ -17,7 +17,11 @@ function localSettingsPath(): string {
 
 export async function readLocalSettings(): Promise<AdminAppSettings> {
   try {
-    return validateAdminSettings(JSON.parse(await readFile(localSettingsPath(), 'utf8')));
+    const stored = JSON.parse(await readFile(localSettingsPath(), 'utf8')) as AdminAppSettings;
+    return validateAdminSettings({
+      ...stored,
+      leaderboardExcludedWallets: stored.leaderboardExcludedWallets === undefined ? [] : stored.leaderboardExcludedWallets,
+    });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return { ...DEFAULT_ADMIN_SETTINGS, allowlistedWallets: [] };

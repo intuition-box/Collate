@@ -267,8 +267,17 @@ export function ActivityDashboard() {
 
               {summary.leaderboard.length === 0 ? (
                 <div className="mt-6 rounded-[1.4rem] border border-dashed border-line bg-white/45 px-6 py-12 text-center">
-                  <p className="text-sm font-medium text-ink">No creations here yet.</p>
-                  <p className="mt-2 text-sm text-muted">The first contributor on this network will take the top spot.</p>
+                  {summary.totals.atoms + summary.totals.claims > 0 ? (
+                    <>
+                      <p className="text-sm font-medium text-ink">No contributors shown right now.</p>
+                      <p className="mt-2 text-sm text-muted">Community creations still count in the totals above.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-ink">No creations here yet.</p>
+                      <p className="mt-2 text-sm text-muted">The first contributor on this network will take the top spot.</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="mt-6 overflow-x-auto rounded-[1.4rem] border border-line/90 bg-white/72">

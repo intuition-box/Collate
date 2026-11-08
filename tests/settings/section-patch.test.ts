@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { NextRequest } from 'next/server';
 
-import { GET, PATCH } from '@/app/api/admin/settings/route';
+import { GET, PATCH, PUT } from '@/app/api/admin/settings/route';
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken } from '@/lib/admin/auth';
 import { DEFAULT_ADMIN_SETTINGS } from '@/lib/settings/creation-limits';
 import { isSettingsSectionDirty, mergeSavedSettings, parseSettingsSectionPatch, pickSettingsSection } from '@/lib/settings/sections';
@@ -27,15 +27,17 @@ test('section patches reject unknown fields and preserve drafts in other section
   assert.throws(() => parseSettingsSectionPatch({ section: 'other', values: {} }), /valid settings section/);
 
   const saved = DEFAULT_ADMIN_SETTINGS;
-  const draft = { ...saved, showDiscoverInNav: true, atomLimit: 75, allowlistedWallets: [WALLET] };
+  const draft = { ...saved, showDiscoverInNav: true, atomLimit: 75, allowlistedWallets: [WALLET], leaderboardExcludedWallets: [WALLET] };
   assert.equal(isSettingsSectionDirty(draft, saved, 'visibility'), true);
   assert.equal(isSettingsSectionDirty(draft, saved, 'limits'), true);
   assert.equal(isSettingsSectionDirty(draft, saved, 'allowlist'), true);
+  assert.equal(isSettingsSectionDirty(draft, saved, 'leaderboard'), true);
   const server = { ...saved, showDiscoverInNav: true };
   const merged = mergeSavedSettings(draft, saved, server, 'visibility');
   assert.equal(isSettingsSectionDirty(merged, server, 'visibility'), false);
   assert.equal(merged.atomLimit, 75);
   assert.deepEqual(merged.allowlistedWallets, [WALLET]);
+  assert.deepEqual(merged.leaderboardExcludedWallets, [WALLET]);
   assert.deepEqual(pickSettingsSection(merged, 'visibility'), { showActivityInNav: false, showDiscoverInNav: true });
 });
 
@@ -83,6 +85,11 @@ test('authenticated section saves only write that section and keep the old PUT c
     const allowlist = await PATCH(sectionRequest({ section: 'allowlist', values: { allowlistedWallets: [WALLET, WALLET] } }, cookie));
     assert.equal(allowlist.status, 200);
     assert.deepEqual(writes[2], ['batch_allowlisted_wallets']);
+    assert.equal((await PATCH(sectionRequest({ section: 'leaderboard', values: { leaderboardExcludedWallets: ['bad'] } }, cookie))).status, 400);
+    assert.equal((await PATCH(sectionRequest({ section: 'leaderboard', values: { allowlistedWallets: [WALLET] } }, cookie))).status, 400);
+    const exclusions = await PATCH(sectionRequest({ section: 'leaderboard', values: { leaderboardExcludedWallets: [WALLET, WALLET] } }, cookie));
+    assert.equal(exclusions.status, 200);
+    assert.deepEqual(writes[3], ['leaderboard_excluded_wallets']);
     const settings = (await (await GET(new NextRequest('http://localhost/api/admin/settings', { headers: { cookie } }))).json()).settings;
     assert.deepEqual(settings, {
       ...DEFAULT_ADMIN_SETTINGS,
@@ -91,7 +98,16 @@ test('authenticated section saves only write that section and keep the old PUT c
       atomLimit: 75,
       listLimit: 60,
       allowlistedWallets: [WALLET],
+      leaderboardExcludedWallets: [WALLET],
     });
+    const { leaderboardExcludedWallets: _ignored, ...oldPayload } = settings;
+    const legacyPut = await PUT(new NextRequest('http://localhost/api/admin/settings', {
+      method: 'PUT',
+      headers: { cookie, 'sec-fetch-site': 'same-origin' },
+      body: JSON.stringify({ ...oldPayload, atomLimit: 80 }),
+    }));
+    assert.equal(legacyPut.status, 200);
+    assert.deepEqual((await legacyPut.json()).settings.leaderboardExcludedWallets, [WALLET]);
   } finally {
     globalWithPool.collateDatabasePool = previousPool;
     if (previousSecret === undefined) delete process.env.ADMIN_AUTH_SECRET;
