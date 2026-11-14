@@ -54,6 +54,11 @@ function CandidateImage({ atom, size = 'compact' }: { atom: IntuitionAtomSearchR
   );
 }
 
+function formatNativeAmount(amount: bigint): string {
+  const formatted = formatEther(amount);
+  return formatted.includes('.') ? formatted.replace(/0+$/, '').replace(/\.$/, '') : formatted;
+}
+
 function CandidateOption({
   atom,
   index,
@@ -270,7 +275,15 @@ export function ListReviewTable({
                     <ReviewStatusPill status={row.status} />
                   </td>
                   <td className="px-3 py-3 align-top text-muted">
-                    {row.payload.prepared ? `${Number.parseFloat(formatEther(row.payload.prepared.assetWei)).toFixed(3).replace(/\.?0+$/, '')} ${nativeSymbol}` : '—'}
+                    {row.payload.prepared ? (
+                      isCsvRow ? (
+                        <div className="space-y-1 whitespace-nowrap text-xs">
+                          <p><span className="text-muted">Required</span> {formatNativeAmount(row.payload.prepared.assetWei - (row.payload.prepared.depositWei ?? 0n))} {nativeSymbol}</p>
+                          <p><span className="text-muted">Added support</span> {formatNativeAmount(row.payload.prepared.depositWei ?? 0n)} {nativeSymbol}</p>
+                          <p className="font-medium text-ink"><span className="font-normal text-muted">Total</span> {formatNativeAmount(row.payload.prepared.assetWei)} {nativeSymbol}</p>
+                        </div>
+                      ) : `${formatNativeAmount(row.payload.prepared.assetWei)} ${nativeSymbol}`
+                    ) : '—'}
                   </td>
                   <td className="px-3 py-3 align-top text-muted">
                     <p>{row.message}</p>

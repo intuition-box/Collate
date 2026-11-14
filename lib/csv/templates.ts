@@ -15,10 +15,10 @@ const SCHEMA_ATOM_CSV_TEMPLATE = [
 ].join('\n');
 
 const LIST_CSV_TEMPLATE = [
-  'member,description',
-  'Ethereum,Layer one network',
-  'Base,Layer two network',
-  'Optimism,Layer two network',
+  'member,description,deposit',
+  'Ethereum,Layer one network,0',
+  'Base,Layer two network,0',
+  'Optimism,Layer two network,0',
 ].join('\n');
 
 function downloadCsvTemplate(filename: string, csvText: string): void {

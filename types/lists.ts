@@ -14,6 +14,7 @@ export interface ListMemberRow {
   sourceLine?: number;
   memberName: string;
   memberDescription: string;
+  deposit?: string;
   selectedAtom: IntuitionAtomSearchResult | null;
   candidates: IntuitionAtomSearchResult[];
   resolutionNote?: string;
@@ -30,6 +31,7 @@ export interface PreparedListEntry {
   memberTermId: Hex;
   tripleId: Hex;
   assetWei: bigint;
+  depositWei?: bigint;
   alreadyExistsOnChain: boolean;
 }
 

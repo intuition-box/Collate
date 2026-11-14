@@ -743,15 +743,16 @@ person,Alex,Rivera,https://example.com/alex,0`}</CsvExample>
         </GuideNote>
         <section id="csv-lists-format" className="rounded-[1.1rem] border border-line/80 bg-paper/65 p-5 sm:p-6">
           <h2 className="text-xl font-medium text-ink">Build the member CSV</h2>
-          <p className="mt-3 text-sm leading-7 text-muted">Use one member atom per row:</p>
-          <CsvExample>{`member,description
-Ethereum,A decentralized open-source blockchain system
-Base,A secure low-cost builder-friendly Ethereum L2`}</CsvExample>
+          <p className="mt-3 text-sm leading-7 text-muted">Use one existing member atom per row. Add an optional <code className="text-ink">deposit</code> value to add extra TRUST on top of the required list-entry cost:</p>
+          <CsvExample>{`member,description,deposit
+Ethereum,A decentralized open-source blockchain system,0
+Base,A secure low-cost builder-friendly Ethereum L2,0`}</CsvExample>
           <ul className="mt-5 list-disc space-y-2 pl-5 text-sm leading-7 text-muted">
             <li><code className="text-ink">member</code> should match the existing atom’s name. <code className="text-ink">name</code>, <code className="text-ink">atom</code>, <code className="text-ink">label</code>, or <code className="text-ink">subject</code> are accepted alternatives.</li>
             <li>Copy the existing atom’s description exactly into <code className="text-ink">description</code>. This is especially important when several atoms share the same name.</li>
             <li>Do not write a new summary in the description column. It is used to identify an atom that already exists on the graph.</li>
             <li>Always copy both the exact name and exact description from the existing atom. The name finds matches; the description identifies the right atom when names repeat.</li>
+            <li><code className="text-ink">deposit</code> is optional extra TRUST per row. Use a non-negative decimal such as <code className="text-ink">0.25</code>; blank or <code className="text-ink">0</code> adds no extra support. The review shows the required cost, added support, and total.</li>
             <li>Each import supports up to 50 member rows.</li>
           </ul>
         </section>
@@ -760,7 +761,7 @@ Base,A secure low-cost builder-friendly Ethereum L2`}</CsvExample>
           steps={[
             {
               title: 'Download or prepare the template',
-              description: <>Choose <strong className="text-ink">Download sample</strong>, keep the header row, and replace the examples with existing member atom names and their exact descriptions.</>,
+              description: <>Choose <strong className="text-ink">Download sample</strong>, keep the header row, and replace the examples with existing member atom names and their exact descriptions. Leave <code className="text-ink">deposit</code> at <code className="text-ink">0</code> or enter extra TRUST support for a row.</>,
             },
             {
               title: 'Upload or paste the CSV',
@@ -855,7 +856,7 @@ Base,A secure low-cost builder-friendly Ethereum L2`}</CsvExample>
           </section>
           <section id="list-csv-headers" className="rounded-[1.1rem] border border-line/80 bg-paper/65 p-5">
             <p className="text-[0.72rem] uppercase tracking-terminal text-muted">List CSV headers</p>
-            <p className="mt-3 font-mono text-sm leading-7 text-ink">member, name, atom, label, subject, description</p>
+            <p className="mt-3 font-mono text-sm leading-7 text-ink">member, name, atom, label, subject, description, deposit (optional)</p>
           </section>
         </div>
       </SectionShell>

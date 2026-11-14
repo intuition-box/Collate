@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { parseEther } from 'viem';
 
 import { buildAtomReviewRows } from '@/lib/intuition/atom-duplicates';
 import {
@@ -12,6 +13,7 @@ import { getCreatablePreparedListEntries, publishManualBatchLists, reviewManualB
 import { HAS_TAG_PREDICATE_TERM_IDS } from '@/lib/intuition/list-predicate';
 import { prepareCreateAtomsTransaction, prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
 import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
+import { parseCsvListText } from '@/lib/csv/list-csv';
 import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
 import type { IntuitionAtomSearchResult } from '@/types/api';
@@ -257,10 +259,49 @@ test('Testnet list review recognizes old Collate entries under the Mainnet predi
   assert.deepEqual(checkedPredicates, [HAS_TAG_PREDICATE_TERM_IDS.testnet, HAS_TAG_PREDICATE_TERM_IDS.mainnet]);
   assert.equal(newRows[0]?.status, 'ready_to_create');
   assert.equal(newRows[0]?.payload.prepared?.tripleId, testnetTripleId);
+  assert.equal(newRows[0]?.payload.prepared?.assetWei, 3n);
+  assert.equal(newRows[0]?.payload.prepared?.depositWei, 0n);
 
   checkedPredicates.length = 0;
   await reviewManualBatchLists({ listAtom, rows: memberRows, network: 'mainnet', publicClient });
   assert.deepEqual(checkedPredicates, [HAS_TAG_PREDICATE_TERM_IDS.mainnet]);
+});
+
+test('CSV list deposits add to the required cost and only eligible rows reach the transaction', async () => {
+  const memberAtom = candidate('0x1111111111111111111111111111111111111111111111111111111111111111', 'Streaming service.');
+  const requiredCost = parseEther('0.01');
+  const deposit = parseEther('0.25');
+  const publicClient = {
+    readContract: async ({ functionName }: { functionName: string }) => {
+      if (functionName === 'getTripleCost') return requiredCost;
+      if (functionName === 'calculateTripleId') return '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      if (functionName === 'isTermCreated') return false;
+      throw new Error(`Unexpected contract read: ${functionName}`);
+    },
+  } as never;
+  const parsedRows = parseCsvListText([
+    'member,description,deposit',
+    'Netflix,Streaming service.,0.25',
+    'Invalid,Other member,-1',
+  ].join('\n')).parsedRows.map(({ row, errors }, index) => ({
+    row: { ...row, selectedAtom: memberAtom },
+    errors,
+  }));
+
+  const reviewed = await reviewCsvBatchLists({
+    listAtom,
+    parsedRows,
+    network: 'testnet',
+    publicClient,
+  });
+
+  assert.equal(reviewed[0]?.status, 'ready_to_create');
+  assert.equal(reviewed[0]?.payload.prepared?.assetWei, requiredCost + deposit);
+  assert.equal(reviewed[0]?.payload.prepared?.depositWei, deposit);
+  assert.equal(reviewed[1]?.status, 'invalid');
+  const eligible = getCreatablePreparedListEntries(reviewed);
+  assert.equal(eligible.length, 1);
+  assert.equal(prepareCreateTriplesTransaction(eligible, 'testnet').value, requiredCost + deposit);
 });
 
 test('getCreatablePreparedAtoms only returns ready atom rows', () => {

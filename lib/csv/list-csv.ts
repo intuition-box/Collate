@@ -1,6 +1,7 @@
 import { findDuplicateHeaders, findHeaderIndex, parseCsvRows, slugifyCsvHeader } from '@/lib/csv/parse-csv';
 import { MAX_CREATION_ITEMS_PER_TRANSACTION } from '@/lib/intuition/write-limits';
 import { createLocalId } from '@/lib/utils/ids';
+import { parseOptionalSupportExact } from '@/lib/utils/validation';
 import type { CsvListParseRow, ListMemberRow } from '@/types/lists';
 
 export const MAX_LIST_BATCH_SIZE = MAX_CREATION_ITEMS_PER_TRANSACTION;
@@ -24,6 +25,7 @@ export function parseCsvListText(
   const duplicateHeaders = findDuplicateHeaders(headers);
   const memberHeaderIndex = findHeaderIndex(headers, ['subject_name', 'subjectname', 'name', 'member', 'atom', 'label', 'subject']);
   const descriptionHeaderIndex = findHeaderIndex(headers, ['subject_description', 'subjectdescription', 'description', 'summary']);
+  const depositHeaderIndex = findHeaderIndex(headers, ['deposit']);
 
   if (duplicateHeaders.length > 0) {
     throw new Error(`CSV contains duplicate headers: ${duplicateHeaders.join(', ')}.`);
@@ -40,6 +42,7 @@ export function parseCsvListText(
   rows.slice(1).forEach((cells, rowIndex) => {
     const memberName = (cells[memberHeaderIndex] ?? '').trim();
     const memberDescription = descriptionHeaderIndex === -1 ? '' : (cells[descriptionHeaderIndex] ?? '').trim();
+    const deposit = depositHeaderIndex === -1 ? '' : (cells[depositHeaderIndex] ?? '').trim();
     const sourceLine = rowIndex + 2;
 
     const row: ListMemberRow = {
@@ -47,15 +50,17 @@ export function parseCsvListText(
       sourceLine,
       memberName,
       memberDescription,
+      deposit,
       selectedAtom: null,
       candidates: [],
     };
 
     parsedRows.push(row);
-    rowResults.push({
-      row,
-      errors: memberName ? [] : ['Member name is required.'],
-    });
+    const errors = memberName ? [] : ['Member name is required.'];
+    if (parseOptionalSupportExact(deposit) === null) {
+      errors.push('Deposit must be a non-negative TRUST amount representable with up to 18 decimal places.');
+    }
+    rowResults.push({ row, errors });
   });
 
   if (parsedRows.every((row) => !row.memberName.trim())) {

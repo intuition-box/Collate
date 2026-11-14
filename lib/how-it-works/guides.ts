@@ -313,8 +313,8 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       },
       {
         title: 'Download the sample and enter existing members',
-        description: 'Download the list CSV sample. Add one member per row, replacing the examples with the actual atoms you want to add to the selected list, then delete any sample rows you do not need.',
-        emphasis: 'Copy each atom\'s exact name and exact description from its existing graph record. The name finds matching atoms, and the description identifies the correct one when several atoms share that name. For a large set, download the sample first, then give that file and the copied graph records to an AI assistant to populate it. It must not rewrite or invent the names and descriptions, so verify every row before uploading.',
+        description: 'Download the list CSV sample. Add one member per row, replacing the examples with the actual atoms you want to add to the selected list, then delete any sample rows you do not need. Keep deposit at 0 or enter extra TRUST support for that member.',
+        emphasis: 'Copy each atom\'s exact name and exact description from its existing graph record. The name finds matching atoms, and the description identifies the correct one when several atoms share that name. The optional deposit column adds TRUST on top of the required list-entry cost. For a large set, download the sample first, then give that file and the copied graph records to an AI assistant to populate it. It must not rewrite or invent the names and descriptions, so verify every row before uploading.',
         action: 'list-csv-template',
       },
       {
@@ -323,7 +323,7 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       },
       {
         title: 'Preview the member rows',
-        description: 'Select Preview CSV rows. Check every line number, member name, and description against the spreadsheet, and correct any parsing error before continuing. This step confirms that Collate read the file; it does not resolve the atoms yet.',
+        description: 'Select Preview CSV rows. Check each member name, exact description, and optional deposit against the spreadsheet. Correct parsing errors before continuing. This step confirms that Collate read the file; it does not resolve the atoms yet.',
       },
       {
         title: 'Resolve the rows against existing atoms',
@@ -335,7 +335,7 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
       },
       {
         title: 'Review again and confirm eligibility',
-        description: 'Review the list again after changing a candidate or correcting the CSV. Confirm that Ready to create and Ready with matches rows are the members you intend to add. Ambiguous, missing, existing, duplicate, and invalid rows stay excluded.',
+        description: 'Review the list again after changing a candidate or correcting the CSV. Confirm the required cost, added support, and total for each eligible row, then verify that Ready to create and Ready with matches rows are the members you intend to add. Ambiguous, missing, existing, duplicate, and invalid rows stay excluded.',
       },
       {
         title: 'Publish the eligible list entries',
@@ -355,7 +355,7 @@ export const HOW_IT_WORKS_GUIDES: HowItWorksGuide[] = [
     ],
     visual: 'csv-lists',
     createFlow: 'csv-lists',
-    csvExample: 'member,description\nEthereum,A decentralized open source blockchain system\nBase,A secure low cost builder friendly Ethereum L2',
+    csvExample: 'member,description,deposit\nEthereum,A decentralized open source blockchain system,0\nBase,A secure low cost builder friendly Ethereum L2,0',
   },
 ];
 

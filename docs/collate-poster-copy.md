@@ -148,10 +148,12 @@ Suggested visual: Several member cards converging into one list atom.
 Recommended format:
 
 ```csv
-member,description
-Ethereum,A decentralized open-source blockchain system
-Base,A secure low-cost builder-friendly Ethereum L2
+member,description,deposit
+Ethereum,A decentralized open-source blockchain system,0
+Base,A secure low-cost builder-friendly Ethereum L2,0
 ```
+
+Optional `deposit` adds extra TRUST on top of the required list-entry cost. Use a non-negative decimal amount; blank or `0` adds no extra support.
 
 ### Resolve and Publish
 

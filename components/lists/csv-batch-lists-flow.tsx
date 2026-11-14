@@ -30,7 +30,7 @@ import type { IntuitionAtomSearchResult } from '@/types/api';
 import type { CsvListParseRow, ManualListReviewRow } from '@/types/lists';
 import type { WriteResult } from '@/types/writes';
 
-const DEFAULT_CSV_TEXT = ['member,description', 'Ethereum,Layer one', 'Base,Layer two'].join('\n');
+const DEFAULT_CSV_TEXT = ['member,description,deposit', 'Ethereum,Layer one,0', 'Base,Layer two,0'].join('\n');
 
 export function CsvBatchListsFlow() {
   const { address, status: accountStatus } = useAccount();
@@ -268,6 +268,10 @@ export function CsvBatchListsFlow() {
                 Select an existing list atom, then import member names and descriptions copied from atoms that already
                 exist on the selected network. Collate resolves those atoms before publishing the missing list entries.
               </p>
+              <p className="max-w-3xl text-sm leading-7 text-muted">
+                The optional <code className="text-ink">deposit</code> column adds extra TRUST on top of each required
+                list entry cost. Leave it blank or use <code className="text-ink">0</code> to add no extra support.
+              </p>
             </div>
           </div>
 
@@ -322,7 +326,7 @@ export function CsvBatchListsFlow() {
                   }}
                   rows={12}
                   className="min-h-[24rem] w-full flex-1 resize-y rounded-xl border border-line/80 bg-white/70 px-4 py-4 font-mono text-sm leading-7 text-ink outline-none"
-                  placeholder="member,description"
+                  placeholder="member,description,deposit"
                 />
               </label>
             </div>
@@ -396,7 +400,7 @@ export function CsvBatchListsFlow() {
             </DisabledActionTooltip>
           </div>
 
-          {parsedRows ? <CsvListPreviewTable rows={parsedRows} /> : null}
+          {parsedRows ? <CsvListPreviewTable rows={parsedRows} nativeSymbol={networkConfig.nativeSymbol} /> : null}
           {reviewRows ? (
             <ListReviewTable
               rows={reviewRows}

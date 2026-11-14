@@ -11,6 +11,7 @@ import { MULTIVAULT_ABI } from '@/lib/intuition/abi';
 import { buildListReviewRows, isCreatableListReviewStatus } from '@/lib/intuition/list-duplicates';
 import { getRecognizedHasTagPredicateTermIds } from '@/lib/intuition/list-predicate';
 import { INTUITION_CHAINS, getIntuitionNetwork } from '@/lib/intuition/networks';
+import { parseOptionalSupportExact } from '@/lib/utils/validation';
 import { prepareCreateTriplesTransaction } from '@/lib/intuition/tx-prepare';
 import type { IntuitionAtomSearchResult, PublicIntuitionNetwork } from '@/types/api';
 import type { ListMemberRow, ManualListReviewRow, PreparedListEntry } from '@/types/lists';
@@ -77,6 +78,10 @@ export async function reviewManualBatchLists({
       errors.push('Select a member atom before reviewing this row.');
     }
 
+    if (parseOptionalSupportExact(row.deposit ?? '') === null) {
+      errors.push('Deposit must be a non-negative TRUST amount representable with up to 18 decimal places.');
+    }
+
     if (errors.length > 0) {
       invalidRows.set(row.id, buildInvalidRow(row, errors));
       continue;
@@ -89,6 +94,7 @@ export async function reviewManualBatchLists({
 
   for (const row of validRows) {
     const memberAtom = row.selectedAtom!;
+    const depositWei = parseOptionalSupportExact(row.deposit ?? '') ?? 0n;
     const tripleIds = await Promise.all(getRecognizedHasTagPredicateTermIds(network).map(async (predicateId) => (
       await publicClient.readContract({
         address: getIntuitionNetwork(network).multiVault,
@@ -114,7 +120,8 @@ export async function reviewManualBatchLists({
       listTermId: listAtom.termId,
       memberTermId: memberAtom.termId,
       tripleId,
-      assetWei: tripleCost,
+      assetWei: tripleCost + depositWei,
+      depositWei,
       alreadyExistsOnChain,
     });
   }

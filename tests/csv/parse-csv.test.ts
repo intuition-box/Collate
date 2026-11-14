@@ -88,7 +88,34 @@ test('parseCsvListText accepts common member headers', () => {
   assert.equal(result.parsedRows.length, 1);
   assert.equal(result.rows[0]?.memberName, 'Ethereum');
   assert.equal(result.rows[0]?.memberDescription, 'Layer one');
+  assert.equal(result.rows[0]?.deposit, '');
   assert.deepEqual(result.parsedRows[0]?.errors, []);
+});
+
+test('parseCsvListText accepts blank, zero, and decimal extra deposits', () => {
+  const result = parseCsvListText([
+    'member,description,deposit',
+    'Blank,No extra support,',
+    'Zero,No extra support,0',
+    'Quarter,Adds support,0.25',
+    'Exact trailing zeros,Still exact,0.2500000000000000000',
+  ].join('\n'));
+
+  assert.deepEqual(result.rows.map((row) => row.deposit), ['', '0', '0.25', '0.2500000000000000000']);
+  assert.ok(result.parsedRows.every((row) => row.errors.length === 0));
+});
+
+test('parseCsvListText rejects negative, malformed, and over-precision deposits by row', () => {
+  const result = parseCsvListText([
+    'member,description,deposit',
+    'Negative,Invalid,-0.1',
+    'Malformed,Invalid,not an amount',
+    'Precise,Invalid,0.0000000000000000001',
+    'Precise without leading zero,Invalid,.0000000000000000001',
+  ].join('\n'));
+
+  assert.equal(result.parsedRows.length, 4);
+  assert.ok(result.parsedRows.every((row) => row.errors.some((error) => /deposit must be a non-negative TRUST amount/i.test(error))));
 });
 
 test('parseCsvListText rejects duplicate headers', () => {

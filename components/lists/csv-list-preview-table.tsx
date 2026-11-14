@@ -2,13 +2,13 @@
 
 import type { CsvListParseRow } from '@/types/lists';
 
-export function CsvListPreviewTable({ rows }: { rows: CsvListParseRow[] }) {
+export function CsvListPreviewTable({ rows, nativeSymbol }: { rows: CsvListParseRow[]; nativeSymbol: string }) {
   return (
     <div className="rounded-[1.15rem] border border-dashed border-line bg-paper/60 p-4">
       <div className="space-y-2">
         <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Parsed CSV rows</p>
         <p className="text-sm leading-7 text-muted">
-          Preview the imported member rows before exact-match resolution and duplicate review.
+          Preview member details and any extra support before exact-match resolution and duplicate review.
         </p>
       </div>
       <div className="mt-4 overflow-x-auto">
@@ -18,6 +18,7 @@ export function CsvListPreviewTable({ rows }: { rows: CsvListParseRow[] }) {
               <th className="px-3 py-3">Line</th>
               <th className="px-3 py-3">Member</th>
               <th className="px-3 py-3">Description</th>
+              <th className="px-3 py-3">Extra deposit</th>
               <th className="px-3 py-3">Parse notes</th>
             </tr>
           </thead>
@@ -27,6 +28,7 @@ export function CsvListPreviewTable({ rows }: { rows: CsvListParseRow[] }) {
                 <td className="px-3 py-3 align-top text-muted">{entry.row.sourceLine ?? '—'}</td>
                 <td className="px-3 py-3 align-top text-ink">{entry.row.memberName || 'Missing member name'}</td>
                 <td className="px-3 py-3 align-top text-muted">{entry.row.memberDescription || '—'}</td>
+                <td className="px-3 py-3 align-top text-muted">{entry.row.deposit?.trim() || '0'} {nativeSymbol}</td>
                 <td className="px-3 py-3 align-top text-muted">
                   {entry.errors.length > 0 ? (
                     <div className="space-y-1">

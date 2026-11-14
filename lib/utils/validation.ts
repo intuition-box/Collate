@@ -23,6 +23,21 @@ export function parseOptionalSupport(value: string): bigint | null {
   }
 }
 
+export function parseOptionalSupportExact(value: string): bigint | null {
+  const normalized = value.trim();
+  if (normalized && !/^-?(?:\d+\.?\d*|\.\d+)$/.test(normalized)) {
+    return null;
+  }
+
+  const fractionalDigits = normalized.match(/^-?(?:\d+)?\.(\d+)$/)?.[1];
+
+  if (fractionalDigits && fractionalDigits.length > 18 && /[1-9]/.test(fractionalDigits.slice(18))) {
+    return null;
+  }
+
+  return parseOptionalSupport(normalized);
+}
+
 export function isValidPositiveIntegerString(value: string): boolean {
   const parsed = Number.parseInt(value.trim(), 10);
   return Number.isFinite(parsed) && parsed > 0;

@@ -256,9 +256,9 @@ Download the sample from Collate, then replace the examples with your own member
 Recommended format:
 
 ```csv
-member,description
-Ethereum,A decentralized open-source blockchain system
-Base,A secure low-cost builder-friendly Ethereum L2
+member,description,deposit
+Ethereum,A decentralized open-source blockchain system,0
+Base,A secure low-cost builder-friendly Ethereum L2,0
 ```
 
 For each row:
@@ -267,6 +267,7 @@ For each row:
 - `description` should match the existing atom’s description exactly.
 - Copy the description from the atom you want to use. Do not write a new summary.
 - Always copy both the exact name and exact description. The name finds matching atoms; the description identifies the right one when names repeat.
+- `deposit` is optional extra TRUST on top of the required list-entry cost. Use a non-negative decimal such as `0.25`; leave it blank or use `0` for no extra support. The review shows required cost, added support, and total.
 - Put quotation marks around descriptions containing commas.
 
 A unique name may technically resolve without a description, but the CSV should still include the exact description so every row is clear and reliable.
