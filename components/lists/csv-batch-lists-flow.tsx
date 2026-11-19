@@ -5,7 +5,7 @@ import { getAddress, type Hex } from 'viem';
 import { useAccount, useChainId, useWalletClient } from 'wagmi';
 
 import { DisabledActionTooltip } from '@/components/app/disabled-action-tooltip';
-import { FlowSteps } from '@/components/app/flow-steps';
+import { CsvReviewLoadingPanel, CsvReviewPrompt, CsvWorkflowProgress, useCsvReviewNavigation } from '@/components/app/csv-workflow';
 import { useSelectedNetwork } from '@/components/app/network-provider';
 import { ErrorNotice } from '@/components/app/error-notice';
 import { usePublishToast } from '@/components/app/publish-toast-provider';
@@ -26,6 +26,7 @@ import { getIntuitionNetwork, getIntuitionNetworkByChainId } from '@/lib/intuiti
 import { createIntuitionPublicClient } from '@/lib/intuition/public-client';
 import { getListReviewDisabledReason } from '@/lib/utils/list-review-state';
 import { getPublishDisabledReason } from '@/lib/utils/publish-state';
+import { getCsvWorkflowStage } from '@/lib/utils/csv-workflow-state';
 import type { IntuitionAtomSearchResult } from '@/types/api';
 import type { CsvListParseRow, ManualListReviewRow } from '@/types/lists';
 import type { WriteResult } from '@/types/writes';
@@ -49,12 +50,16 @@ export function CsvBatchListsFlow() {
   const [previewLimit, setPreviewLimit] = useState<number | null>(null);
   const [reviewRows, setReviewRows] = useState<ManualListReviewRow[] | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [writeResult, setWriteResult] = useState<WriteResult | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewStarted, setReviewStarted] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const { reviewRef, navigateToReview, showReview } = useCsvReviewNavigation(isReviewing, reviewRows !== null, reviewError !== null);
 
   const networkConfig = getIntuitionNetwork(network);
   const publicClient = useMemo(() => createIntuitionPublicClient(network), [network]);
@@ -74,6 +79,13 @@ export function CsvBatchListsFlow() {
     missingInputMessage: 'Preview at least one CSV row before reviewing.',
   });
   const limitChanged = previewLimit !== null && previewLimit !== listLimit;
+  const workflowStage = getCsvWorkflowStage({
+    hasPreview: parsedRows !== null,
+    isReviewing,
+    hasReview: reviewRows !== null,
+    reviewStarted,
+    reviewFailed: reviewError !== null,
+  });
   const publishDisabledReason = limitsError ? 'Batch limits are unavailable. Refresh this page before publishing.' : limitsPending ? 'Loading batch limits. Please wait before publishing.' : limitChanged ? `Your list-entry limit changed to ${listLimit}. Preview the CSV again before publishing.` : getPublishDisabledReason({
     hasReview: !!reviewRows,
     eligibleCount: creatableEntries.length,
@@ -88,8 +100,11 @@ export function CsvBatchListsFlow() {
     setParsedRows(null);
     setPreviewLimit(null);
     setReviewRows(null);
+    setReviewStarted(false);
     setStatus(null);
-    setError(null);
+    setPreviewError(null);
+    setPublishError(null);
+    setReviewError(null);
     setWriteResult(null);
   }
 
@@ -116,17 +131,20 @@ export function CsvBatchListsFlow() {
       setStatus(`Loaded ${file.name}. Preview the parsed rows before review.`);
     } catch (caughtError) {
       setStatus(null);
-      setError(caughtError instanceof Error ? `CSV list file read failed: ${caughtError.message}` : 'CSV list file read failed.');
+      setPreviewError(caughtError instanceof Error ? `CSV list file read failed: ${caughtError.message}` : 'CSV list file read failed.');
     }
   }
 
   function handlePreview() {
     if (limitsPending || limitsError) {
-      setError('Batch limits are unavailable. Try previewing again shortly.');
+      setPreviewError('Batch limits are unavailable. Try previewing again shortly.');
       return;
     }
     setIsParsing(true);
-    setError(null);
+    setPreviewError(null);
+    setPublishError(null);
+    setReviewError(null);
+    setReviewStarted(false);
     setStatus('Parsing CSV rows...');
     setWriteResult(null);
     setReviewRows(null);
@@ -141,31 +159,36 @@ export function CsvBatchListsFlow() {
     } catch (caughtError) {
       setParsedRows(null);
       setStatus(null);
-      setError(caughtError instanceof Error ? `CSV list parsing failed: ${caughtError.message}` : 'CSV list parsing failed.');
+      setPreviewError(caughtError instanceof Error ? `CSV list parsing failed: ${caughtError.message}` : 'CSV list parsing failed.');
     } finally {
       setIsParsing(false);
     }
   }
 
   async function handleReview() {
+    navigateToReview();
     if (limitChanged) {
-      setError(`Your list-entry limit changed to ${listLimit}. Preview the CSV again before reviewing.`);
+      setReviewError(`Your list-entry limit changed to ${listLimit}. Preview the CSV again before reviewing.`);
       return;
     }
     if (!listAtom) {
-      setError('Select an existing list atom before reviewing CSV rows.');
+      setReviewError('Select an existing list atom before reviewing CSV rows.');
       return;
     }
 
     if (!parsedRows || parsedRows.length === 0) {
-      setError('Preview the CSV before reviewing it.');
+      setReviewError('Preview the CSV before reviewing it.');
       return;
     }
 
     setIsReviewing(true);
-    setError(null);
+    setReviewStarted(true);
+    setReviewRows(null);
+    setPreviewError(null);
+    setPublishError(null);
+    setReviewError(null);
     setWriteResult(null);
-    setStatus('Resolving member atoms and preparing list review...');
+    setStatus(null);
 
     try {
       const resolvedRows = await resolveCsvListRows({
@@ -188,11 +211,11 @@ export function CsvBatchListsFlow() {
 
       setParsedRows(mergedParsedRows);
       setReviewRows(nextRows);
-      setStatus(`Review ready. ${getCreatablePreparedListEntries(nextRows).length} list entries can be created.`);
+      setStatus(null);
     } catch (caughtError) {
       setReviewRows(null);
       setStatus(null);
-      setError(caughtError instanceof Error ? `CSV list review failed: ${caughtError.message}` : 'CSV list review failed.');
+      setReviewError(caughtError instanceof Error ? `CSV list review failed: ${caughtError.message}` : 'CSV list review failed.');
     } finally {
       setIsReviewing(false);
     }
@@ -202,7 +225,9 @@ export function CsvBatchListsFlow() {
     setParsedRows((current) => current?.map((entry) => (entry.row.id === rowId ? updater(entry) : entry)) ?? null);
     setReviewRows(null);
     setStatus('Row updated. Review the batch again to refresh statuses.');
-    setError(null);
+    setPreviewError(null);
+    setPublishError(null);
+    setReviewError(null);
     setWriteResult(null);
   }
 
@@ -210,27 +235,29 @@ export function CsvBatchListsFlow() {
     setParsedRows((current) => current?.filter((entry) => entry.row.id !== rowId) ?? null);
     setReviewRows((current) => current?.filter((entry) => entry.id !== rowId) ?? null);
     setStatus('Row removed. Review the batch again if needed.');
-    setError(null);
+    setPreviewError(null);
+    setPublishError(null);
+    setReviewError(null);
     setWriteResult(null);
   }
 
   async function handlePublish() {
     if (limitsPending || limitsError || limitChanged) {
-      setError(publishDisabledReason ?? 'Batch limits are unavailable. Try again.');
+      setPublishError(publishDisabledReason ?? 'Batch limits are unavailable. Try again.');
       return;
     }
     if (!reviewRows || creatableEntries.length === 0) {
-      setError('Review the CSV list batch before publishing.');
+      setPublishError('Review the CSV list batch before publishing.');
       return;
     }
 
     if (!canWrite || !walletClient || !address) {
-      setError(`Connect a wallet on ${networkConfig.name} before publishing the batch.`);
+      setPublishError(`Connect a wallet on ${networkConfig.name} before publishing the batch.`);
       return;
     }
 
     setIsPublishing(true);
-    setError(null);
+    setPublishError(null);
     setWriteResult(null);
     setStatus('Checking limits before requesting wallet approval for the eligible list entries...');
 
@@ -250,7 +277,7 @@ export function CsvBatchListsFlow() {
       showConfirmedPublish({ result, kind: 'list_entry', network });
     } catch (caughtError) {
       setStatus(null);
-      setError(caughtError instanceof Error ? `CSV list publish failed: ${caughtError.message}` : 'CSV list publish failed.');
+      setPublishError(caughtError instanceof Error ? `CSV list publish failed: ${caughtError.message}` : 'CSV list publish failed.');
     } finally {
       setIsPublishing(false);
     }
@@ -275,14 +302,13 @@ export function CsvBatchListsFlow() {
             </div>
           </div>
 
-          <FlowSteps
-            steps={[
-              { label: 'Choose a list', hint: 'Select the existing list atom you want to update before importing members.' },
-              { label: 'Load CSV', hint: 'Copy the exact name and exact description from each existing member atom.' },
-              { label: 'Review and resolve', hint: 'Preview rows, resolve ambiguous matches, and confirm which entries are publishable.' },
-              { label: 'Publish missing entries', hint: 'Only ready list entries are submitted. Missing or ambiguous rows stay blocked.' },
-            ]}
-          />
+          <CsvWorkflowProgress activeStage={workflowStage} finished={!!writeResult} />
+
+          <section aria-labelledby="prepare-lists-title" className="space-y-5">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-terminal text-muted">Prepare</p>
+              <h2 id="prepare-lists-title" className="text-xl font-medium text-ink">Choose a list and prepare your CSV</h2>
+            </div>
 
           <AtomSearchSelect
             label="List atom"
@@ -320,12 +346,13 @@ export function CsvBatchListsFlow() {
                 <span className="text-[0.72rem] uppercase tracking-terminal text-muted">Paste CSV text</span>
                 <textarea
                   value={csvText}
+                  disabled={isReviewing || isPublishing}
                   onChange={(event) => {
                     setCsvText(event.target.value);
                     resetDownstreamState();
                   }}
                   rows={12}
-                  className="min-h-[24rem] w-full flex-1 resize-y rounded-xl border border-line/80 bg-white/70 px-4 py-4 font-mono text-sm leading-7 text-ink outline-none"
+                  className="min-h-[24rem] w-full flex-1 resize-y rounded-xl border border-line/80 bg-white/70 px-4 py-4 font-mono text-sm leading-7 text-ink outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="member,description,deposit"
                 />
               </label>
@@ -335,11 +362,12 @@ export function CsvBatchListsFlow() {
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-terminal text-muted">CSV source</p>
                 <div className="flex flex-wrap gap-2">
-                  <label className="inline-flex cursor-pointer rounded-full border border-line bg-white/85 px-4 py-2 text-sm text-ink">
+                  <label className={`inline-flex rounded-full border border-line bg-white/85 px-4 py-2 text-sm text-ink ${isReviewing || isPublishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                     <input
                       key={fileInputKey}
                       type="file"
                       accept=".csv,text/csv"
+                      disabled={isReviewing || isPublishing}
                       className="sr-only"
                       onChange={(event) => {
                         void handleCsvFileChange(event.target.files?.[0] ?? null);
@@ -382,53 +410,128 @@ export function CsvBatchListsFlow() {
               type="button"
               onClick={handlePreview}
               disabled={isParsing || isReviewing || isPublishing}
-              className="inline-flex rounded-full border border-ink bg-ink px-4 py-2 text-sm text-paper transition-opacity duration-150 hover:opacity-[0.85] disabled:cursor-not-allowed disabled:opacity-60"
+              className={`inline-flex rounded-full px-4 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60 ${parsedRows ? 'border border-line bg-paper/70 text-ink hover:border-ink/20' : 'border border-ink bg-ink text-paper hover:opacity-[0.85]'}`}
             >
-              {isParsing ? 'Parsing CSV...' : 'Preview CSV rows'}
+              {isParsing ? 'Preparing preview...' : parsedRows ? 'Refresh preview' : 'Preview CSV rows'}
             </button>
-            <DisabledActionTooltip reason={reviewDisabledReason}>
-              <button
-                type="button"
-                onClick={() => {
-                  void handleReview();
-                }}
-                disabled={!!reviewDisabledReason}
-                className="inline-flex rounded-full border border-line bg-paper/70 px-4 py-2 text-sm text-muted transition-colors duration-150 hover:border-ink/15 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isReviewing ? 'Reviewing list rows...' : 'Review list rows'}
-              </button>
-            </DisabledActionTooltip>
           </div>
 
-          {parsedRows ? <CsvListPreviewTable rows={parsedRows} nativeSymbol={networkConfig.nativeSymbol} /> : null}
-          {reviewRows ? (
-            <ListReviewTable
-              rows={reviewRows}
-              nativeSymbol={networkConfig.nativeSymbol}
-              onSelectCandidate={(rowId, atom) => {
-                patchParsedRow(rowId, (entry) => ({
-                  ...entry,
-                  row: {
-                    ...entry.row,
-                    selectedAtom: atom,
-                    resolutionNote: 'Selected manually after reviewing duplicate-name candidates.',
-                  },
-                }));
-              }}
-              onRemoveRow={removeParsedRow}
-            />
+          {!parsedRows && status ? <p role="status" className="text-sm leading-6 text-muted">{status}</p> : null}
+          {!parsedRows && previewError ? <ErrorNotice message={previewError} /> : null}
+          </section>
+
+          {parsedRows ? (
+            <section aria-label="CSV preview" className="space-y-4">
+              <CsvReviewPrompt
+                rowCount={parsedRows.length}
+                reviewed={reviewRows !== null}
+                description={reviewRows ? 'Your checks are complete. See which members are ready to add.' : 'Check the rows below, then review them to match existing atoms and check the list.'}
+              >
+                {!reviewError ? (
+                  <DisabledActionTooltip reason={reviewDisabledReason}>
+                    <button
+                      type="button"
+                      onClick={() => { if (reviewRows) showReview(); else void handleReview(); }}
+                      disabled={!!reviewDisabledReason}
+                      className="inline-flex rounded-full border border-ink bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-opacity hover:opacity-[0.85] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isReviewing ? 'Reviewing list entries...' : reviewRows ? 'View review results' : 'Continue to review'}
+                    </button>
+                  </DisabledActionTooltip>
+                ) : null}
+              </CsvReviewPrompt>
+              <CsvListPreviewTable rows={parsedRows} nativeSymbol={networkConfig.nativeSymbol} />
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line/80 bg-paper/50 px-4 py-3">
+                <p className="text-sm leading-6 text-muted">
+                  {parsedRows.length} {parsedRows.length === 1 ? 'row' : 'rows'} previewed. Review will match each member to an existing atom and check for entries already in this list.
+                </p>
+                {!reviewError ? (
+                  <DisabledActionTooltip reason={reviewDisabledReason}>
+                    <button
+                      type="button"
+                      onClick={() => { if (reviewRows) showReview(); else void handleReview(); }}
+                      disabled={!!reviewDisabledReason}
+                      className="inline-flex rounded-full border border-ink bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-opacity hover:opacity-[0.85] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isReviewing ? 'Reviewing list entries...' : reviewRows ? 'View review results' : 'Continue to review'}
+                    </button>
+                  </DisabledActionTooltip>
+                ) : null}
+              </div>
+              {status && !isReviewing && (parsedRows.length === 0 || (reviewStarted && !reviewRows)) ? (
+                <p role="status" className="text-sm leading-6 text-muted">{status}</p>
+              ) : null}
+              {previewError ? <ErrorNotice message={previewError} /> : null}
+            </section>
           ) : null}
 
-          <div className="rounded-[1.15rem] border border-line/80 bg-paper/70 p-5">
+          <div ref={reviewRef} tabIndex={-1} role="region" aria-label="List entry review" className="scroll-mt-6 space-y-8 outline-none">
+          {isReviewing ? (
+            <CsvReviewLoadingPanel kind="list members" rowCount={parsedRows?.length ?? 0} networkName={networkConfig.name} />
+          ) : null}
+          {reviewError ? (
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line/80 bg-paper/65 p-4">
+              <div className="min-w-0 flex-1 space-y-2">
+                <ErrorNotice message={reviewError} />
+                <p className="text-sm leading-6 text-muted">
+                  {limitChanged
+                    ? 'Refresh the preview to apply your updated row limit, then review again.'
+                    : 'Your preview is unchanged. Retry the checks when ready.'}
+                </p>
+              </div>
+              <DisabledActionTooltip reason={reviewDisabledReason}>
+                <button
+                  type="button"
+                  onClick={() => { limitChanged ? handlePreview() : void handleReview(); }}
+                  disabled={!limitChanged && !!reviewDisabledReason}
+                  className="inline-flex shrink-0 rounded-full border border-ink bg-ink px-4 py-2 text-sm font-medium text-paper transition-opacity hover:opacity-[0.85] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {limitChanged ? 'Refresh preview' : 'Try review again'}
+                </button>
+              </DisabledActionTooltip>
+            </div>
+          ) : null}
+
+          {reviewRows ? (
+            <section aria-label="List entry review results" className="space-y-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-terminal text-muted">Review complete</p>
+                  <h2 className="mt-1 text-xl font-medium text-ink">List entry checks</h2>
+                </div>
+                <p role="status" className="text-sm text-muted">
+                  {creatableEntries.length} of {reviewRows.length} rows eligible to publish
+                </p>
+              </div>
+              {status && !isPublishing && !writeResult ? <p role="status" className="text-sm leading-6 text-muted">{status}</p> : null}
+              <ListReviewTable
+                rows={reviewRows}
+                nativeSymbol={networkConfig.nativeSymbol}
+                onSelectCandidate={(rowId, atom) => {
+                  patchParsedRow(rowId, (entry) => ({
+                    ...entry,
+                    row: {
+                      ...entry.row,
+                      selectedAtom: atom,
+                      resolutionNote: 'Selected manually after reviewing duplicate-name candidates.',
+                    },
+                  }));
+                }}
+                onRemoveRow={removeParsedRow}
+              />
+            </section>
+          ) : null}
+          </div>
+
+          {reviewRows ? <div className="rounded-[1.15rem] border border-line/80 bg-paper/70 p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-terminal text-muted">Publish</p>
                 <p className="text-sm leading-7 text-muted">
-                  Review comes first. `ready_to_create` and `ready_with_matches` rows are included. Existing, duplicate,
-                  ambiguous, missing, and invalid rows are blocked.
+                  Only eligible members will be added. Existing entries and rows that need a choice or correction are left out.
                 </p>
                 <p className="text-sm leading-7 text-muted">
-                  Eligible rows: <span className="text-ink">{creatableEntries.length}</span> / {reviewRows?.length ?? 0}
+                  Eligible rows: <span className="text-ink">{creatableEntries.length}</span> / {reviewRows.length}
                 </p>
               </div>
 
@@ -437,7 +540,7 @@ export function CsvBatchListsFlow() {
                 onClick={() => {
                   void handlePublish();
                 }}
-                disabled={!reviewRows || creatableEntries.length === 0 || !canWrite || isPublishing || isReviewing || isParsing || !!publishDisabledReason}
+                disabled={creatableEntries.length === 0 || !canWrite || isPublishing || isReviewing || isParsing || !!publishDisabledReason}
                 className="inline-flex rounded-full border border-ink px-5 py-3 text-sm text-ink transition-colors duration-150 hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPublishing ? 'Publishing batch...' : hasNetworkMismatch ? 'Wrong network' : 'Publish eligible list entries'}
@@ -446,13 +549,13 @@ export function CsvBatchListsFlow() {
 
             {publishDisabledReason ? <p className="mt-4 text-sm leading-7 text-muted">{publishDisabledReason}</p> : null}
 
-            {status ? <p className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
-            {error ? <ErrorNotice message={error} className="mt-4" /> : null}
+            {status && (isPublishing || writeResult) ? <p role="status" className="mt-4 text-sm leading-7 text-muted">{status}</p> : null}
+            {publishError ? <ErrorNotice message={publishError} className="mt-4" /> : null}
 
             {writeResult?.txHash ? (
               <TransactionExplorerLink network={network} txHash={writeResult.txHash} trackingPending={writeResult.trackingPending} trackingUnavailable={writeResult.trackingUnavailable} />
             ) : null}
-          </div>
+          </div> : null}
     </div>
   );
 }
